@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import Navigation from "@/Components/Home/Navigation.vue";
 
 const page = usePage();
-const appName = computed(() => page.props.appName || "StarterKit");
+const appName = computed(() => page.props.appName || "BookFlow");
 const showPassword = ref(false);
 const showPasswordConfirmation = ref(false);
 
@@ -24,7 +24,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Register" />
+    <Head :title="`Create Account | ${appName}`" />
 
     <div class="relative min-h-screen overflow-hidden bg-slate-950">
         <Navigation
@@ -48,11 +48,11 @@ const submit = () => {
                     {{ appName }}
                 </p>
                 <h1 class="text-5xl font-black leading-tight">
-                    This is a
-                    <span class="text-cyan-300">Laravel Starter Kit</span>
+                    Launch your
+                    <span class="text-cyan-300">booking workspace</span>
                 </h1>
                 <p class="mt-5 max-w-md text-base text-slate-200/85">
-                    Create an account
+                    Create your account to manage services, schedules, and client bookings.
                 </p>
             </section>
 
@@ -60,10 +60,10 @@ const submit = () => {
                 class="rounded-3xl border border-white/20 bg-transparent p-6 shadow-2xl shadow-cyan-900/25 backdrop-blur sm:p-8"
             >
                 <h2 class="text-3xl font-black tracking-tight text-white">
-                    Register account
+                    Create account
                 </h2>
                 <p class="mt-2 text-sm text-slate-300">
-                    Set up your access to the starter dashboard.
+                    Set up access to your booking dashboard.
                 </p>
 
                 <form @submit.prevent="submit" class="mt-6 space-y-5">
@@ -317,7 +317,7 @@ const submit = () => {
                         class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {{
-                            form.processing ? "Creating account..." : "Create account"
+                            form.processing ? "Creating account..." : "Create booking account"
                         }}
                     </button>
 

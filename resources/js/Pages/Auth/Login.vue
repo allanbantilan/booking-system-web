@@ -9,7 +9,7 @@ const props = defineProps({
 });
 
 const page = usePage();
-const appName = computed(() => page.props.appName || "StarterKit");
+const appName = computed(() => page.props.appName || "BookFlow");
 const showPassword = ref(false);
 
 const form = useForm({
@@ -29,7 +29,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Sign In" />
+    <Head :title="`Sign In | ${appName}`" />
 
     <div class="relative min-h-screen overflow-hidden bg-slate-950">
         <Navigation
@@ -53,11 +53,11 @@ const submit = () => {
                     {{ appName }}
                 </p>
                 <h1 class="text-5xl font-black leading-tight">
-                    Modern
-                    <span class="text-cyan-300">Starter Kit.</span>
+                    Welcome back to
+                    <span class="text-cyan-300">your bookings.</span>
                 </h1>
                 <p class="mt-5 max-w-md text-base text-slate-200/85">
-                    Sign in
+                    Sign in to view your calendar, reservations, and customer activity.
                 </p>
             </section>
 
@@ -68,7 +68,7 @@ const submit = () => {
                     Sign in
                 </h2>
                 <p class="mt-2 text-sm text-slate-300">
-                    Access your project workspace.
+                    Access your booking dashboard.
                 </p>
 
                 <div
@@ -206,13 +206,13 @@ const submit = () => {
                         {{ form.processing ? "Signing in..." : "Sign in" }}
                     </button>
 
-                    <p class="text-center text-sm text-slate-600">
-                        New to the starter?
+                    <p class="text-center text-sm text-slate-300">
+                        New to {{ appName }}?
                         <Link
                             :href="route('register')"
                             class="font-semibold text-cyan-300 hover:text-cyan-200"
                         >
-                            Register account
+                            Create account
                         </Link>
                     </p>
                 </form>

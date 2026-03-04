@@ -2,7 +2,7 @@
 const props = defineProps({
     appName: {
         type: String,
-        default: "StarterKit",
+        default: "BookFlow",
     },
 });
 
@@ -10,16 +10,16 @@ const currentYear = new Date().getFullYear();
 
 const links = {
     product: [
-        { label: "Features", href: "#" },
-        { label: "Dashboard", href: "#" },
-        { label: "Agenda Builder", href: "#" },
-        { label: "Team Assignments", href: "#" },
+        { label: "Online Booking", href: "#" },
+        { label: "Calendar Sync", href: "#" },
+        { label: "Payments", href: "#" },
+        { label: "Client Reminders", href: "#" },
     ],
     company: [
-        { label: "Starter Overview", href: "#" },
-        { label: "Roadmap", href: "#" },
-        { label: "Changelog", href: "#" },
-        { label: "Support", href: "#" },
+        { label: "About", href: "#" },
+        { label: "Careers", href: "#" },
+        { label: "Help Center", href: "#" },
+        { label: "Contact", href: "#" },
     ],
     legal: [
         { label: "Privacy Policy", href: "#" },
@@ -58,7 +58,7 @@ const links = {
                         </span>
                     </div>
                     <p class="text-slate-400">
-                        Starter kit powered by Laravel, Inertia, Vue, and Tailwind.
+                        Booking software for service businesses that need faster scheduling and fewer no-shows.
                     </p>
                 </div>
                 <div>
@@ -105,7 +105,7 @@ const links = {
                 class="border-t border-white/10 mt-8 pt-8 text-center text-slate-400"
             >
                 <p>
-                    &copy; {{ currentYear }} {{ appName }} Starter. All rights reserved.
+                    &copy; {{ currentYear }} {{ appName }}. All rights reserved.
                 </p>
             </div>
         </div>

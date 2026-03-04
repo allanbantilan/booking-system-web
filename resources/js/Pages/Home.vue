@@ -15,7 +15,7 @@ const props = defineProps({
     },
     appName: {
         type: String,
-        default: "StarterKit",
+        default: "BookFlow",
     },
 });
 
@@ -28,7 +28,7 @@ const scrollToSection = (sectionId) => {
 </script>
 
 <template>
-    <Head title="Starter Kit" />
+    <Head :title="`${appName} | Booking System`" />
 
     <div class="min-h-screen bg-slate-950">
         <!-- Navigation -->

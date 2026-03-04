@@ -13,7 +13,7 @@ const props = defineProps({
     },
     appName: {
         type: String,
-        default: "StarterKit",
+        default: "BookFlow",
     },
     hideMainLinks: {
         type: Boolean,
@@ -93,19 +93,19 @@ onUnmounted(() => {
                             @click="scrollToSection('features')"
                             class="text-slate-200 hover:text-cyan-300 font-medium transition-colors"
                         >
-                            Features
+                            Booking Features
                         </button>
                         <button
                             @click="scrollToSection('about')"
                             class="text-slate-200 hover:text-cyan-300 font-medium transition-colors"
                         >
-                            Why It Works
+                            How It Works
                         </button>
                         <button
                             @click="scrollToSection('contact')"
                             class="text-slate-200 hover:text-cyan-300 font-medium transition-colors"
                         >
-                            Support
+                            Contact
                         </button>
                     </div>
                 </div>
@@ -168,19 +168,19 @@ onUnmounted(() => {
                         @click="scrollToSection('features')"
                         class="block w-full text-left px-4 py-2 text-slate-200 hover:text-cyan-300 font-medium"
                     >
-                        Features
+                        Booking Features
                     </button>
                     <button
                         @click="scrollToSection('about')"
                         class="block w-full text-left px-4 py-2 text-slate-200 hover:text-cyan-300 font-medium"
                     >
-                        Why It Works
+                        How It Works
                     </button>
                     <button
                         @click="scrollToSection('contact')"
                         class="block w-full text-left px-4 py-2 text-slate-200 hover:text-cyan-300 font-medium"
                     >
-                        Support
+                        Contact
                     </button>
 
                     <!-- Auth links -->

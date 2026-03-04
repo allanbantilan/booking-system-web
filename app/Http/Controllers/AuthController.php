@@ -13,6 +13,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -62,6 +63,9 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
+
+        Role::findOrCreate('user', 'web');
+        $user->assignRole('user');
 
         event(new Registered($user));
         Auth::login($user);

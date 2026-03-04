@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -20,9 +22,13 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // User-facing booking flow scaffolds (manual CRUD/business logic to be implemented by you).
+    Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::post('/events/{eventId}/book', [BookingController::class, 'store'])->name('bookings.store');
+    Route::patch('/bookings/{bookingId}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/history', [BookingController::class, 'history'])->name('bookings.history');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

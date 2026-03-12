@@ -39,6 +39,11 @@ class BookingsTable
                 TextColumn::make('price')
                     ->money('PHP')
                     ->sortable(),
+                TextColumn::make('discount_percentage')
+                    ->label('Discount %')
+                    ->numeric()
+                    ->suffix('%')
+                    ->sortable(),
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->searchable()

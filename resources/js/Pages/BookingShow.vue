@@ -30,6 +30,14 @@ const formatDate = (value) => {
     });
 };
 
+const getDiscountPercentage = () =>
+    Number(props.booking.discount_percentage || 0);
+
+const getOriginalPrice = () => {
+    const discount = getDiscountPercentage();
+    return props.booking.price * (1 + discount / 100);
+};
+
 const primaryImage = computed(() => props.booking.image_urls?.[0]);
 
 const reserveBooking = () => {
@@ -108,11 +116,19 @@ const reserveBooking = () => {
                     Booking Info
                 </p>
                 <div class="mt-4 space-y-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-start justify-between gap-4">
                         <span class="text-sm text-slate-300">Price</span>
-                        <span class="text-lg font-black text-orange-300">
-                            {{ formatCurrency(booking.price) }}
-                        </span>
+                        <div class="text-right">
+                            <div class="text-lg font-black text-orange-300">
+                                {{ formatCurrency(booking.price) }}
+                            </div>
+                            <div v-if="getDiscountPercentage() > 0" class="text-xs text-slate-400 line-through">
+                                {{ formatCurrency(getOriginalPrice()) }}
+                            </div>
+                            <div v-if="getDiscountPercentage() > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
+                                -{{ getDiscountPercentage() }}%
+                            </div>
+                        </div>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-slate-300">Created By</span>
@@ -142,3 +158,5 @@ const reserveBooking = () => {
         </div>
     </DashboardLayout>
 </template>
+
+

@@ -27,6 +27,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'NAIA Terminal 3, Pasay',
                 'capacity' => 180,
                 'price' => 3499,
+                'discount_percentage' => 10,
                 'queries' => ['airplane', 'airport'],
             ],
             'Hotels / Accommodations' => [
@@ -35,6 +36,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'White Beach, Boracay',
                 'capacity' => 2,
                 'price' => 6800,
+                'discount_percentage' => 10,
                 'queries' => ['hotel room', 'resort'],
             ],
             'Car Rentals' => [
@@ -43,14 +45,16 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Makati CBD',
                 'capacity' => 5,
                 'price' => 2200,
+                'discount_percentage' => 10,
                 'queries' => ['car rental', 'compact car'],
             ],
             'Restaurant Tables' => [
-                'title' => 'Chef’s Tasting Table for Two',
+                'title' => 'Chef\'s Tasting Table for Two',
                 'description' => 'Reserve a prime dinner slot with a curated six-course tasting menu.',
                 'location' => 'Poblacion, Makati',
                 'capacity' => 2,
                 'price' => 3200,
+                'discount_percentage' => 10,
                 'queries' => ['restaurant', 'fine dining'],
             ],
             'Private Dining Rooms' => [
@@ -59,6 +63,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'BGC, Taguig',
                 'capacity' => 10,
                 'price' => 9500,
+                'discount_percentage' => 10,
                 'queries' => ['private dining', 'banquet room'],
             ],
             'Catering Services' => [
@@ -67,6 +72,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Ortigas Center, Pasig',
                 'capacity' => 30,
                 'price' => 18000,
+                'discount_percentage' => 10,
                 'queries' => ['catering', 'buffet'],
             ],
             'Concert Tickets' => [
@@ -75,6 +81,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Smart Araneta Coliseum, QC',
                 'capacity' => 1,
                 'price' => 4800,
+                'discount_percentage' => 10,
                 'queries' => ['concert', 'arena'],
             ],
             'Movies (Cinemas)' => [
@@ -83,6 +90,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Uptown Mall, BGC',
                 'capacity' => 2,
                 'price' => 1400,
+                'discount_percentage' => 10,
                 'queries' => ['cinema', 'movie theater'],
             ],
             'Sports Games' => [
@@ -91,6 +99,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'MOA Arena, Pasay',
                 'capacity' => 1,
                 'price' => 5200,
+                'discount_percentage' => 10,
                 'queries' => ['stadium', 'basketball game'],
             ],
             'Doctor or Dentist Appointments' => [
@@ -99,6 +108,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Greenbelt, Makati',
                 'capacity' => 1,
                 'price' => 1800,
+                'discount_percentage' => 10,
                 'queries' => ['dental clinic', 'dentist'],
             ],
             'Haircuts / Barbershop Visits' => [
@@ -107,6 +117,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Kapitolyo, Pasig',
                 'capacity' => 1,
                 'price' => 650,
+                'discount_percentage' => 10,
                 'queries' => ['barbershop', 'haircut'],
             ],
             'Spa or Massage Sessions' => [
@@ -115,6 +126,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Alabang Town Center',
                 'capacity' => 1,
                 'price' => 2500,
+                'discount_percentage' => 10,
                 'queries' => ['spa', 'massage'],
             ],
             'Sports Courts (Tennis, Badminton, Basketball)' => [
@@ -123,6 +135,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Marikina Sports Center',
                 'capacity' => 12,
                 'price' => 1800,
+                'discount_percentage' => 10,
                 'queries' => ['sports court', 'indoor court'],
             ],
             'Meeting or Conference Rooms' => [
@@ -131,6 +144,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Bonifacio High Street, BGC',
                 'capacity' => 12,
                 'price' => 6000,
+                'discount_percentage' => 10,
                 'queries' => ['meeting room', 'conference room'],
             ],
             'Photography Studios' => [
@@ -139,6 +153,7 @@ class BookingItemsSeeder extends Seeder
                 'location' => 'Quezon City',
                 'capacity' => 6,
                 'price' => 3200,
+                'discount_percentage' => 10,
                 'queries' => ['photo studio', 'photography'],
             ],
         ];
@@ -153,6 +168,7 @@ class BookingItemsSeeder extends Seeder
                     'location' => "Metro Manila Hub " . ($index + 1),
                     'capacity' => 10 + ($index * 5),
                     'price' => 500 + ($index * 150),
+                    'discount_percentage' => 10,
                     'queries' => [Str::slug($category->name)],
                 ];
 
@@ -167,6 +183,7 @@ class BookingItemsSeeder extends Seeder
                         'event_date' => $now->copy()->addDays(3 + ($index * 2)),
                         'capacity' => $template['capacity'],
                         'price' => $template['price'],
+                        'discount_percentage' => $template['discount_percentage'] ?? 0,
                         'created_by' => $admin->id,
                     ]
                 );

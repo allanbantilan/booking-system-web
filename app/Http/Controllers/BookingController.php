@@ -11,7 +11,7 @@ class BookingController extends Controller
     public function index(): Response
     {
         $bookings = Booking::query()
-            ->with('category:id,name')
+            ->with('category')
             ->with('media')
             ->orderBy('event_date')
             ->get();
@@ -23,7 +23,7 @@ class BookingController extends Controller
 
     public function show(Booking $booking): Response
     {
-        $booking->load(['category:id,name', 'creator:id,name', 'media']);
+        $booking->load(['category', 'creator:id,name', 'media']);
 
         return Inertia::render('BookingShow', [
             'booking' => $booking,

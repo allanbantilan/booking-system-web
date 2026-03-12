@@ -20,7 +20,37 @@ class CategoriesTable
                 TextColumn::make('slug')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('color')
+                    ->label('Color')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('badge_label')
+                    ->label('Badge')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('quantity_label')
+                    ->label('Quantity')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('availability_label')
+                    ->label('Availability')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('meta_line')
+                    ->label('Meta Line')
+                    ->limit(40)
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('amenities')
+                    ->label('Amenities')
+                    ->formatStateUsing(fn ($state) => is_array($state) ? implode(', ', $state) : '')
+                    ->limit(40)
+                    ->toggleable(),
                 TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

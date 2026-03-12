@@ -23,7 +23,7 @@ class ReservationController extends Controller
     public function history(Request $request): Response
     {
         $reservations = Reservation::query()
-            ->with('booking:id,title,event_date,location,category_id')
+            ->with(['booking:id,title,event_date,location,category_id', 'booking.category'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();

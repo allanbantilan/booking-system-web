@@ -43,6 +43,13 @@ class BookingForm
                     ->numeric()
                     ->minValue(0)
                     ->required(),
+                TextInput::make('discount_percentage')
+                    ->label('Discount %')
+                    ->numeric()
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->default(0)
+                    ->suffix('%'),
             ]);
     }
 }

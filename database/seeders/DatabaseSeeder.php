@@ -11,8 +11,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             CategoriesSeeder::class,
-            BookingItemsSeeder::class,
+            CategoryDisplaySeeder::class,
             FrontendUsersSeeder::class,
+            BookingItemsSeeder::class,
+            ReservationsSeeder::class,
             BackendUsersSeeder::class,
         ]);
     }

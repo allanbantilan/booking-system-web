@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Events\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -32,11 +31,6 @@ class EventForm
                 TextInput::make('price')
                     ->numeric()
                     ->minValue(0)
-                    ->required(),
-                Select::make('created_by')
-                    ->relationship('creator', 'name')
-                    ->searchable()
-                    ->preload()
                     ->required(),
             ]);
     }

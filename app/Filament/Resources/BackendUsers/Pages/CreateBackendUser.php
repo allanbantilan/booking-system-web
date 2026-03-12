@@ -8,4 +8,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateBackendUser extends CreateRecord
 {
     protected static string $resource = BackendUserResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return static::$resource::getUrl('index');
+    }
 }

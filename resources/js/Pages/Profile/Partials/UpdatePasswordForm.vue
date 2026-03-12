@@ -38,7 +38,7 @@ const updatePassword = () => {
 </script>
 
 <template>
-    <FormSection @submitted="updatePassword">
+    <FormSection variant="dashboard" @submitted="updatePassword">
         <template #title>
             Update Password
         </template>
@@ -49,50 +49,53 @@ const updatePassword = () => {
 
         <template #form>
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="current_password" value="Current Password" />
+                <InputLabel for="current_password" value="Current Password" variant="dashboard" />
                 <TextInput
                     id="current_password"
                     ref="currentPasswordInput"
                     v-model="form.current_password"
                     type="password"
                     class="mt-1 block w-full"
+                    variant="dashboard"
                     autocomplete="current-password"
                 />
-                <InputError :message="form.errors.current_password" class="mt-2" />
+                <InputError :message="form.errors.current_password" class="mt-2" variant="dashboard" />
             </div>
 
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="password" value="New Password" />
+                <InputLabel for="password" value="New Password" variant="dashboard" />
                 <TextInput
                     id="password"
                     ref="passwordInput"
                     v-model="form.password"
                     type="password"
                     class="mt-1 block w-full"
+                    variant="dashboard"
                     autocomplete="new-password"
                 />
-                <InputError :message="form.errors.password" class="mt-2" />
+                <InputError :message="form.errors.password" class="mt-2" variant="dashboard" />
             </div>
 
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="password_confirmation" value="Confirm Password" />
+                <InputLabel for="password_confirmation" value="Confirm Password" variant="dashboard" />
                 <TextInput
                     id="password_confirmation"
                     v-model="form.password_confirmation"
                     type="password"
                     class="mt-1 block w-full"
+                    variant="dashboard"
                     autocomplete="new-password"
                 />
-                <InputError :message="form.errors.password_confirmation" class="mt-2" />
+                <InputError :message="form.errors.password_confirmation" class="mt-2" variant="dashboard" />
             </div>
         </template>
 
         <template #actions>
-            <ActionMessage :on="form.recentlySuccessful" class="me-3">
+            <ActionMessage :on="form.recentlySuccessful" class="me-3" variant="dashboard">
                 Saved.
             </ActionMessage>
 
-            <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+            <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing" variant="dashboard">
                 Save
             </PrimaryButton>
         </template>

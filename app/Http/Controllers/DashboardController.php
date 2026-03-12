@@ -14,24 +14,14 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $events = Event::query()
-            ->with('creator:id,name')
-            ->orderBy('event_date')
-            ->get();
-
-        $bookings = Booking::query()
-            ->with('event:id,title,event_date,location')
-            ->where('user_id', $user->id)
-            ->latest()
-            ->get();
-
         return Inertia::render('Dashboard', [
-            'events' => $events,
-            'bookings' => $bookings,
             'totals' => [
-                'events' => $events->count(),
-                'bookingHistory' => $bookings->count(),
-                'confirmedBookings' => $bookings->where('status', 'confirmed')->count(),
+                'events' => Event::query()->count(),
+                'bookingHistory' => Booking::query()->where('user_id', $user->id)->count(),
+                'confirmedBookings' => Booking::query()
+                    ->where('user_id', $user->id)
+                    ->where('status', 'confirmed')
+                    ->count(),
             ],
         ]);
     }

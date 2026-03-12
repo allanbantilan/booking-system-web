@@ -76,7 +76,7 @@ const clearPhotoFileInput = () => {
 </script>
 
 <template>
-    <FormSection @submitted="updateProfileInformation">
+    <FormSection variant="dashboard" @submitted="updateProfileInformation">
         <template #title>
             Profile Information
         </template>
@@ -97,7 +97,7 @@ const clearPhotoFileInput = () => {
                     @change="updatePhotoPreview"
                 >
 
-                <InputLabel for="photo" value="Photo" />
+                <InputLabel for="photo" value="Photo" variant="dashboard" />
 
                 <!-- Current Profile Photo -->
                 <div v-show="! photoPreview" class="mt-2">
@@ -112,7 +112,7 @@ const clearPhotoFileInput = () => {
                     />
                 </div>
 
-                <SecondaryButton class="mt-2 me-2" type="button" @click.prevent="selectNewPhoto">
+                <SecondaryButton class="mt-2 me-2" type="button" variant="dashboard" @click.prevent="selectNewPhoto">
                     Select A New Photo
                 </SecondaryButton>
 
@@ -120,57 +120,60 @@ const clearPhotoFileInput = () => {
                     v-if="user.profile_photo_path"
                     type="button"
                     class="mt-2"
+                    variant="dashboard"
                     @click.prevent="deletePhoto"
                 >
                     Remove Photo
                 </SecondaryButton>
 
-                <InputError :message="form.errors.photo" class="mt-2" />
+                <InputError :message="form.errors.photo" class="mt-2" variant="dashboard" />
             </div>
 
             <!-- Name -->
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="name" value="Name" variant="dashboard" />
                 <TextInput
                     id="name"
                     v-model="form.name"
                     type="text"
                     class="mt-1 block w-full"
+                    variant="dashboard"
                     required
                     autocomplete="name"
                 />
-                <InputError :message="form.errors.name" class="mt-2" />
+                <InputError :message="form.errors.name" class="mt-2" variant="dashboard" />
             </div>
 
             <!-- Email -->
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Email" variant="dashboard" />
                 <TextInput
                     id="email"
                     v-model="form.email"
                     type="email"
                     class="mt-1 block w-full"
+                    variant="dashboard"
                     required
                     autocomplete="username"
                 />
-                <InputError :message="form.errors.email" class="mt-2" />
+                <InputError :message="form.errors.email" class="mt-2" variant="dashboard" />
 
                 <div v-if="$page.props.jetstream.hasEmailVerification && user.email_verified_at === null">
-                    <p class="text-sm mt-2">
+                    <p class="text-sm mt-2 text-slate-300">
                         Your email address is unverified.
 
                         <Link
                             :href="route('verification.send')"
                             method="post"
                             as="button"
-                            class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            class="underline text-sm text-cyan-200 hover:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 focus:ring-offset-slate-950"
                             @click.prevent="sendEmailVerification"
                         >
                             Click here to re-send the verification email.
                         </Link>
                     </p>
 
-                    <div v-show="verificationLinkSent" class="mt-2 font-medium text-sm text-green-600">
+                    <div v-show="verificationLinkSent" class="mt-2 font-medium text-sm text-emerald-300">
                         A new verification link has been sent to your email address.
                     </div>
                 </div>
@@ -178,11 +181,11 @@ const clearPhotoFileInput = () => {
         </template>
 
         <template #actions>
-            <ActionMessage :on="form.recentlySuccessful" class="me-3">
+            <ActionMessage :on="form.recentlySuccessful" class="me-3" variant="dashboard">
                 Saved.
             </ActionMessage>
 
-            <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+            <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing" variant="dashboard">
                 Save
             </PrimaryButton>
         </template>

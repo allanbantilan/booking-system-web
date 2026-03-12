@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BookingController extends Controller
 {
@@ -18,10 +20,16 @@ class BookingController extends Controller
         return back()->with('error', "Booking #{$bookingId} cancel is not implemented yet. Add your manual cancel logic here.");
     }
 
-    public function history(Request $request): RedirectResponse
+    public function history(Request $request): Response
     {
-        $historyCount = Booking::query()->where('user_id', $request->user()->id)->count();
+        $bookings = Booking::query()
+            ->with('event:id,title,event_date,location')
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->get();
 
-        return back()->with('success', "Booking history scaffold is ready. Current records: {$historyCount}.");
+        return Inertia::render('BookingHistory', [
+            'bookings' => $bookings,
+        ]);
     }
 }

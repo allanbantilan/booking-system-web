@@ -27,6 +27,10 @@ class Booking extends Model implements HasMedia
         'location',
         'event_date',
         'capacity',
+        'availability_label',
+        'quantity_label',
+        'meta_line',
+        'amenities',
         'price',
         'discount_percentage',
         'created_by',
@@ -38,6 +42,7 @@ class Booking extends Model implements HasMedia
             'event_date' => 'datetime',
             'price' => 'decimal:2',
             'discount_percentage' => 'integer',
+            'amenities' => 'array',
         ];
     }
 

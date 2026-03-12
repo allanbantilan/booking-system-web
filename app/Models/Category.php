@@ -17,18 +17,7 @@ class Category extends Model
         'slug',
         'color',
         'badge_label',
-        'quantity_label',
-        'availability_label',
-        'meta_line',
-        'amenities',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'amenities' => 'array',
-        ];
-    }
 
     public function bookings(): HasMany
     {

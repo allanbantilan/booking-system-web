@@ -36,6 +36,24 @@ class BookingsTable
                 TextColumn::make('capacity')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('availability_label')
+                    ->label('Availability Label')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('quantity_label')
+                    ->label('Quantity Label')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('meta_line')
+                    ->label('Meta Line')
+                    ->limit(40)
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('amenities')
+                    ->label('Amenities')
+                    ->formatStateUsing(fn ($state) => is_array($state) ? implode(', ', $state) : '')
+                    ->limit(40)
+                    ->toggleable(),
                 TextColumn::make('price')
                     ->money('PHP')
                     ->sortable(),

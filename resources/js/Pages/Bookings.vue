@@ -12,6 +12,7 @@ defineProps({
 });
 
 const bookingQuantity = reactive({});
+const expandedDescriptions = reactive({});
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat("en-PH", {
@@ -42,10 +43,6 @@ const openBookingScaffold = (bookingId) => {
 const fallbackCategory = {
     color: "slate",
     badge_label: "Booking",
-    quantity_label: "slot(s)",
-    availability_label: "Slots left",
-    meta_line: "Available booking slot",
-    amenities: ["availability", "support", "secure"],
 };
 
 const getCategory = (booking) => booking.category || fallbackCategory;
@@ -57,8 +54,7 @@ const getAccent = (booking) => {
 };
 
 const getAmenities = (booking) => {
-    const category = getCategory(booking);
-    const amenities = category.amenities || [];
+    const amenities = booking.amenities || [];
     return amenities.map((amenity) => ({
         key: amenity.amenity_key || amenity,
         ...amenityConfig[amenity.amenity_key || amenity],
@@ -66,14 +62,14 @@ const getAmenities = (booking) => {
 };
 
 const getAvailabilityLabel = (booking) =>
-    getCategory(booking).availability_label || "Slots left";
+    booking.availability_label || "Slots left";
 const getQuantityLabel = (booking) =>
-    getCategory(booking).quantity_label || "slot(s)";
+    booking.quantity_label || "slot(s)";
 const getCtaLabel = () => "Book Now";
 const getBadgeLabel = (booking) =>
     getCategory(booking).badge_label || "Booking";
 const getMetaLine = (booking) =>
-    getCategory(booking).meta_line ||
+    booking.meta_line ||
     `${booking.location || "-"} · ${formatDate(booking.event_date)}`;
 
 const getDiscountPercentage = (booking) =>
@@ -82,6 +78,13 @@ const getDiscountPercentage = (booking) =>
 const getOriginalPrice = (booking) => {
     const discount = getDiscountPercentage(booking);
     return booking.price * (1 + discount / 100);
+};
+
+const isLongDescription = (description) =>
+    typeof description === "string" && description.length > 140;
+
+const toggleDescription = (bookingId) => {
+    expandedDescriptions[bookingId] = !expandedDescriptions[bookingId];
 };
 </script>
 
@@ -101,7 +104,7 @@ const getOriginalPrice = (booking) => {
                 <article
                     v-for="booking in bookings"
                     :key="booking.id"
-                    class="group rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+                    class="group flex flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
                     :class="getAccent(booking).glow"
                 >
                     <div
@@ -144,12 +147,34 @@ const getOriginalPrice = (booking) => {
                         </p>
                     </div>
 
-                    <p class="mt-3 text-sm text-slate-300">
-                        {{
-                            booking.description ||
-                            "No description provided yet."
-                        }}
-                    </p>
+                    <div class="mt-3 min-h-[4.5rem]">
+                        <p
+                            class="text-sm text-slate-300"
+                            :style="
+                                expandedDescriptions[booking.id]
+                                    ? {}
+                                    : {
+                                          display: '-webkit-box',
+                                          WebkitBoxOrient: 'vertical',
+                                          WebkitLineClamp: 3,
+                                          overflow: 'hidden',
+                                      }
+                            "
+                        >
+                            {{
+                                booking.description ||
+                                "No description provided yet."
+                            }}
+                        </p>
+                        <button
+                            v-if="isLongDescription(booking.description)"
+                            type="button"
+                            class="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300 transition hover:text-cyan-200"
+                            @click="toggleDescription(booking.id)"
+                        >
+                            {{ expandedDescriptions[booking.id] ? "Read Less" : "Read More" }}
+                        </button>
+                    </div>
 
                     <div class="mt-4 flex flex-wrap items-center gap-2">
                         <div
@@ -162,7 +187,8 @@ const getOriginalPrice = (booking) => {
                         </div>
                     </div>
 
-                    <div class="mt-5 flex flex-wrap items-center justify-between gap-4">
+                    <div class="mt-auto pt-5">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
                             <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
                                 Price
@@ -213,9 +239,9 @@ const getOriginalPrice = (booking) => {
                                 </span>
                             </div>
                         </div>
-                    </div>
+                        </div>
 
-                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <p class="text-sm text-slate-300">
                             Total:
                             <span class="font-semibold text-white">
@@ -242,6 +268,7 @@ const getOriginalPrice = (booking) => {
                             >
                                 View Details
                             </Link>
+                        </div>
                         </div>
                     </div>
                 </article>

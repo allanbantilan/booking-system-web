@@ -105,7 +105,8 @@ const reserveBooking = () => {
                         <span
                             class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-200"
                         >
-                            Capacity: {{ booking.capacity }}
+                            {{ booking.availability_label || "Slots left" }}:
+                            {{ booking.capacity }}
                         </span>
                     </div>
                 </div>

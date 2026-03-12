@@ -1,63 +1,75 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 import { Link, router } from "@inertiajs/vue3";
-import { computed, reactive } from "vue";
+import { computed, reactive, watch } from "vue";
 import { amenityConfig, getAccentClasses } from "@/Config/bookingCategoryConfig.js";
 
 const props = defineProps({
     bookings: {
+        type: Object,
+        required: true,
+    },
+    categories: {
         type: Array,
         default: () => [],
+    },
+    filters: {
+        type: Object,
+        default: () => ({
+            categoryId: "all",
+            minPrice: "",
+            maxPrice: "",
+        }),
     },
 });
 
 const bookingQuantity = reactive({});
 const expandedDescriptions = reactive({});
-const filters = reactive({
-    categoryId: "all",
-    minPrice: "",
-    maxPrice: "",
-});
+const filters = reactive({ ...props.filters });
 
-const allBookings = computed(() => props.bookings || []);
+const bookings = computed(() => props.bookings?.data || []);
+const paginationLinks = computed(() => props.bookings?.links || []);
 
 const categoryOptions = computed(() => {
-    const seen = new Map();
-    allBookings.value.forEach((booking) => {
-        const category = booking.category;
-        if (category?.id && !seen.has(category.id)) {
-            seen.set(category.id, category.name || "Category");
-        }
-    });
-    return Array.from(seen.entries()).map(([id, name]) => ({
-        id: String(id),
-        name,
+    return props.categories.map((category) => ({
+        id: String(category.id),
+        name: category.name || "Category",
     }));
 });
 
-const filteredBookings = computed(() => {
-    const minPrice = Number(filters.minPrice);
-    const maxPrice = Number(filters.maxPrice);
+const applyFilters = () => {
+    const payload = {
+        categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
+        minPrice: filters.minPrice || undefined,
+        maxPrice: filters.maxPrice || undefined,
+    };
 
-    return allBookings.value.filter((booking) => {
-        if (filters.categoryId !== "all") {
-            const bookingCategoryId = booking.category?.id;
-            if (String(bookingCategoryId) !== String(filters.categoryId)) {
-                return false;
-            }
-        }
-
-        const price = Number(booking.price || 0);
-        if (!Number.isNaN(minPrice) && filters.minPrice !== "" && price < minPrice) {
-            return false;
-        }
-        if (!Number.isNaN(maxPrice) && filters.maxPrice !== "" && price > maxPrice) {
-            return false;
-        }
-
-        return true;
+    router.get(route("bookings.index"), payload, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
     });
-});
+};
+
+let filterTimeout;
+watch(
+    () => ({ ...filters }),
+    () => {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            applyFilters();
+        }, 300);
+    },
+    { deep: true },
+);
+
+watch(
+    () => props.filters,
+    (next) => {
+        Object.assign(filters, next || {});
+    },
+    { deep: true },
+);
 
 const clearFilters = () => {
     filters.categoryId = "all";
@@ -126,9 +138,9 @@ const getMetaLine = (booking) =>
 const getDiscountPercentage = (booking) =>
     Number(booking.discount_percentage || 0);
 
-const getOriginalPrice = (booking) => {
+const getDiscountedPrice = (booking) => {
     const discount = getDiscountPercentage(booking);
-    return booking.price * (1 + discount / 100);
+    return booking.price * (1 - discount / 100);
 };
 
 const isLongDescription = (description) =>
@@ -206,9 +218,9 @@ const toggleDescription = (bookingId) => {
                 </button>
             </div>
 
-            <div v-if="filteredBookings.length" class="grid gap-5 md:grid-cols-2">
+            <div v-if="bookings.length" class="grid gap-5 md:grid-cols-2">
                 <article
-                    v-for="booking in filteredBookings"
+                    v-for="booking in bookings"
                     :key="booking.id"
                     class="group flex flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
                     :class="getAccent(booking).glow"
@@ -301,10 +313,10 @@ const toggleDescription = (bookingId) => {
                             </p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-lg font-black text-orange-300">
-                                    {{ formatCurrency(booking.price) }}
+                                    {{ formatCurrency(getDiscountedPrice(booking)) }}
                                 </span>
                                 <span v-if="getDiscountPercentage(booking) > 0" class="text-xs text-slate-400 line-through">
-                                    {{ formatCurrency(getOriginalPrice(booking)) }}
+                                    {{ formatCurrency(booking.price) }}
                                 </span>
                                 <span v-if="getDiscountPercentage(booking) > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
                                     -{{ getDiscountPercentage(booking) }}%
@@ -353,7 +365,7 @@ const toggleDescription = (bookingId) => {
                             <span class="font-semibold text-white">
                                 {{
                                     formatCurrency(
-                                        booking.price *
+                                        getDiscountedPrice(booking) *
                                             Number(bookingQuantity[booking.id] || 1),
                                     )
                                 }}
@@ -386,6 +398,25 @@ const toggleDescription = (bookingId) => {
             >
                 No bookings match your filters.
             </p>
+        </section>
+
+        <section v-if="paginationLinks.length > 1" class="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <component
+                :is="link.url ? Link : 'span'"
+                v-for="link in paginationLinks"
+                :key="link.label"
+                :href="link.url"
+                preserve-scroll
+                preserve-state
+                class="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold transition"
+                :class="[
+                    link.active
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                        : 'text-slate-200 hover:bg-white/10',
+                    !link.url && 'cursor-not-allowed opacity-40',
+                ]"
+                v-html="link.label"
+            />
         </section>
     </DashboardLayout>
 </template>

@@ -19,6 +19,7 @@ class BookingItemsSeeder extends Seeder
         }
 
         $now = now();
+        $shouldSeedImages = filter_var(env('SEED_EXTERNAL_IMAGES', false), FILTER_VALIDATE_BOOLEAN);
 
         $templates = [
             'Flights' => [
@@ -256,7 +257,7 @@ class BookingItemsSeeder extends Seeder
                     ]
                 );
 
-                if ($booking->getMedia('images')->isEmpty()) {
+                if ($shouldSeedImages && $booking->getMedia('images')->isEmpty()) {
                     $queries = $template['queries'] ?? [Str::slug($category->name)];
                     foreach ($queries as $imageIndex => $query) {
                         $slug = Str::slug($query) ?: 'booking-item';

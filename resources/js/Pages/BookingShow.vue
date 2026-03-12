@@ -33,9 +33,9 @@ const formatDate = (value) => {
 const getDiscountPercentage = () =>
     Number(props.booking.discount_percentage || 0);
 
-const getOriginalPrice = () => {
+const getDiscountedPrice = () => {
     const discount = getDiscountPercentage();
-    return props.booking.price * (1 + discount / 100);
+    return props.booking.price * (1 - discount / 100);
 };
 
 const primaryImage = computed(() => props.booking.image_urls?.[0]);
@@ -121,10 +121,10 @@ const reserveBooking = () => {
                         <span class="text-sm text-slate-300">Price</span>
                         <div class="text-right">
                             <div class="text-lg font-black text-orange-300">
-                                {{ formatCurrency(booking.price) }}
+                                {{ formatCurrency(getDiscountedPrice()) }}
                             </div>
                             <div v-if="getDiscountPercentage() > 0" class="text-xs text-slate-400 line-through">
-                                {{ formatCurrency(getOriginalPrice()) }}
+                                {{ formatCurrency(booking.price) }}
                             </div>
                             <div v-if="getDiscountPercentage() > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
                                 -{{ getDiscountPercentage() }}%

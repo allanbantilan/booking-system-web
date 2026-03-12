@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Reservation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,24 +15,114 @@ class ReservationController extends Controller
 {
     public function store(Request $request, int $bookingId): RedirectResponse
     {
-        return back()->with('error', "Reservation for booking #{$bookingId} is not implemented yet. Add your manual booking logic here.");
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $user = $request->user();
+
+        DB::transaction(function () use ($bookingId, $validated, $user): void {
+            $booking = Booking::query()
+                ->lockForUpdate()
+                ->findOrFail($bookingId);
+
+            $reserved = Reservation::query()
+                ->where('booking_id', $booking->id)
+                ->where('status', 'confirmed')
+                ->sum('quantity');
+
+            $available = max(0, $booking->capacity - $reserved);
+
+            if ($validated['quantity'] > $available) {
+                throw ValidationException::withMessages([
+                    'quantity' => ["Only {$available} slots left for this booking."],
+                ]);
+            }
+
+            $unitPrice = $this->discountedPrice($booking->price, $booking->discount_percentage);
+
+            Reservation::query()->create([
+                'user_id' => $user->id,
+                'booking_id' => $booking->id,
+                'quantity' => $validated['quantity'],
+                'total_price' => $unitPrice * $validated['quantity'],
+                'status' => 'confirmed',
+            ]);
+        });
+
+        return back()->with('success', 'Reservation confirmed.');
     }
 
-    public function cancel(int $reservationId): RedirectResponse
+    public function cancel(Request $request, int $reservationId): RedirectResponse
     {
-        return back()->with('error', "Reservation #{$reservationId} cancel is not implemented yet. Add your manual cancel logic here.");
+        $reservation = Reservation::query()
+            ->whereKey($reservationId)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        if ($reservation->status === 'cancelled') {
+            return back()->with('error', 'Reservation is already cancelled.');
+        }
+
+        $reservation->update([
+            'status' => 'cancelled',
+        ]);
+
+        return back()->with('success', 'Reservation cancelled.');
     }
 
     public function history(Request $request): Response
     {
         $reservations = Reservation::query()
-            ->with(['booking:id,title,event_date,location,category_id', 'booking.category'])
+            ->with(['booking:id,title,description,location,event_date,capacity,price,discount_percentage,availability_label,quantity_label,meta_line,amenities,category_id', 'booking.category:id,name,color,badge_label', 'booking.media'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
 
         return Inertia::render('BookingHistory', [
-            'reservations' => $reservations,
+            'reservations' => $reservations->map(fn (Reservation $reservation) => [
+                'id' => $reservation->id,
+                'quantity' => $reservation->quantity,
+                'total_price' => $reservation->total_price,
+                'status' => $reservation->status,
+                'booking' => $reservation->booking
+                    ? $this->serializeBooking($reservation->booking)
+                    : null,
+            ]),
         ]);
+    }
+
+    private function discountedPrice(float $price, int $discountPercentage): float
+    {
+        $discount = max(0, min(100, $discountPercentage));
+
+        return round($price * (1 - ($discount / 100)), 2);
+    }
+
+    private function serializeBooking(Booking $booking): array
+    {
+        return [
+            'id' => $booking->id,
+            'title' => $booking->title,
+            'description' => $booking->description,
+            'location' => $booking->location,
+            'event_date' => $booking->event_date,
+            'capacity' => $booking->capacity,
+            'price' => $booking->price,
+            'discount_percentage' => $booking->discount_percentage,
+            'availability_label' => $booking->availability_label,
+            'quantity_label' => $booking->quantity_label,
+            'meta_line' => $booking->meta_line,
+            'amenities' => $booking->amenities,
+            'image_urls' => $booking->image_urls,
+            'category' => $booking->category
+                ? [
+                    'id' => $booking->category->id,
+                    'name' => $booking->category->name,
+                    'color' => $booking->category->color,
+                    'badge_label' => $booking->category->badge_label,
+                ]
+                : null,
+        ];
     }
 }

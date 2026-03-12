@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Filament\Resources\Events\Schemas;
+namespace App\Filament\Resources\Bookings\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
-class EventForm
+class BookingForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -19,6 +21,15 @@ class EventForm
                 Textarea::make('description')
                     ->maxLength(65535)
                     ->columnSpanFull(),
+                Select::make('category_id')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+                SpatieMediaLibraryFileUpload::make('images')
+                    ->collection('images')
+                    ->multiple()
+                    ->image(),
                 TextInput::make('location')
                     ->required()
                     ->maxLength(255),

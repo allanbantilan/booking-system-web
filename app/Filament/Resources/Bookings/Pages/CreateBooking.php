@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\Events\Pages;
+namespace App\Filament\Resources\Bookings\Pages;
 
-use App\Filament\Resources\Events\EventResource;
+use App\Filament\Resources\Bookings\BookingResource;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateEvent extends CreateRecord
+class CreateBooking extends CreateRecord
 {
-    protected static string $resource = EventResource::class;
+    protected static string $resource = BookingResource::class;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

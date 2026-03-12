@@ -3,7 +3,7 @@ import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 import { router } from "@inertiajs/vue3";
 
 defineProps({
-    bookings: {
+    reservations: {
         type: Array,
         default: () => [],
     },
@@ -27,8 +27,8 @@ const formatDate = (value) => {
     });
 };
 
-const cancelBookingScaffold = (bookingId) => {
-    router.patch(route("bookings.cancel", bookingId));
+const cancelBookingScaffold = (reservationId) => {
+    router.patch(route("reservations.cancel", reservationId));
 };
 </script>
 
@@ -44,13 +44,13 @@ const cancelBookingScaffold = (bookingId) => {
         </section>
 
         <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div v-if="bookings.length" class="overflow-x-auto">
+            <div v-if="reservations.length" class="overflow-x-auto">
                 <table
                     class="min-w-full border-separate border-spacing-y-2 text-sm"
                 >
                     <thead>
                         <tr class="text-left text-slate-300">
-                            <th class="px-3 py-2">Event</th>
+                            <th class="px-3 py-2">Booking</th>
                             <th class="px-3 py-2">Date</th>
                             <th class="px-3 py-2">Quantity</th>
                             <th class="px-3 py-2">Total</th>
@@ -60,42 +60,42 @@ const cancelBookingScaffold = (bookingId) => {
                     </thead>
                     <tbody>
                         <tr
-                            v-for="booking in bookings"
-                            :key="booking.id"
+                            v-for="reservation in reservations"
+                            :key="reservation.id"
                             class="rounded-xl border border-white/10 bg-slate-900/60"
                         >
                             <td class="px-3 py-3">
-                                {{ booking.event?.title || "Event" }}
+                                {{ reservation.booking?.title || "Booking" }}
                             </td>
                             <td class="px-3 py-3 text-slate-300">
-                                {{ formatDate(booking.event?.event_date) }}
+                                {{ formatDate(reservation.booking?.event_date) }}
                             </td>
                             <td class="px-3 py-3">
-                                {{ booking.quantity }}
+                                {{ reservation.quantity }}
                             </td>
                             <td class="px-3 py-3">
-                                {{ formatCurrency(booking.total_price) }}
+                                {{ formatCurrency(reservation.total_price) }}
                             </td>
                             <td class="px-3 py-3">
                                 <span
                                     class="rounded-full px-2.5 py-1 text-xs font-semibold"
                                     :class="
-                                        booking.status === 'confirmed'
+                                        reservation.status === 'confirmed'
                                             ? 'bg-emerald-400/20 text-emerald-300'
                                             : 'bg-rose-400/20 text-rose-300'
                                     "
                                 >
-                                    {{ booking.status }}
+                                    {{ reservation.status }}
                                 </span>
                             </td>
                             <td class="px-3 py-3">
                                 <button
                                     type="button"
-                                    :disabled="booking.status === 'cancelled'"
-                                    @click="cancelBookingScaffold(booking.id)"
+                                    :disabled="reservation.status === 'cancelled'"
+                                    @click="cancelBookingScaffold(reservation.id)"
                                     class="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold transition enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
-                                    Cancel Booking
+                                    Cancel Reservation
                                 </button>
                             </td>
                         </tr>

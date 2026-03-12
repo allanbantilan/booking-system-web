@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\Events\Pages;
+namespace App\Filament\Resources\Bookings\Pages;
 
-use App\Filament\Resources\Events\EventResource;
+use App\Filament\Resources\Bookings\BookingResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListEvents extends ListRecords
+class ListBookings extends ListRecords
 {
-    protected static string $resource = EventResource::class;
+    protected static string $resource = BookingResource::class;
 
     protected function getHeaderActions(): array
     {

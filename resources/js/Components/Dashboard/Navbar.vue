@@ -73,15 +73,15 @@ const logout = () => {
                             Dashboard
                         </Link>
                         <Link
-                            :href="route('events.index')"
+                            :href="route('bookings.index')"
                             class="rounded-full px-3 py-1.5 font-semibold transition"
                             :class="
-                                route().current('events.index')
+                                route().current('bookings.*')
                                     ? 'bg-white/10 text-cyan-300'
                                     : 'text-slate-200 hover:text-white hover:bg-white/5'
                             "
                         >
-                            Events
+                            Bookings
                         </Link>
                         <Link
                             :href="route('bookings.history')"

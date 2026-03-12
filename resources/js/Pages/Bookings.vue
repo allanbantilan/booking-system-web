@@ -1,10 +1,10 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
-import { router } from "@inertiajs/vue3";
+import { Link, router } from "@inertiajs/vue3";
 import { reactive } from "vue";
 
 defineProps({
-    events: {
+    bookings: {
         type: Array,
         default: () => [],
     },
@@ -30,61 +30,82 @@ const formatDate = (value) => {
     });
 };
 
-const openBookingScaffold = (eventId) => {
-    const quantity = Number(bookingQuantity[eventId] || 1);
+const openBookingScaffold = (bookingId) => {
+    const quantity = Number(bookingQuantity[bookingId] || 1);
 
-    router.post(route("bookings.store", eventId), {
+    router.post(route("reservations.store", bookingId), {
         quantity,
     });
 };
 </script>
 
 <template>
-    <DashboardLayout title="Events">
+    <DashboardLayout title="Bookings">
         <section
             class="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
         >
-            <h1 class="text-xl font-bold md:text-2xl">Events</h1>
+            <h1 class="text-xl font-bold md:text-2xl">Bookings</h1>
             <p class="mt-1 text-sm text-slate-300">
-                Browse available events and book tickets.
+                Browse available bookings and reserve your slot.
             </p>
         </section>
 
         <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div v-if="events.length" class="grid gap-4 md:grid-cols-2">
+            <div v-if="bookings.length" class="grid gap-4 md:grid-cols-2">
                 <article
-                    v-for="event in events"
-                    :key="event.id"
+                    v-for="booking in bookings"
+                    :key="booking.id"
                     class="rounded-xl border border-white/10 bg-slate-900/60 p-5"
                 >
+                    <div
+                        v-if="booking.image_urls?.length"
+                        class="mb-4 overflow-hidden rounded-xl border border-white/10"
+                    >
+                        <img
+                            :src="booking.image_urls[0]"
+                            :alt="booking.title"
+                            class="h-40 w-full object-cover"
+                            loading="lazy"
+                        />
+                    </div>
+
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <h3 class="text-lg font-bold text-white">
-                                {{ event.title }}
+                                {{ booking.title }}
                             </h3>
                             <p class="mt-1 text-sm text-slate-300">
-                                {{ event.location }} •
-                                {{ formatDate(event.event_date) }}
+                                {{ booking.location }} -
+                                {{ formatDate(booking.event_date) }}
+                            </p>
+                            <p
+                                v-if="booking.category?.name"
+                                class="mt-1 text-xs uppercase tracking-[0.2em] text-cyan-200"
+                            >
+                                {{ booking.category.name }}
                             </p>
                         </div>
                         <span
                             class="rounded-full border border-white/20 px-3 py-1 text-xs text-cyan-300"
                         >
-                            Seat Limit: {{ event.capacity }}
+                            Seat Limit: {{ booking.capacity }}
                         </span>
                     </div>
 
                     <p class="mt-3 text-sm text-slate-300">
-                        {{ event.description || "No description provided yet." }}
+                        {{
+                            booking.description ||
+                            "No description provided yet."
+                        }}
                     </p>
 
                     <div class="mt-4 flex items-center justify-between gap-4">
                         <p class="text-lg font-black text-orange-300">
-                            {{ formatCurrency(event.price) }}
+                            {{ formatCurrency(booking.price) }}
                         </p>
                         <div class="flex items-center gap-2">
                             <input
-                                v-model.number="bookingQuantity[event.id]"
+                                v-model.number="bookingQuantity[booking.id]"
                                 type="number"
                                 min="1"
                                 class="w-20 rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
@@ -92,11 +113,17 @@ const openBookingScaffold = (eventId) => {
                             />
                             <button
                                 type="button"
-                                @click="openBookingScaffold(event.id)"
+                                @click="openBookingScaffold(booking.id)"
                                 class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
                             >
-                                Book Ticket
+                                Reserve
                             </button>
+                            <Link
+                                :href="route('bookings.show', booking.id)"
+                                class="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                            >
+                                View Details
+                            </Link>
                         </div>
                     </div>
                 </article>
@@ -106,8 +133,7 @@ const openBookingScaffold = (eventId) => {
                 v-else
                 class="rounded-xl border border-dashed border-white/20 bg-slate-900/40 p-4 text-sm text-slate-300"
             >
-                No events yet. Create events in Filament, then they will appear
-                here.
+                No bookings yet.
             </p>
         </section>
     </DashboardLayout>

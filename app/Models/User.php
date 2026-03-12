@@ -69,13 +69,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function eventsCreated(): HasMany
+    public function bookingsCreated(): HasMany
     {
-        return $this->hasMany(Event::class, 'created_by');
+        return $this->hasMany(Booking::class, 'created_by');
     }
 
-    public function bookings(): HasMany
+    public function reservations(): HasMany
     {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(Reservation::class);
     }
 }

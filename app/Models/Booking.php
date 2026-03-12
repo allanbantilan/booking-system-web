@@ -5,33 +5,64 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Booking extends Model
+class Booking extends Model implements HasMedia
 {
     use HasFactory;
+    use SoftDeletes;
+    use InteractsWithMedia;
+
+    protected $appends = [
+        'image_urls',
+    ];
 
     protected $fillable = [
-        'user_id',
-        'event_id',
-        'quantity',
-        'total_price',
-        'status',
+        'title',
+        'description',
+        'category_id',
+        'location',
+        'event_date',
+        'capacity',
+        'price',
+        'created_by',
     ];
 
     protected function casts(): array
     {
         return [
-            'total_price' => 'decimal:2',
+            'event_date' => 'datetime',
+            'price' => 'decimal:2',
         ];
     }
 
-    public function user(): BelongsTo
+    public function registerMediaCollections(): void
     {
-        return $this->belongsTo(User::class);
+        $this->addMediaCollection('images');
     }
 
-    public function event(): BelongsTo
+    public function getImageUrlsAttribute(): array
     {
-        return $this->belongsTo(Event::class);
+        return $this->getMedia('images')
+            ->map(fn ($media) => $media->getUrl())
+            ->all();
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
     }
 }

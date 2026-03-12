@@ -14,9 +14,9 @@ class RolesAndPermissionsSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $webPermissions = [
-            'book events',
-            'view own bookings',
-            'cancel own bookings',
+            'book bookings',
+            'view own reservations',
+            'cancel own reservations',
         ];
 
         foreach ($webPermissions as $permission) {
@@ -34,10 +34,14 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $backendPermissions = [
             'dashboard.view',
-            'events.view',
-            'events.create',
-            'events.update',
-            'events.delete',
+            'bookings.view',
+            'bookings.create',
+            'bookings.update',
+            'bookings.delete',
+            'categories.view',
+            'categories.create',
+            'categories.update',
+            'categories.delete',
             'users.view',
             'users.create',
             'users.update',
@@ -68,20 +72,25 @@ class RolesAndPermissionsSeeder extends Seeder
             'super_admin' => $backendPermissions,
             'content_manager' => [
                 'dashboard.view',
-                'events.view',
-                'events.create',
-                'events.update',
-                'events.delete',
+                'bookings.view',
+                'bookings.create',
+                'bookings.update',
+                'bookings.delete',
+                'categories.view',
+                'categories.create',
+                'categories.update',
+                'categories.delete',
                 'media.view',
                 'media.upload',
                 'media.delete',
             ],
             'event_manager' => [
                 'dashboard.view',
-                'events.view',
-                'events.create',
-                'events.update',
-                'events.delete',
+                'bookings.view',
+                'bookings.create',
+                'bookings.update',
+                'bookings.delete',
+                'categories.view',
                 'media.view',
                 'media.upload',
             ],
@@ -99,7 +108,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
             'support_staff' => [
                 'dashboard.view',
-                'events.view',
+                'bookings.view',
                 'users.view',
                 'media.view',
             ],

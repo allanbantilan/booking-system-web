@@ -1,10 +1,10 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 import { Link, router } from "@inertiajs/vue3";
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 import { amenityConfig, getAccentClasses } from "@/Config/bookingCategoryConfig.js";
 
-defineProps({
+const props = defineProps({
     bookings: {
         type: Array,
         default: () => [],
@@ -13,6 +13,57 @@ defineProps({
 
 const bookingQuantity = reactive({});
 const expandedDescriptions = reactive({});
+const filters = reactive({
+    categoryId: "all",
+    minPrice: "",
+    maxPrice: "",
+});
+
+const allBookings = computed(() => props.bookings || []);
+
+const categoryOptions = computed(() => {
+    const seen = new Map();
+    allBookings.value.forEach((booking) => {
+        const category = booking.category;
+        if (category?.id && !seen.has(category.id)) {
+            seen.set(category.id, category.name || "Category");
+        }
+    });
+    return Array.from(seen.entries()).map(([id, name]) => ({
+        id: String(id),
+        name,
+    }));
+});
+
+const filteredBookings = computed(() => {
+    const minPrice = Number(filters.minPrice);
+    const maxPrice = Number(filters.maxPrice);
+
+    return allBookings.value.filter((booking) => {
+        if (filters.categoryId !== "all") {
+            const bookingCategoryId = booking.category?.id;
+            if (String(bookingCategoryId) !== String(filters.categoryId)) {
+                return false;
+            }
+        }
+
+        const price = Number(booking.price || 0);
+        if (!Number.isNaN(minPrice) && filters.minPrice !== "" && price < minPrice) {
+            return false;
+        }
+        if (!Number.isNaN(maxPrice) && filters.maxPrice !== "" && price > maxPrice) {
+            return false;
+        }
+
+        return true;
+    });
+});
+
+const clearFilters = () => {
+    filters.categoryId = "all";
+    filters.minPrice = "";
+    filters.maxPrice = "";
+};
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat("en-PH", {
@@ -100,9 +151,64 @@ const toggleDescription = (bookingId) => {
         </section>
 
         <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div v-if="bookings.length" class="grid gap-5 md:grid-cols-2">
+            <div class="mb-5 flex flex-wrap items-end gap-3">
+                <div class="min-w-[200px]">
+                    <label class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                        Category
+                    </label>
+                    <select
+                        v-model="filters.categoryId"
+                        class="mt-2 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                    >
+                        <option value="all">All categories</option>
+                        <option
+                            v-for="category in categoryOptions"
+                            :key="category.id"
+                            :value="category.id"
+                        >
+                            {{ category.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="min-w-[140px]">
+                    <label class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                        Min Price
+                    </label>
+                    <input
+                        v-model="filters.minPrice"
+                        type="number"
+                        min="0"
+                        class="mt-2 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        placeholder="0"
+                    />
+                </div>
+
+                <div class="min-w-[140px]">
+                    <label class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                        Max Price
+                    </label>
+                    <input
+                        v-model="filters.maxPrice"
+                        type="number"
+                        min="0"
+                        class="mt-2 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        placeholder="Any"
+                    />
+                </div>
+
+                <button
+                    type="button"
+                    class="rounded-lg border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:bg-white/10"
+                    @click="clearFilters"
+                >
+                    Clear
+                </button>
+            </div>
+
+            <div v-if="filteredBookings.length" class="grid gap-5 md:grid-cols-2">
                 <article
-                    v-for="booking in bookings"
+                    v-for="booking in filteredBookings"
                     :key="booking.id"
                     class="group flex flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
                     :class="getAccent(booking).glow"
@@ -278,8 +384,7 @@ const toggleDescription = (bookingId) => {
                 v-else
                 class="rounded-xl border border-dashed border-white/20 bg-slate-900/40 p-4 text-sm text-slate-300"
             >
-                No bookings yet. Create bookings in Filament, then they will
-                appear here.
+                No bookings match your filters.
             </p>
         </section>
     </DashboardLayout>

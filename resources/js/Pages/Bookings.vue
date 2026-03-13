@@ -98,9 +98,11 @@ const formatDate = (value) => {
 const openBookingScaffold = (bookingId) => {
     const quantity = Number(bookingQuantity[bookingId] || 1);
 
-    router.post(route("reservations.store", bookingId), {
-        quantity,
-    });
+    router.get(
+        route("bookings.show", bookingId),
+        { quantity },
+        { preserveState: false },
+    );
 };
 
 const fallbackCategory = {
@@ -127,8 +129,8 @@ const getAmenities = (booking) => {
 const getAvailabilityLabel = (booking) =>
     booking.availability_label || "Slots left";
 const getQuantityLabel = (booking) =>
-    booking.quantity_label || "slot(s)";
-const getCtaLabel = () => "Book Now";
+    booking.quantity_label || "Quantity";
+const getCtaLabel = () => "View & Pay";
 const getBadgeLabel = (booking) =>
     getCategory(booking).badge_label || "Booking";
 const getMetaLine = (booking) =>
@@ -158,7 +160,7 @@ const toggleDescription = (bookingId) => {
         >
             <h1 class="text-xl font-bold md:text-2xl">Bookings</h1>
             <p class="mt-1 text-sm text-slate-300">
-                Browse available bookings and reserve your slot.
+                Browse available bookings and reserve with Maya payment.
             </p>
         </section>
 

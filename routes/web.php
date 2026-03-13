@@ -3,8 +3,10 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PayMayaCheckoutController;
+use App\Http\Controllers\PayMayaReturnController;
+use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -32,6 +34,8 @@ Route::middleware([
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings/{bookingId}/reserve', [ReservationController::class, 'store'])->name('reservations.store');
     Route::patch('/reservations/{reservationId}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
+    Route::post('/payments/paymaya/checkout', PayMayaCheckoutController::class)->name('payments.paymaya.checkout');
+    Route::get('/payments/paymaya/return', PayMayaReturnController::class)->name('payments.paymaya.return');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'paymaya' => [
+        'base_url' => env('PAYMAYA_BASE_URL', 'https://pg-sandbox.paymaya.com'),
+        'public_key' => env('PAYMAYA_PUBLIC_KEY'),
+        'secret_key' => env('PAYMAYA_SECRET_KEY'),
+        'redirect_success' => env('PAYMAYA_REDIRECT_SUCCESS'),
+        'redirect_cancel' => env('PAYMAYA_REDIRECT_CANCEL'),
+        'redirect_failure' => env('PAYMAYA_REDIRECT_FAILURE'),
+    ],
+
 ];

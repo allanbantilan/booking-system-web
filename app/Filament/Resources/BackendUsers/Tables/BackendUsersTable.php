@@ -20,6 +20,18 @@ class BackendUsersTable
                 TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('mobile_number')
+                    ->label('Mobile')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('facebook_url')
+                    ->label('Facebook')
+                    ->url(fn ($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('instagram_url')
+                    ->label('Instagram')
+                    ->url(fn ($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('roles.name')
                     ->label('Roles')
                     ->badge()

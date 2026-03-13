@@ -54,7 +54,7 @@ class BookingController extends Controller
 
     public function show(Booking $booking): Response
     {
-        $booking->load(['category:id,name,color,badge_label', 'creator:id,name', 'media']);
+        $booking->load(['category:id,name,color,badge_label', 'creator:id,name,email,mobile_number,facebook_url,instagram_url', 'media']);
 
         return Inertia::render('BookingShow', [
             'booking' => $this->serializeBooking($booking, withCreator: true),
@@ -89,6 +89,10 @@ class BookingController extends Controller
                 ? [
                     'id' => $booking->creator->id,
                     'name' => $booking->creator->name,
+                    'email' => $booking->creator->email,
+                    'mobile_number' => $booking->creator->mobile_number,
+                    'facebook_url' => $booking->creator->facebook_url,
+                    'instagram_url' => $booking->creator->instagram_url,
                 ]
                 : null,
         ];

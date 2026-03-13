@@ -1,6 +1,6 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
-import { router } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 
 const props = defineProps({
@@ -10,7 +10,16 @@ const props = defineProps({
     },
 });
 
-const quantity = ref(1);
+const page = usePage();
+const initialQuantity = Number(
+    new URLSearchParams(window.location.search).get("quantity") || 1,
+);
+const quantity = ref(
+    Number.isFinite(initialQuantity) && initialQuantity > 0
+        ? initialQuantity
+        : 1,
+);
+const isProcessing = ref(false);
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat("en-PH", {
@@ -38,12 +47,57 @@ const getDiscountedPrice = () => {
     return props.booking.price * (1 - discount / 100);
 };
 
+const totalPrice = computed(
+    () => getDiscountedPrice() * Number(quantity.value || 1),
+);
+
 const primaryImage = computed(() => props.booking.image_urls?.[0]);
 
-const reserveBooking = () => {
-    router.post(route("reservations.store", props.booking.id), {
-        quantity: Number(quantity.value || 1),
-    });
+const contactItems = computed(() => {
+    const creator = props.booking.creator || {};
+
+    return [
+        {
+            key: "email",
+            label: "Email",
+            value: creator.email,
+        },
+        {
+            key: "mobile",
+            label: "Mobile",
+            value: creator.mobile_number,
+        },
+        {
+            key: "facebook",
+            label: "Facebook",
+            value: creator.facebook_url,
+            url: creator.facebook_url,
+        },
+        {
+            key: "instagram",
+            label: "Instagram",
+            value: creator.instagram_url,
+            url: creator.instagram_url,
+        },
+    ];
+});
+
+const startPayMayaCheckout = () => {
+    isProcessing.value = true;
+
+    router.post(
+        route("payments.paymaya.checkout"),
+        {
+            booking_id: props.booking.id,
+            quantity: Number(quantity.value || 1),
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isProcessing.value = false;
+            },
+        },
+    );
 };
 </script>
 
@@ -114,7 +168,7 @@ const reserveBooking = () => {
 
             <aside class="rounded-2xl border border-white/10 bg-white/5 p-6">
                 <p class="text-xs uppercase tracking-[0.3em] text-slate-400">
-                    Booking Info
+                    Booking Summary
                 </p>
                 <div class="mt-4 space-y-4">
                     <div class="flex items-start justify-between gap-4">
@@ -123,10 +177,16 @@ const reserveBooking = () => {
                             <div class="text-lg font-black text-orange-300">
                                 {{ formatCurrency(getDiscountedPrice()) }}
                             </div>
-                            <div v-if="getDiscountPercentage() > 0" class="text-xs text-slate-400 line-through">
+                            <div
+                                v-if="getDiscountPercentage() > 0"
+                                class="text-xs text-slate-400 line-through"
+                            >
                                 {{ formatCurrency(booking.price) }}
                             </div>
-                            <div v-if="getDiscountPercentage() > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
+                            <div
+                                v-if="getDiscountPercentage() > 0"
+                                class="text-[10px] uppercase tracking-[0.2em] text-emerald-300"
+                            >
                                 -{{ getDiscountPercentage() }}%
                             </div>
                         </div>
@@ -137,27 +197,215 @@ const reserveBooking = () => {
                             {{ booking.creator?.name || "Admin" }}
                         </span>
                     </div>
+                    <div class="space-y-3">
+                        <div
+                            v-for="item in contactItems"
+                            :key="item.key"
+                            class="flex items-center justify-between gap-3 text-sm"
+                        >
+                            <span
+                                class="inline-flex items-center gap-2 text-slate-300"
+                            >
+                                <span
+                                    v-if="item.key === 'email'"
+                                    class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200"
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        class="h-4 w-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path d="M4 6h16v12H4z" />
+                                        <path d="M4 7l8 6 8-6" />
+                                    </svg>
+                                </span>
+                                <span
+                                    v-else-if="item.key === 'mobile'"
+                                    class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200"
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        class="h-4 w-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path d="M7 2h10v20H7z" />
+                                        <path d="M10 19h4" />
+                                    </svg>
+                                </span>
+                                <span
+                                    v-else-if="item.key === 'facebook'"
+                                    class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200"
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        class="h-4 w-4"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            d="M13.5 9H16V6h-2.5C11.6 6 11 7.5 11 9v2H9v3h2v6h3v-6h2.2L17 11h-3V9c0-.6.2-1 1.5-1z"
+                                        />
+                                    </svg>
+                                </span>
+                                <span
+                                    v-else-if="item.key === 'instagram'"
+                                    class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200"
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        class="h-4 w-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <rect
+                                            x="4"
+                                            y="4"
+                                            width="16"
+                                            height="16"
+                                            rx="5"
+                                        />
+                                        <circle cx="12" cy="12" r="3.5" />
+                                        <circle
+                                            cx="17"
+                                            cy="7"
+                                            r="1"
+                                            fill="currentColor"
+                                            stroke="none"
+                                        />
+                                    </svg>
+                                </span>
+                                <span>{{ item.label }}</span>
+                            </span>
+                            <span class="text-white">
+                                <!-- Facebook & Instagram: icon button, no URL text -->
+                                <a
+                                    v-if="
+                                        item.url &&
+                                        (item.key === 'facebook' ||
+                                            item.key === 'instagram')
+                                    "
+                                    :href="item.url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-cyan-200 transition hover:bg-white/10 hover:text-cyan-100"
+                                >
+                                    <svg
+                                        v-if="item.key === 'facebook'"
+                                        viewBox="0 0 24 24"
+                                        class="h-3.5 w-3.5"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            d="M13.5 9H16V6h-2.5C11.6 6 11 7.5 11 9v2H9v3h2v6h3v-6h2.2L17 11h-3V9c0-.6.2-1 1.5-1z"
+                                        />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        viewBox="0 0 24 24"
+                                        class="h-3.5 w-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <rect
+                                            x="4"
+                                            y="4"
+                                            width="16"
+                                            height="16"
+                                            rx="5"
+                                        />
+                                        <circle cx="12" cy="12" r="3.5" />
+                                        <circle
+                                            cx="17"
+                                            cy="7"
+                                            r="1"
+                                            fill="currentColor"
+                                            stroke="none"
+                                        />
+                                    </svg>
+                                    Visit {{ item.label }}
+                                </a>
+                                <span
+                                    v-else-if="
+                                        item.url &&
+                                        (item.key === 'facebook' ||
+                                            item.key === 'instagram')
+                                    "
+                                    class="text-xs text-slate-500 italic"
+                                >
+                                    Not set
+                                </span>
+                                <!-- Email & Mobile: show value as plain text or link -->
+                                <a
+                                    v-else-if="item.url"
+                                    :href="item.url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="text-cyan-200 hover:text-cyan-100"
+                                >
+                                    {{ item.value }}
+                                </a>
+                                <span v-else>
+                                    {{
+                                        item.value || "Available after booking"
+                                    }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mt-6">
-                    <label class="text-sm text-slate-300">Quantity</label>
+                <div class="mt-6 space-y-3">
+                    <label class="text-sm text-slate-300">
+                        {{ booking.quantity_label || "Quantity" }}
+                    </label>
                     <input
                         v-model.number="quantity"
                         type="number"
                         min="1"
-                        class="mt-2 w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        class="w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
                     />
+
+                    <div
+                        class="rounded-xl border border-white/10 bg-slate-950/70 p-4"
+                    >
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-300">Total</span>
+                            <span class="font-semibold text-white">
+                                {{ formatCurrency(totalPrice) }}
+                            </span>
+                        </div>
+                        <p class="mt-2 text-xs text-slate-400">
+                            You will be redirected to PayMaya to complete
+                            payment.
+                        </p>
+                    </div>
+
                     <button
                         type="button"
-                        @click="reserveBooking"
-                        class="mt-4 w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+                        @click="startPayMayaCheckout"
+                        :disabled="isProcessing"
+                        class="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        Reserve Now
+                        {{
+                            isProcessing
+                                ? "Preparing checkout..."
+                                : "Reserve Now"
+                        }}
                     </button>
+
+                    <p
+                        v-if="page.props.flash?.error"
+                        class="text-xs text-rose-300"
+                    >
+                        {{ page.props.flash?.error }}
+                    </p>
                 </div>
             </aside>
         </div>
     </DashboardLayout>
 </template>
-
-

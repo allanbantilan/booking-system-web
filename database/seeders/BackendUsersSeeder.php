@@ -16,6 +16,9 @@ class BackendUsersSeeder extends Seeder
                 'name' => 'Super Admin',
                 'password' => Hash::make('Hello123!'),
                 'email_verified_at' => now(),
+                'mobile_number' => '09170000001',
+                'facebook_url' => 'https://facebook.com/superadmin',
+                'instagram_url' => 'https://instagram.com/superadmin',
             ]
         );
 

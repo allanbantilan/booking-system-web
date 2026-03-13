@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Models\BackendUser;
 
 class Booking extends Model implements HasMedia
 {
@@ -65,7 +66,7 @@ class Booking extends Model implements HasMedia
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(BackendUser::class, 'created_by');
     }
 
     public function reservations(): HasMany

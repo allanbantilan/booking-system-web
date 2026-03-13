@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Types\StatusType;
 
 class Reservation extends Model
 {
@@ -22,6 +24,7 @@ class Reservation extends Model
     {
         return [
             'total_price' => 'decimal:2',
+            'status' => StatusType::class,
         ];
     }
 
@@ -33,5 +36,15 @@ class Reservation extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class);
+    }
+
+    public function receipt(): HasOne
+    {
+        return $this->hasOne(Receipt::class);
     }
 }

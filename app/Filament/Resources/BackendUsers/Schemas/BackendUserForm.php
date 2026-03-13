@@ -21,6 +21,18 @@ class BackendUserForm
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
+                TextInput::make('mobile_number')
+                    ->label('Mobile Number')
+                    ->maxLength(30)
+                    ->tel(),
+                TextInput::make('facebook_url')
+                    ->label('Facebook URL')
+                    ->url()
+                    ->maxLength(255),
+                TextInput::make('instagram_url')
+                    ->label('Instagram URL')
+                    ->url()
+                    ->maxLength(255),
                 TextInput::make('password')
                     ->password()
                     ->revealable()

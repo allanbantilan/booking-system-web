@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             BookingItemsSeeder::class,
             ReservationsSeeder::class,
             BackendUsersSeeder::class,
+            BackendUserContactSeeder::class,
         ]);
     }
 }

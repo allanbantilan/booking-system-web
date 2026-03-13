@@ -28,7 +28,7 @@ class ReservationController extends Controller
 
             $reserved = Reservation::query()
                 ->where('booking_id', $booking->id)
-                ->where('status', 'confirmed')
+                ->whereIn('status', ['pending', 'confirmed'])
                 ->sum('quantity');
 
             $available = max(0, $booking->capacity - $reserved);
@@ -60,21 +60,21 @@ class ReservationController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        if ($reservation->status === 'cancelled') {
-            return back()->with('error', 'Reservation is already cancelled.');
-        }
+        $reservation->delete();
 
-        $reservation->update([
-            'status' => 'cancelled',
-        ]);
-
-        return back()->with('success', 'Reservation cancelled.');
+        return back()->with('success', 'Reservation cancelled and removed.');
     }
 
     public function history(Request $request): Response
     {
         $reservations = Reservation::query()
-            ->with(['booking:id,title,description,location,event_date,capacity,price,discount_percentage,availability_label,quantity_label,meta_line,amenities,category_id', 'booking.category:id,name,color,badge_label', 'booking.media'])
+            ->with([
+                'booking:id,title,description,location,event_date,capacity,price,discount_percentage,availability_label,quantity_label,meta_line,amenities,category_id',
+                'booking.category:id,name,color,badge_label',
+                'booking.media',
+                'payment',
+                'receipt',
+            ])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
@@ -85,6 +85,19 @@ class ReservationController extends Controller
                 'quantity' => $reservation->quantity,
                 'total_price' => $reservation->total_price,
                 'status' => $reservation->status,
+                'payment' => $reservation->payment
+                    ? [
+                        'id' => $reservation->payment->id,
+                        'status' => $reservation->payment->status,
+                    ]
+                    : null,
+                'receipt' => $reservation->receipt
+                    ? [
+                        'id' => $reservation->receipt->id,
+                        'receipt_number' => $reservation->receipt->receipt_number,
+                        'issued_at' => $reservation->receipt->issued_at?->toIso8601String(),
+                    ]
+                    : null,
                 'booking' => $reservation->booking
                     ? $this->serializeBooking($reservation->booking)
                     : null,

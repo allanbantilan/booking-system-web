@@ -23,8 +23,8 @@ const logout = () => {
 <template>
     <nav class="w-full z-50 bg-transparent border-b border-white/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-            <div class="flex items-center h-16">
-                <div class="flex w-1/3 items-center gap-3">
+            <div class="flex flex-col gap-4 lg:h-16 lg:flex-row lg:items-center">
+                <div class="flex w-full items-center gap-3 lg:w-1/3">
                     <Link
                         :href="route('dashboard')"
                         class="flex items-center space-x-2 group"
@@ -57,9 +57,9 @@ const logout = () => {
                     </Link>
                 </div>
 
-                <div class="flex w-1/3 items-center justify-center">
+                <div class="flex w-full items-center justify-center lg:w-1/3">
                     <nav
-                        class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2 py-1 text-sm text-slate-200"
+                        class="flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200 sm:text-sm"
                     >
                         <Link
                             :href="route('dashboard')"
@@ -76,7 +76,7 @@ const logout = () => {
                             :href="route('bookings.index')"
                             class="rounded-full px-3 py-1.5 font-semibold transition"
                             :class="
-                                route().current('bookings.*')
+                                route().current('bookings.index') || route().current('bookings.show')
                                     ? 'bg-white/10 text-cyan-300'
                                     : 'text-slate-200 hover:text-white hover:bg-white/5'
                             "
@@ -97,7 +97,7 @@ const logout = () => {
                     </nav>
                 </div>
 
-                <div class="flex w-1/3 items-center justify-end space-x-3">
+                <div class="flex w-full items-center justify-end space-x-3 lg:w-1/3">
                     <Dropdown
                         align="right"
                         width="64"

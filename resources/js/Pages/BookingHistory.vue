@@ -77,7 +77,6 @@ const cancelBookingScaffold = (reservationId) => {
                         <tr class="text-left text-slate-300">
                             <th class="px-3 py-2">Booking</th>
                             <th class="px-3 py-2">Date</th>
-                            <th class="px-3 py-2">Quantity</th>
                             <th class="px-3 py-2">Total</th>
                             <th class="px-3 py-2">Status</th>
                             <th class="px-3 py-2">Receipt</th>
@@ -95,9 +94,6 @@ const cancelBookingScaffold = (reservationId) => {
                             </td>
                             <td class="px-3 py-3 text-slate-300">
                                 {{ formatDate(reservation.booking?.event_date) }}
-                            </td>
-                            <td class="px-3 py-3">
-                                {{ reservation.quantity }}
                             </td>
                             <td class="px-3 py-3">
                                 {{ formatCurrency(reservation.total_price) }}

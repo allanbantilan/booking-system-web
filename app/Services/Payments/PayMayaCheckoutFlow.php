@@ -27,16 +27,9 @@ class PayMayaCheckoutFlow
                 ->lockForUpdate()
                 ->findOrFail($bookingId);
 
-            $reserved = Reservation::query()
-                ->where('booking_id', $booking->id)
-                ->whereIn('status', ['pending', 'confirmed'])
-                ->sum('quantity');
-
-            $available = max(0, $booking->capacity - $reserved);
-
-            if ($quantity > $available) {
+            if ($quantity > $booking->capacity) {
                 throw ValidationException::withMessages([
-                    'quantity' => ["Only {$available} slots left for this booking."],
+                    'quantity' => ["Only {$booking->capacity} slots left for this booking."],
                 ]);
             }
 

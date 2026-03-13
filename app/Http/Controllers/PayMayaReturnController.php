@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Receipt;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -36,7 +37,9 @@ class PayMayaReturnController extends Controller
                     $payment->save();
 
                     if ($normalized === 'succeeded') {
-                        $payment->reservation?->update(['status' => 'confirmed']);
+                        if ($payment->reservation && $payment->reservation->status !== 'confirmed') {
+                            $this->confirmReservation($payment);
+                        }
                         $receipt = $this->createReceipt($payment);
                     }
                 }
@@ -119,6 +122,25 @@ class PayMayaReturnController extends Controller
                 ],
             ]
         );
+    }
+
+    private function confirmReservation(Payment $payment): void
+    {
+        DB::transaction(function () use ($payment): void {
+            $reservation = $payment->reservation()->lockForUpdate()->first();
+            if (!$reservation) {
+                return;
+            }
+
+            $booking = $reservation->booking()->lockForUpdate()->first();
+            if ($booking) {
+                $booking->update([
+                    'capacity' => max(0, $booking->capacity - $reservation->quantity),
+                ]);
+            }
+
+            $reservation->update(['status' => 'confirmed']);
+        });
     }
 
     private function generateReceiptNumber(int $paymentId): string

@@ -26,16 +26,9 @@ class ReservationController extends Controller
                 ->lockForUpdate()
                 ->findOrFail($bookingId);
 
-            $reserved = Reservation::query()
-                ->where('booking_id', $booking->id)
-                ->whereIn('status', ['pending', 'confirmed'])
-                ->sum('quantity');
-
-            $available = max(0, $booking->capacity - $reserved);
-
-            if ($validated['quantity'] > $available) {
+            if ($validated['quantity'] > $booking->capacity) {
                 throw ValidationException::withMessages([
-                    'quantity' => ["Only {$available} slots left for this booking."],
+                    'quantity' => ["Only {$booking->capacity} slots left for this booking."],
                 ]);
             }
 
@@ -48,6 +41,10 @@ class ReservationController extends Controller
                 'total_price' => $unitPrice * $validated['quantity'],
                 'status' => 'confirmed',
             ]);
+
+            $booking->update([
+                'capacity' => max(0, $booking->capacity - $validated['quantity']),
+            ]);
         });
 
         return back()->with('success', 'Reservation confirmed.');
@@ -55,12 +52,26 @@ class ReservationController extends Controller
 
     public function cancel(Request $request, int $reservationId): RedirectResponse
     {
-        $reservation = Reservation::query()
-            ->whereKey($reservationId)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        DB::transaction(function () use ($reservationId, $request): void {
+            $reservation = Reservation::query()
+                ->whereKey($reservationId)
+                ->where('user_id', $request->user()->id)
+                ->firstOrFail();
 
-        $reservation->delete();
+            if ($reservation->status === 'confirmed') {
+                $booking = Booking::query()
+                    ->lockForUpdate()
+                    ->find($reservation->booking_id);
+
+                if ($booking) {
+                    $booking->update([
+                        'capacity' => $booking->capacity + $reservation->quantity,
+                    ]);
+                }
+            }
+
+            $reservation->delete();
+        });
 
         return back()->with('success', 'Reservation cancelled and removed.');
     }

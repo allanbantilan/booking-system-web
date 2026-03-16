@@ -22,6 +22,6 @@ class BackendUsersSeeder extends Seeder
             ]
         );
 
-        $superAdmin->syncRoles(['super_admin']);
+        $superAdmin->syncRoles(['super_admin', 'admin']);
     }
 }

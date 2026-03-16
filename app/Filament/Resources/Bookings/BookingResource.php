@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class BookingResource extends Resource
@@ -31,6 +32,18 @@ class BookingResource extends Resource
     public static function table(Table $table): Table
     {
         return BookingsTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth('backend')->user();
+
+        if ($user && $user->hasRole('merchant')) {
+            $query->where('created_by', $user->id);
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

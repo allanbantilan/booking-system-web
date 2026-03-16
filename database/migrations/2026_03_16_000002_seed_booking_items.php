@@ -1,16 +1,14 @@
 <?php
 
-namespace Database\Seeders;
-
-use App\Models\Booking;
 use App\Models\BackendUser;
+use App\Models\Booking;
 use App\Models\Category;
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Str;
 
-class BookingItemsSeeder extends Seeder
+return new class extends Migration
 {
-    public function run(): void
+    public function up(): void
     {
         $backendUsers = BackendUser::query()->orderBy('id')->get();
 
@@ -226,7 +224,7 @@ class BookingItemsSeeder extends Seeder
                 $template = $templates[$category->name] ?? [
                     'title' => "{$category->name} Booking",
                     'description' => "Sample booking item for {$category->name}.",
-                    'location' => "Metro Manila Hub " . ($index + 1),
+                    'location' => 'Metro Manila Hub ' . ($index + 1),
                     'capacity' => 10 + ($index * 5),
                     'price' => 500 + ($index * 150),
                     'discount_percentage' => 10,
@@ -304,4 +302,9 @@ SVG;
                 }
             });
     }
-}
+
+    public function down(): void
+    {
+        Booking::query()->delete();
+    }
+};

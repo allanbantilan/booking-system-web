@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
             CategoriesSeeder::class,
             CategoryDisplaySeeder::class,
             FrontendUsersSeeder::class,
-            BookingItemsSeeder::class,
             ReservationsSeeder::class,
             BackendUsersSeeder::class,
             BackendUserContactSeeder::class,

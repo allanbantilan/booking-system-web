@@ -18,7 +18,7 @@ class ReservationsSeeder extends Seeder
             return;
         }
 
-        $statusCycle = ['confirmed', 'cancelled'];
+        $statusCycle = ['confirmed', 'pending'];
         $bookingCount = $bookings->count();
 
         foreach ($users as $userIndex => $user) {

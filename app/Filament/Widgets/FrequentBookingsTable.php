@@ -52,6 +52,8 @@ class FrequentBookingsTable extends TableWidget
     protected function getQuery(): Builder
     {
         $rangeStart = $this->getRangeStart();
+        $merchantId = auth('backend')->user()?->id;
+        $isMerchant = auth('backend')->user()?->hasRole('merchant') ?? false;
 
         return Booking::query()
             ->select([
@@ -64,6 +66,7 @@ class FrequentBookingsTable extends TableWidget
             ])
             ->join('reservations', 'reservations.booking_id', '=', 'bookings.id')
             ->where('reservations.status', 'confirmed')
+            ->when($isMerchant, fn ($query) => $query->where('bookings.created_by', $merchantId))
             ->when($rangeStart, fn ($query) => $query->where('reservations.created_at', '>=', $rangeStart))
             ->groupBy('bookings.id', 'bookings.title')
             ->orderByDesc('reservations_count')

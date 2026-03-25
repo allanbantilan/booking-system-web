@@ -14,14 +14,22 @@ class RetentionStatsOverview extends StatsOverviewWidget
 
     protected static bool $isDiscovered = false;
 
+    public static function canView(): bool
+    {
+        return auth('backend')->user()?->hasRole('super_admin') ?? false;
+    }
+
     protected function getStats(): array
     {
         $rangeStart = $this->getRangeStart();
         $rangeLabel = $this->getRangeLabel();
+        $merchantId = auth('backend')->user()?->id;
+        $isMerchant = auth('backend')->user()?->hasRole('merchant') ?? false;
 
         $base = Reservation::query()
             ->select('user_id', DB::raw('count(*) as total'))
             ->where('status', 'confirmed')
+            ->when($isMerchant, fn ($query) => $query->whereHas('booking', fn ($bookingQuery) => $bookingQuery->where('created_by', $merchantId)))
             ->when($rangeStart, fn ($query) => $query->where('created_at', '>=', $rangeStart))
             ->groupBy('user_id')
             ->get();

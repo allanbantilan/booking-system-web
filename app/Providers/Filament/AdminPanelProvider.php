@@ -28,6 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
             ->authGuard('backend')
             ->authPasswordBroker('backend_users')
             ->colors([

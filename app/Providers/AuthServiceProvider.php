@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\BackendUser;
 use App\Models\Booking;
 use App\Models\Category;
+use App\Models\MerchantRequest;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\Reservation;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Policies\BackendUserPolicy;
 use App\Policies\BookingPolicy;
 use App\Policies\CategoryPolicy;
+use App\Policies\MerchantRequestPolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\ReceiptPolicy;
 use App\Policies\ReservationPolicy;
@@ -35,6 +37,7 @@ class AuthServiceProvider extends ServiceProvider
         Receipt::class => ReceiptPolicy::class,
         User::class => UserPolicy::class,
         BackendUser::class => BackendUserPolicy::class,
+        MerchantRequest::class => MerchantRequestPolicy::class,
         Role::class => RolePolicy::class,
     ];
 }

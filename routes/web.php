@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MerchantAccountController;
 use App\Http\Controllers\PayMayaCheckoutController;
 use App\Http\Controllers\PayMayaReturnController;
 use App\Http\Controllers\ReservationController;
@@ -36,6 +37,9 @@ Route::middleware([
     Route::patch('/reservations/{reservationId}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
     Route::post('/payments/paymaya/checkout', PayMayaCheckoutController::class)->name('payments.paymaya.checkout');
     Route::get('/payments/paymaya/return', PayMayaReturnController::class)->name('payments.paymaya.return');
+
+    Route::post('/profile/merchant-account', [MerchantAccountController::class, 'store'])
+        ->name('merchant-account.store');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

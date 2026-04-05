@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Payment;
-use App\Models\Receipt;
-use Illuminate\Support\Facades\DB;
+use App\Services\Payments\PaymentFinalizer;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,10 +13,12 @@ class PayMayaReturnController extends Controller
     /**
      * Render the PayMaya return page for polling status.
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, PaymentFinalizer $finalizer): Response
     {
         $paymentId = $request->integer('payment_id');
         $status = $request->string('status')->value();
+        $checkoutId = $request->string('checkoutId')->value()
+            ?: $request->string('id')->value();
 
         $receipt = null;
         $payment = null;
@@ -26,30 +27,33 @@ class PayMayaReturnController extends Controller
             $payment = Payment::query()
                 ->whereKey($paymentId)
                 ->where('provider', 'paymaya')
+                ->where('user_id', $request->user()->id)
                 ->with('reservation.booking', 'reservation.user')
                 ->first();
 
             if ($payment) {
+                if ($checkoutId && $payment->checkout_id && $checkoutId !== $payment->checkout_id) {
+                    return Inertia::render('PaymentReturn', [
+                        'checkoutId' => $checkoutId,
+                        'status' => 'failed',
+                        'payment' => null,
+                        'receipt' => null,
+                    ])->with('error', 'Checkout id mismatch.');
+                }
+
                 $normalized = $this->normalizeStatus($status);
 
                 if ($normalized) {
-                    $payment->status = $normalized;
-                    $payment->save();
-
-                    if ($normalized === 'succeeded') {
-                        if ($payment->reservation && $payment->reservation->status !== 'confirmed') {
-                            $this->confirmReservation($payment);
-                        }
-                        $receipt = $this->createReceipt($payment);
-                    }
+                    $payment = $finalizer->apply($payment, $normalized);
                 }
+
+                $receipt = $payment->receipt;
             }
         }
 
         return Inertia::render('PaymentReturn', [
-            'checkoutId' => $request->string('checkoutId')->value()
-                ?: $request->string('id')->value(),
-            'status' => $status,
+            'checkoutId' => $checkoutId,
+            'status' => $payment?->status ?? $this->normalizeStatus($status) ?? $status,
             'payment' => $payment ? [
                 'id' => $payment->id,
                 'status' => $payment->status,
@@ -100,51 +104,4 @@ class PayMayaReturnController extends Controller
         };
     }
 
-    private function createReceipt(Payment $payment): ?Receipt
-    {
-        if (!$payment->reservation) {
-            return null;
-        }
-
-        return Receipt::firstOrCreate(
-            ['payment_id' => $payment->id],
-            [
-                'reservation_id' => $payment->reservation->id,
-                'receipt_number' => $this->generateReceiptNumber($payment->id),
-                'amount' => $payment->amount,
-                'currency' => $payment->currency,
-                'issued_at' => now(),
-                'metadata' => [
-                    'reference' => $payment->reference,
-                    'customer_name' => $payment->reservation?->user?->name,
-                    'booking_title' => $payment->reservation?->booking?->title,
-                    'booking_date' => $payment->reservation?->booking?->event_date?->toIso8601String(),
-                ],
-            ]
-        );
-    }
-
-    private function confirmReservation(Payment $payment): void
-    {
-        DB::transaction(function () use ($payment): void {
-            $reservation = $payment->reservation()->lockForUpdate()->first();
-            if (!$reservation) {
-                return;
-            }
-
-            $booking = $reservation->booking()->lockForUpdate()->first();
-            if ($booking) {
-                $booking->update([
-                    'capacity' => max(0, $booking->capacity - $reservation->quantity),
-                ]);
-            }
-
-            $reservation->update(['status' => 'confirmed']);
-        });
-    }
-
-    private function generateReceiptNumber(int $paymentId): string
-    {
-        return 'RCPT-' . now()->format('Ymd') . '-' . str_pad((string) $paymentId, 6, '0', STR_PAD_LEFT);
-    }
 }

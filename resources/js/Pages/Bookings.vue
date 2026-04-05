@@ -126,16 +126,49 @@ const getAmenities = (booking) => {
     }));
 };
 
-const getAvailabilityLabel = (booking) =>
-    booking.availability_label || "Slots left";
+const bookingTypeDefaults = {
+    event: { availabilityLabel: "Tickets left", quantityLabel: "ticket(s)", nightsRequired: false },
+    accommodation: { availabilityLabel: "Rooms left", quantityLabel: "room(s)", nightsRequired: true },
+    service: { availabilityLabel: "Slots left", quantityLabel: "slot(s)", nightsRequired: false },
+    rental: { availabilityLabel: "Units left", quantityLabel: "unit(s)", nightsRequired: true },
+    package: { availabilityLabel: "Packages left", quantityLabel: "package(s)", nightsRequired: false },
+};
+
+const getTypeDefaults = (booking) => {
+    const type = booking.booking_type || "event";
+    return bookingTypeDefaults[type] || bookingTypeDefaults.event;
+};
+
+const getAvailabilityLabel = (booking) => {
+    if (booking.availability_label) return booking.availability_label;
+    return getTypeDefaults(booking).availabilityLabel;
+};
+
+const getAvailabilityValue = (booking) => {
+    if (booking.capacity === null || booking.capacity === undefined) return null;
+    return booking.capacity;
+};
+
 const getQuantityLabel = (booking) =>
-    booking.quantity_label || "Quantity";
+    booking.quantity_label || getTypeDefaults(booking).quantityLabel;
 const getCtaLabel = () => "View & Pay";
 const getBadgeLabel = (booking) =>
     getCategory(booking).badge_label || "Booking";
-const getMetaLine = (booking) =>
-    booking.meta_line ||
-    `${booking.location || "-"} · ${formatDate(booking.event_date)}`;
+const getMetaLine = (booking) => {
+    if (booking.meta_line) return booking.meta_line;
+
+    const location = booking.location || "-";
+    const date = booking.event_date ? formatDate(booking.event_date) : null;
+
+    return date ? `${location} · ${date}` : location;
+};
+
+const getRateLabel = (booking) => {
+    const type = booking.booking_type || "event";
+    if (type === "rental") return "Base Daily Rate";
+    if (type === "accommodation") return "Base Nightly Rate";
+    return "Price";
+};
 
 const getDiscountPercentage = (booking) =>
     Number(booking.discount_percentage || 0);
@@ -154,11 +187,11 @@ const toggleDescription = (bookingId) => {
 </script>
 
 <template>
-    <DashboardLayout title="Bookings">
+    <DashboardLayout title="Available Bookings">
         <section
             class="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
         >
-            <h1 class="text-xl font-bold md:text-2xl">Bookings</h1>
+            <h1 class="text-xl font-bold md:text-2xl">Available Bookings</h1>
             <p class="mt-1 text-sm text-slate-300">
                 Browse available bookings and reserve with Maya payment.
             </p>
@@ -257,8 +290,13 @@ const toggleDescription = (bookingId) => {
                             <span
                                 class="rounded-full border border-white/20 px-3 py-1 text-xs text-slate-200"
                             >
-                                {{ getAvailabilityLabel(booking) }}:
-                                {{ booking.capacity }}
+                                <template v-if="getAvailabilityValue(booking) !== null">
+                                    {{ getAvailabilityLabel(booking) }}:
+                                    {{ getAvailabilityValue(booking) }}
+                                </template>
+                                <template v-else>
+                                    Availability not set
+                                </template>
                             </span>
                         </div>
 
@@ -311,7 +349,7 @@ const toggleDescription = (bookingId) => {
                         <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
                             <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
-                                Price
+                                {{ getRateLabel(booking) }}
                             </p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-lg font-black text-orange-300">

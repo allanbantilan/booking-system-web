@@ -17,6 +17,7 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'quantity' => ['required', 'integer', 'min:1'],
+            'nights' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $user = $request->user();
@@ -32,13 +33,26 @@ class ReservationController extends Controller
                 ]);
             }
 
-            $unitPrice = $this->discountedPrice($booking->price, $booking->discount_percentage);
+            $basePrice = $this->discountedPrice($booking->price, $booking->discount_percentage);
+            $extraRate = $booking->extra_rate !== null
+                ? $this->discountedPrice((float) $booking->extra_rate, $booking->discount_percentage)
+                : null;
+            $defaults = Booking::typeDefaults((string) $booking->booking_type);
+            $requiresNights = (bool) ($defaults['nights_required'] ?? false);
+            $stayLength = $requiresNights ? max(1, (int) ($validated['nights'] ?? 1)) : 1;
+
+            if ($requiresNights && empty($validated['nights'])) {
+                throw ValidationException::withMessages([
+                    'nights' => ['Nights is required for this booking type.'],
+                ]);
+            }
 
             Reservation::query()->create([
                 'user_id' => $user->id,
                 'booking_id' => $booking->id,
                 'quantity' => $validated['quantity'],
-                'total_price' => $unitPrice * $validated['quantity'],
+                'nights' => $stayLength,
+                'total_price' => $this->calculateTotal($basePrice, $extraRate, $validated['quantity'], $stayLength, $requiresNights),
                 'status' => 'confirmed',
             ]);
 
@@ -52,12 +66,16 @@ class ReservationController extends Controller
 
     public function cancel(Request $request, int $reservationId): RedirectResponse
     {
-        DB::transaction(function () use ($reservationId, $request): void {
-            $reservation = Reservation::query()
-                ->whereKey($reservationId)
-                ->where('user_id', $request->user()->id)
-                ->firstOrFail();
+        $reservation = Reservation::query()
+            ->whereKey($reservationId)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
+        if (!$this->canCancelReservation($reservation)) {
+            return back()->with('error', 'Reservations can only be cancelled within 3 days.');
+        }
+
+        DB::transaction(function () use ($reservation): void {
             if ($reservation->status === 'confirmed') {
                 $booking = Booking::query()
                     ->lockForUpdate()
@@ -96,6 +114,9 @@ class ReservationController extends Controller
                 'quantity' => $reservation->quantity,
                 'total_price' => $reservation->total_price,
                 'status' => $reservation->status,
+                'created_at' => $reservation->created_at?->toIso8601String(),
+                'can_cancel' => $this->canCancelReservation($reservation),
+                'nights' => $reservation->nights,
                 'payment' => $reservation->payment
                     ? [
                         'id' => $reservation->payment->id,
@@ -116,11 +137,35 @@ class ReservationController extends Controller
         ]);
     }
 
+    private function canCancelReservation(Reservation $reservation): bool
+    {
+        if (!$reservation->created_at) {
+            return false;
+        }
+
+        return now()->lt($reservation->created_at->addDays(3));
+    }
+
     private function discountedPrice(float $price, int $discountPercentage): float
     {
         $discount = max(0, min(100, $discountPercentage));
 
         return round($price * (1 - ($discount / 100)), 2);
+    }
+
+    private function calculateTotal(float $basePrice, ?float $extraRate, int $quantity, int $nights, bool $requiresNights): float
+    {
+        if (!$requiresNights) {
+            return $basePrice * $quantity;
+        }
+
+        if ($extraRate === null) {
+            return $basePrice * $quantity * $nights;
+        }
+
+        $extraNights = max(0, $nights - 1);
+
+        return ($basePrice * $quantity) + ($extraRate * $quantity * $extraNights);
     }
 
     private function serializeBooking(Booking $booking): array
@@ -131,8 +176,10 @@ class ReservationController extends Controller
             'description' => $booking->description,
             'location' => $booking->location,
             'event_date' => $booking->event_date,
+            'booking_type' => $booking->booking_type,
             'capacity' => $booking->capacity,
             'price' => $booking->price,
+            'extra_rate' => $booking->extra_rate,
             'discount_percentage' => $booking->discount_percentage,
             'availability_label' => $booking->availability_label,
             'quantity_label' => $booking->quantity_label,

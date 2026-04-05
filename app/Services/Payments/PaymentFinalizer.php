@@ -5,67 +5,37 @@ namespace App\Services\Payments;
 use App\Models\Payment;
 use App\Models\Receipt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class PaymentFinalizer
 {
-    private const VALID_STATUSES = ['pending', 'succeeded', 'failed', 'cancelled'];
-
     public function apply(Payment $payment, string $status, array $raw = [], array $webhook = []): Payment
     {
-        if (!in_array($status, self::VALID_STATUSES, true)) {
-            Log::warning('Invalid payment status provided to finalizer. Defaulting to pending.', [
-                'payment_id' => $payment->id,
-                'status' => $status,
-            ]);
-            $status = 'pending';
+        if ($payment->status === 'succeeded') {
+            return $payment;
         }
 
-        DB::transaction(function () use ($payment, $status, $raw, $webhook): void {
-            $lockedPayment = Payment::query()
-                ->lockForUpdate()
-                ->find($payment->id);
+        $payment->status = $status;
+        if (!empty($raw)) {
+            $payment->raw_response = $raw;
+        }
+        if (!empty($webhook)) {
+            $payment->raw_webhook = $webhook;
+        }
+        $payment->save();
 
-            if (!$lockedPayment) {
-                Log::warning('Payment missing during finalization.', [
-                    'payment_id' => $payment->id,
-                ]);
-                return;
-            }
+        if ($status !== 'succeeded') {
+            return $payment;
+        }
 
-            if ($lockedPayment->status === 'succeeded') {
-                $status = 'succeeded';
-            }
-
-            $lockedPayment->status = $status;
-            $lockedPayment->raw_response = $raw;
-            $lockedPayment->raw_webhook = $webhook;
-            $lockedPayment->save();
-
-            if ($status !== 'succeeded') {
-                return;
-            }
-
-            $now = now();
-            $reservation = $lockedPayment->reservation()->lockForUpdate()->first();
+        DB::transaction(function () use ($payment): void {
+            $reservation = $payment->reservation()->lockForUpdate()->first();
             if (!$reservation) {
-                Log::warning('Reservation missing during payment finalization.', [
-                    'payment_id' => $lockedPayment->id,
-                ]);
                 return;
             }
 
             if ($reservation->status !== 'confirmed') {
                 $booking = $reservation->booking()->lockForUpdate()->first();
                 if ($booking) {
-                    if ($booking->capacity < $reservation->quantity) {
-                        Log::warning('Booking capacity below reservation quantity during payment finalization.', [
-                            'booking_id' => $booking->id,
-                            'reservation_id' => $reservation->id,
-                            'capacity' => $booking->capacity,
-                            'quantity' => $reservation->quantity,
-                        ]);
-                    }
                     $booking->update([
                         'capacity' => max(0, $booking->capacity - $reservation->quantity),
                     ]);
@@ -75,15 +45,15 @@ class PaymentFinalizer
             }
 
             Receipt::firstOrCreate(
-                ['payment_id' => $lockedPayment->id],
+                ['payment_id' => $payment->id],
                 [
                     'reservation_id' => $reservation->id,
-                    'receipt_number' => 'RCPT-' . $now->format('Ymd') . '-' . str_pad((string) $lockedPayment->id, 6, '0', STR_PAD_LEFT),
-                    'amount' => $lockedPayment->amount,
-                    'currency' => $lockedPayment->currency,
-                    'issued_at' => $now,
+                    'receipt_number' => 'RCPT-' . now()->format('Ymd') . '-' . str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency,
+                    'issued_at' => now(),
                     'metadata' => [
-                        'reference' => $lockedPayment->reference,
+                        'reference' => $payment->reference,
                         'customer_name' => $reservation->user?->name,
                         'booking_title' => $reservation->booking?->title,
                         'booking_date' => $reservation->booking?->event_date?->toIso8601String(),
@@ -92,6 +62,6 @@ class PaymentFinalizer
             );
         });
 
-        return Payment::query()->find($payment->id) ?? $payment;
+        return $payment;
     }
 }

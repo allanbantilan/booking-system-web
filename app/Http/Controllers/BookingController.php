@@ -14,7 +14,7 @@ class BookingController extends Controller
     {
         $query = Booking::query()
             ->with(['category:id,name,color,badge_label', 'media'])
-            ->orderBy('event_date');
+            ->orderByRaw('event_date is null, event_date');
 
         if ($request->filled('categoryId') && $request->string('categoryId')->value() !== 'all') {
             $query->where('category_id', $request->string('categoryId')->value());
@@ -69,8 +69,10 @@ class BookingController extends Controller
             'description' => $booking->description,
             'location' => $booking->location,
             'event_date' => $booking->event_date,
+            'booking_type' => $booking->booking_type,
             'capacity' => $booking->capacity,
             'price' => $booking->price,
+            'extra_rate' => $booking->extra_rate,
             'discount_percentage' => $booking->discount_percentage,
             'availability_label' => $booking->availability_label,
             'quantity_label' => $booking->quantity_label,

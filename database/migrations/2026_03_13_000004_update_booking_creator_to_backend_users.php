@@ -48,6 +48,10 @@ return new class extends Migration
 
     private function dropForeignIfExists(string $table, string $column): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         $constraint = DB::table('information_schema.KEY_COLUMN_USAGE')
             ->where('TABLE_SCHEMA', DB::getDatabaseName())
             ->where('TABLE_NAME', $table)

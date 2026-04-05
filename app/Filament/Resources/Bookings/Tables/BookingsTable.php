@@ -27,11 +27,15 @@ class BookingsTable
                     ->label('Category')
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('booking_type')
+                    ->label('Type')
+                    ->sortable(),
                 TextColumn::make('location')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('event_date')
                     ->dateTime()
+                    ->label('Booking Date')
                     ->sortable(),
                 TextColumn::make('capacity')
                     ->numeric()

@@ -8,8 +8,11 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use App\Models\Booking;
 
 class BookingForm
 {
@@ -20,6 +23,41 @@ class BookingForm
                 TextInput::make('title')
                     ->required()
                     ->maxLength(255),
+                Select::make('booking_type')
+                    ->label('Booking Type')
+                    ->options(Booking::typeOptions())
+                    ->required()
+                    ->default(Booking::TYPE_EVENT)
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, Get $get, Set $set, $old): void {
+                        $defaults = Booking::typeDefaults((string) $state);
+                        $previousDefaults = Booking::typeDefaults((string) $old);
+
+                        $currentQuantity = (string) ($get('quantity_label') ?? '');
+                        $currentAvailability = (string) ($get('availability_label') ?? '');
+
+                        $allDefaults = array_map(
+                            fn (array $item) => [$item['quantity_label'], $item['availability_label']],
+                            array_map(
+                                fn (string $type) => Booking::typeDefaults($type),
+                                array_keys(Booking::typeOptions())
+                            )
+                        );
+                        $flatDefaults = array_unique(array_merge(...$allDefaults));
+
+                        $shouldReplaceQuantity = $currentQuantity === '' || $currentQuantity === ($previousDefaults['quantity_label'] ?? '')
+                            || in_array($currentQuantity, $flatDefaults, true);
+                        $shouldReplaceAvailability = $currentAvailability === '' || $currentAvailability === ($previousDefaults['availability_label'] ?? '')
+                            || in_array($currentAvailability, $flatDefaults, true);
+
+                        if ($shouldReplaceQuantity) {
+                            $set('quantity_label', $defaults['quantity_label']);
+                        }
+
+                        if ($shouldReplaceAvailability) {
+                            $set('availability_label', $defaults['availability_label']);
+                        }
+                    }),
                 Textarea::make('description')
                     ->maxLength(65535)
                     ->columnSpanFull(),
@@ -38,7 +76,13 @@ class BookingForm
                     ->required()
                     ->maxLength(255),
                 DateTimePicker::make('event_date')
-                    ->required(),
+                    ->label(fn (Get $get) => $get('booking_type') === Booking::TYPE_EVENT ? 'Event Date' : 'Booking Date')
+                    ->helperText(fn (Get $get) => $get('booking_type') === Booking::TYPE_EVENT
+                        ? 'Required for event listings.'
+                        : 'Optional for listings without a fixed date.'
+                    )
+                    ->required(fn (Get $get) => $get('booking_type') === Booking::TYPE_EVENT)
+                    ->nullable(),
                 TextInput::make('capacity')
                     ->numeric()
                     ->minValue(1)
@@ -72,6 +116,12 @@ class BookingForm
                     ->numeric()
                     ->minValue(0)
                     ->required(),
+                TextInput::make('extra_rate')
+                    ->label('Extra Rate')
+                    ->numeric()
+                    ->minValue(0)
+                    ->helperText('Optional. For accommodation/rental: added per extra night/day per room/unit. If empty, price is multiplied by nights/days.')
+                    ->visible(fn (Get $get) => in_array($get('booking_type'), [Booking::TYPE_ACCOMMODATION, Booking::TYPE_RENTAL], true)),
                 TextInput::make('discount_percentage')
                     ->label('Discount %')
                     ->numeric()

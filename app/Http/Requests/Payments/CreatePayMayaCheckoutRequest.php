@@ -16,6 +16,7 @@ class CreatePayMayaCheckoutRequest extends FormRequest
         return [
             'booking_id' => ['required', 'integer', 'exists:bookings,id'],
             'quantity' => ['required', 'integer', 'min:1'],
+            'nights' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

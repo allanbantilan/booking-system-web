@@ -1,34 +1,49 @@
 <?php
 
-namespace App\Filament\Resources\Reservations;
+namespace App\Filament\Resources\ConfirmedBookings;
 
-use App\Filament\Resources\Reservations\Pages\ListReservations;
-use App\Filament\Resources\Reservations\Tables\ReservationsTable;
+use App\Filament\Resources\ConfirmedBookings\Pages\ListConfirmedBookings;
+use App\Filament\Resources\ConfirmedBookings\Tables\ConfirmedBookingsTable;
 use App\Models\Reservation;
 use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Table;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
-class ReservationResource extends Resource
+class ConfirmedBookingResource extends Resource
 {
     protected static ?string $model = Reservation::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
     protected static string|UnitEnum|null $navigationGroup = 'Sales';
-    protected static ?string $navigationLabel = 'Reservations';
+    protected static ?string $navigationLabel = 'Confirmed Bookings';
 
     public static function table(Table $table): Table
     {
-        return ReservationsTable::configure($table);
+        return ConfirmedBookingsTable::configure($table);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth('backend')->user();
+
+        return (bool) $user?->hasAnyRole(['super_admin', 'merchant']);
+    }
+
+    public static function canViewAny(): bool
+    {
+        $user = auth('backend')->user();
+
+        return (bool) $user?->hasAnyRole(['super_admin', 'merchant']);
     }
 
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['booking', 'user', 'payment']);
+            ->with(['booking', 'user', 'payment'])
+            ->where('status', 'confirmed');
 
         $user = auth('backend')->user();
 
@@ -42,7 +57,7 @@ class ReservationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListReservations::route('/'),
+            'index' => ListConfirmedBookings::route('/'),
         ];
     }
 }

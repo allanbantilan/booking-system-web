@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Payments;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Services\Payments\PaymentFinalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -13,8 +14,17 @@ class PayMayaWebhookController extends Controller
     /**
      * Handle PayMaya webhook callbacks.
      */
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, PaymentFinalizer $finalizer): JsonResponse
     {
+        $token = $request->header('X-PayMaya-Token');
+        if (!$token || $token !== config('services.paymaya.webhook_token')) {
+            return response()->json([
+                'data' => null,
+                'message' => 'Unauthorized webhook.',
+                'errors' => ['token' => ['Invalid webhook token.']],
+            ], 401);
+        }
+
         $payload = $request->all();
 
         $checkoutId = $payload['checkoutId']
@@ -46,17 +56,8 @@ class PayMayaWebhookController extends Controller
         $status = $this->normalizeStatus($payload['status'] ?? Arr::get($payload, 'paymentStatus'));
 
         if ($status) {
-            $payment->status = $status;
+            $finalizer->apply($payment, $status, [], $payload);
         }
-
-        $payment->raw_webhook = $payload;
-        $payment->save();
-
-        if ($status === 'succeeded') {
-            $payment->reservation?->update(['status' => 'confirmed']);
-        }
-
-        // Keep reservation pending if payment is cancelled/failed in sandbox flow.
 
         return response()->json([
             'data' => ['ack' => true],

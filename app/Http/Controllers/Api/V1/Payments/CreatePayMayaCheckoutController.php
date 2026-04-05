@@ -18,9 +18,10 @@ class CreatePayMayaCheckoutController extends Controller
     {
         $user = $request->user();
         $quantity = (int) $request->input('quantity');
+        $nights = (int) $request->input('nights');
         $bookingId = (int) $request->input('booking_id');
         try {
-            $result = $flow->create($user, $bookingId, $quantity);
+            $result = $flow->create($user, $bookingId, $quantity, $nights);
             $payment = $result['payment'];
         } catch (ValidationException $exception) {
             throw $exception;

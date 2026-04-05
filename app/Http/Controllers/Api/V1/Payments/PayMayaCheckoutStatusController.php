@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\PaymentResource;
 use App\Models\Payment;
 use App\Services\Payments\PayMayaService;
+use App\Services\Payments\PaymentFinalizer;
 use Illuminate\Http\JsonResponse;
 
 class PayMayaCheckoutStatusController extends Controller
@@ -13,7 +14,7 @@ class PayMayaCheckoutStatusController extends Controller
     /**
      * Fetch PayMaya checkout status and sync local records.
      */
-    public function __invoke(string $checkoutId, PayMayaService $payMaya): JsonResponse
+    public function __invoke(string $checkoutId, PayMayaService $payMaya, PaymentFinalizer $finalizer): JsonResponse
     {
         $payment = Payment::query()
             ->where('provider', 'paymaya')
@@ -26,15 +27,7 @@ class PayMayaCheckoutStatusController extends Controller
         $status = $this->normalizeStatus($response['status'] ?? $response['paymentStatus'] ?? null);
 
         if ($status) {
-            $payment->status = $status;
-            $payment->raw_response = $response;
-            $payment->save();
-
-            if ($status === 'succeeded') {
-                $payment->reservation?->update(['status' => 'confirmed']);
-            }
-
-            // Keep reservation pending if payment is cancelled/failed in sandbox flow.
+            $finalizer->apply($payment, $status, $response);
         }
 
         return (new PaymentResource($payment->load('reservation.booking')))

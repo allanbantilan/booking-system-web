@@ -14,10 +14,16 @@ const page = usePage();
 const initialQuantity = Number(
     new URLSearchParams(window.location.search).get("quantity") || 1,
 );
+const initialNights = Number(
+    new URLSearchParams(window.location.search).get("nights") || 1,
+);
 const quantity = ref(
     Number.isFinite(initialQuantity) && initialQuantity > 0
         ? initialQuantity
         : 1,
+);
+const nights = ref(
+    Number.isFinite(initialNights) && initialNights > 0 ? initialNights : 1,
 );
 const isProcessing = ref(false);
 
@@ -39,17 +45,74 @@ const formatDate = (value) => {
     });
 };
 
+const bookingTypeDefaults = {
+    event: { availabilityLabel: "Tickets left", quantityLabel: "ticket(s)", nightsRequired: false, durationLabel: "Duration" },
+    accommodation: { availabilityLabel: "Rooms left", quantityLabel: "room(s)", nightsRequired: true, durationLabel: "Nights" },
+    service: { availabilityLabel: "Slots left", quantityLabel: "slot(s)", nightsRequired: false, durationLabel: "Duration" },
+    rental: { availabilityLabel: "Units left", quantityLabel: "unit(s)", nightsRequired: true, durationLabel: "Days" },
+    package: { availabilityLabel: "Packages left", quantityLabel: "package(s)", nightsRequired: false, durationLabel: "Duration" },
+};
+
+const getTypeDefaults = () => {
+    const type = props.booking.booking_type || "event";
+    return bookingTypeDefaults[type] || bookingTypeDefaults.event;
+};
+
+const getAvailabilityLabel = () => {
+    if (props.booking.availability_label) return props.booking.availability_label;
+    return getTypeDefaults().availabilityLabel;
+};
+
+const getAvailabilityValue = () => {
+    if (props.booking.capacity === null || props.booking.capacity === undefined) return null;
+    return props.booking.capacity;
+};
+
+const getQuantityLabel = () => {
+    if (props.booking.quantity_label) return props.booking.quantity_label;
+    return getTypeDefaults().quantityLabel;
+};
+
+const isNightsRequired = computed(() => getTypeDefaults().nightsRequired);
+const getDurationLabel = () => getTypeDefaults().durationLabel || "Duration";
+
 const getDiscountPercentage = () =>
     Number(props.booking.discount_percentage || 0);
 
-const getDiscountedPrice = () => {
+const getDiscountedBasePrice = () => {
     const discount = getDiscountPercentage();
     return props.booking.price * (1 - discount / 100);
 };
 
-const totalPrice = computed(
-    () => getDiscountedPrice() * Number(quantity.value || 1),
-);
+const totalPrice = computed(() => {
+    const unitCount = Number(quantity.value || 1);
+    const stayLength = isNightsRequired.value ? Number(nights.value || 1) : 1;
+    const basePrice = getDiscountedBasePrice();
+    const extraRate = props.booking.extra_rate !== null && props.booking.extra_rate !== undefined
+        ? props.booking.extra_rate * (1 - getDiscountPercentage() / 100)
+        : null;
+
+    if (!isNightsRequired.value) {
+        return basePrice * unitCount;
+    }
+
+    if (extraRate === null) {
+        return basePrice * unitCount * stayLength;
+    }
+
+    const extraNights = Math.max(0, stayLength - 1);
+
+    return (basePrice * unitCount) + (extraRate * unitCount * extraNights);
+});
+
+const getRateLabel = () => {
+    if (!isNightsRequired.value) return "Price";
+    return props.booking.booking_type === "rental" ? "Base Daily Rate" : "Base Nightly Rate";
+};
+
+const getExtraRateLabel = () => {
+    return props.booking.booking_type === "rental" ? "Extra Day Rate" : "Extra Night Rate";
+};
 
 const primaryImage = computed(() => props.booking.image_urls?.[0]);
 
@@ -90,6 +153,7 @@ const startPayMayaCheckout = () => {
         {
             booking_id: props.booking.id,
             quantity: Number(quantity.value || 1),
+            nights: isNightsRequired.value ? Number(nights.value || 1) : 1,
         },
         {
             preserveScroll: true,
@@ -110,7 +174,10 @@ const startPayMayaCheckout = () => {
                 {{ booking.title }}
             </h1>
             <p class="mt-1 text-sm text-slate-300">
-                {{ booking.location }} - {{ formatDate(booking.event_date) }}
+                <span>{{ booking.location }}</span>
+                <span v-if="booking.event_date">
+                    - {{ formatDate(booking.event_date) }}
+                </span>
             </p>
         </section>
 
@@ -159,8 +226,13 @@ const startPayMayaCheckout = () => {
                         <span
                             class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-200"
                         >
-                            {{ booking.availability_label || "Slots left" }}:
-                            {{ booking.capacity }}
+                            <template v-if="getAvailabilityValue() !== null">
+                                {{ getAvailabilityLabel() }}:
+                                {{ getAvailabilityValue() }}
+                            </template>
+                            <template v-else>
+                                Availability not set
+                            </template>
                         </span>
                     </div>
                 </div>
@@ -172,10 +244,16 @@ const startPayMayaCheckout = () => {
                 </p>
                 <div class="mt-4 space-y-4">
                     <div class="flex items-start justify-between gap-4">
-                        <span class="text-sm text-slate-300">Price</span>
+                        <span class="text-sm text-slate-300">{{ getRateLabel() }}</span>
                         <div class="text-right">
                             <div class="text-lg font-black text-orange-300">
-                                {{ formatCurrency(getDiscountedPrice()) }}
+                                {{ formatCurrency(getDiscountedBasePrice()) }}
+                            </div>
+                            <div
+                                v-if="isNightsRequired && booking.extra_rate"
+                                class="mt-1 text-xs text-slate-400"
+                            >
+                                {{ getExtraRateLabel() }}: {{ formatCurrency(booking.extra_rate) }}
                             </div>
                             <div
                                 v-if="getDiscountPercentage() > 0"
@@ -361,7 +439,7 @@ const startPayMayaCheckout = () => {
 
                 <div class="mt-6 space-y-3">
                     <label class="text-sm text-slate-300">
-                        {{ booking.quantity_label || "Quantity" }}
+                        {{ getQuantityLabel() }}
                     </label>
                     <input
                         v-model.number="quantity"
@@ -369,6 +447,15 @@ const startPayMayaCheckout = () => {
                         min="1"
                         class="w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
                     />
+                    <div v-if="isNightsRequired">
+                        <label class="text-sm text-slate-300">{{ getDurationLabel() }}</label>
+                        <input
+                            v-model.number="nights"
+                            type="number"
+                            min="1"
+                            class="w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        />
+                    </div>
 
                     <div
                         class="rounded-xl border border-white/10 bg-slate-950/70 p-4"

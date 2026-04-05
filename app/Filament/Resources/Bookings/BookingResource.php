@@ -22,16 +22,16 @@ class BookingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static string|UnitEnum|null $navigationGroup = 'Management';
-    protected static ?string $navigationLabel = 'Booking';
+    protected static ?string $navigationLabel = 'Booking Listings';
 
     public static function getModelLabel(): string
     {
-        return 'Booking';
+        return 'Booking Listing';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Bookings';
+        return 'Booking Listings';
     }
 
     public static function form(Schema $schema): Schema

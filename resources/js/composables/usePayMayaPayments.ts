@@ -25,11 +25,13 @@ type PaymentData = {
         id: number;
         status: string;
         quantity: number;
+        nights: number;
         total_price: number;
         booking: {
             id: number;
             title: string;
             event_date: string;
+            booking_type: string;
         } | null;
     } | null;
 };
@@ -47,7 +49,7 @@ export const usePayMayaPayments = () => {
         data: null as PaymentData | null,
     });
 
-    const createCheckout = async (payload: { booking_id: number; quantity: number }) => {
+    const createCheckout = async (payload: { booking_id: number; quantity: number; nights: number }) => {
         state.loading = true;
         state.error = null;
         try {

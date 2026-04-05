@@ -52,6 +52,26 @@ const formatDate = (value) => {
     });
 };
 
+const bookingTypeDefaults = {
+    event: { quantityLabel: "ticket(s)", nightsRequired: false, durationLabel: "Duration" },
+    accommodation: { quantityLabel: "room(s)", nightsRequired: true, durationLabel: "Nights" },
+    service: { quantityLabel: "slot(s)", nightsRequired: false, durationLabel: "Duration" },
+    rental: { quantityLabel: "unit(s)", nightsRequired: true, durationLabel: "Days" },
+    package: { quantityLabel: "package(s)", nightsRequired: false, durationLabel: "Duration" },
+};
+
+const getTypeDefaults = (reservation) => {
+    const type = reservation.booking?.booking_type || "event";
+    return bookingTypeDefaults[type] || bookingTypeDefaults.event;
+};
+
+const getQuantityLabel = (reservation) => {
+    return reservation.booking?.quantity_label || getTypeDefaults(reservation).quantityLabel;
+};
+
+const isNightsRequired = (reservation) => getTypeDefaults(reservation).nightsRequired;
+const getDurationLabel = (reservation) => getTypeDefaults(reservation).durationLabel || "Duration";
+
 const cancelBookingScaffold = (reservationId) => {
     router.patch(route("reservations.cancel", reservationId));
 };
@@ -78,6 +98,7 @@ const cancelBookingScaffold = (reservationId) => {
                             <th class="px-3 py-2">Booking</th>
                             <th class="px-3 py-2">Date</th>
                             <th class="px-3 py-2">Total</th>
+                            <th class="px-3 py-2">Duration</th>
                             <th class="px-3 py-2">Status</th>
                             <th class="px-3 py-2">Receipt</th>
                             <th class="px-3 py-2">Action</th>
@@ -97,6 +118,12 @@ const cancelBookingScaffold = (reservationId) => {
                             </td>
                             <td class="px-3 py-3">
                                 {{ formatCurrency(reservation.total_price) }}
+                            </td>
+                            <td class="px-3 py-3 text-slate-300">
+                                <span v-if="isNightsRequired(reservation)">
+                                    {{ reservation.nights || 1 }} {{ getDurationLabel(reservation) }}
+                                </span>
+                                <span v-else>-</span>
                             </td>
                             <td class="px-3 py-3">
                                 <span
@@ -125,13 +152,20 @@ const cancelBookingScaffold = (reservationId) => {
                             </td>
                             <td class="px-3 py-3">
                                 <button
+                                    v-if="reservation.can_cancel"
                                     type="button"
-                                    :disabled="reservation.status === 'cancelled'"
                                     @click="cancelBookingScaffold(reservation.id)"
-                                    class="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold transition enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                    class="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/10"
                                 >
                                     Cancel Reservation
                                 </button>
+                                <span
+                                    v-else
+                                    class="inline-flex items-center text-xs text-slate-400"
+                                    title="Cant be cancelled"
+                                >
+                                    Cant be cancelled
+                                </span>
                             </td>
                         </tr>
                     </tbody>
@@ -201,9 +235,15 @@ const cancelBookingScaffold = (reservationId) => {
                     </span>
                 </div>
                 <div class="mt-2 flex items-center justify-between">
-                    <span>{{ activeReceipt.booking?.quantity_label || "Quantity" }}</span>
+                    <span>{{ getQuantityLabel(activeReceipt) }}</span>
                     <span class="font-semibold text-white">
                         {{ activeReceipt.quantity }}
+                    </span>
+                </div>
+                <div class="mt-2 flex items-center justify-between">
+                    <span>{{ getDurationLabel(activeReceipt) }}</span>
+                    <span class="font-semibold text-white">
+                        {{ isNightsRequired(activeReceipt) ? (activeReceipt.nights || 1) : "-" }}
                     </span>
                 </div>
             </div>

@@ -29,12 +29,15 @@ class PaymentResource extends JsonResource
                     'id' => $reservation->id,
                     'status' => $reservation->status,
                     'quantity' => $reservation->quantity,
+                    'nights' => $reservation->nights,
                     'total_price' => (float) $reservation->total_price,
                     'booking' => $booking
                         ? [
                             'id' => $booking->id,
                             'title' => $booking->title,
                             'event_date' => $booking->event_date,
+                            'booking_type' => $booking->booking_type,
+                            'extra_rate' => $booking->extra_rate,
                         ]
                         : null,
                 ]

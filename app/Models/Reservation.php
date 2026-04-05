@@ -16,6 +16,7 @@ class Reservation extends Model
         'user_id',
         'booking_id',
         'quantity',
+        'nights',
         'total_price',
         'status',
     ];
@@ -25,6 +26,7 @@ class Reservation extends Model
         return [
             'total_price' => 'decimal:2',
             'status' => StatusType::class,
+            'nights' => 'integer',
         ];
     }
 

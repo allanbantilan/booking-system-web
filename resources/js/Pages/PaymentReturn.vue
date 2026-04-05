@@ -22,7 +22,23 @@ const props = defineProps({
     },
 });
 
-const resolvedStatus = computed(() => props.status || "pending");
+const normalizeStatus = (value) => {
+    if (!value) return "pending";
+
+    const normalized = String(value).toLowerCase();
+
+    if (["success", "succeeded"].includes(normalized)) return "succeeded";
+    if (["failed", "failure"].includes(normalized)) return "failed";
+    if (["cancel", "cancelled", "canceled"].includes(normalized)) return "cancelled";
+
+    return normalized;
+};
+
+const resolvedStatus = computed(() => {
+    if (props.receipt) return "succeeded";
+    if (props.payment?.status) return normalizeStatus(props.payment.status);
+    return normalizeStatus(props.status);
+});
 
 const statusTone = computed(() => {
     if (resolvedStatus.value === "succeeded") return "text-emerald-300";
@@ -48,7 +64,7 @@ const statusMessage = computed(() => {
     if (resolvedStatus.value === "cancelled") {
         return "The payment was cancelled. You can start a new checkout anytime.";
     }
-    return "We're checking the payment status. This usually takes a few seconds.";
+    return "We're confirming your payment. This usually takes a few seconds.";
 });
 
 const formatCurrency = (value) =>
@@ -79,6 +95,28 @@ const formatDate = (value) => {
             <h1 class="mt-3 text-2xl font-bold" :class="statusTone">
                 {{ statusHeadline }}
             </h1>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-slate-100"
+                >
+                    <span
+                        class="h-2 w-2 rounded-full"
+                        :class="
+                            resolvedStatus === 'succeeded'
+                                ? 'bg-emerald-400'
+                                : resolvedStatus === 'failed'
+                                    ? 'bg-rose-400'
+                                    : resolvedStatus === 'cancelled'
+                                        ? 'bg-amber-300'
+                                        : 'bg-slate-300 animate-pulse'
+                        "
+                    ></span>
+                    {{ resolvedStatus }}
+                </span>
+                <span v-if="payment?.reference" class="text-slate-400">
+                    Ref: {{ payment.reference }}
+                </span>
+            </div>
             <p class="mt-3 text-sm text-slate-300">
                 {{ statusMessage }}
             </p>

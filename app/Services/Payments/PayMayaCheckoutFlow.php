@@ -20,9 +20,9 @@ class PayMayaCheckoutFlow
     /**
      * @return array{payment: Payment, checkout_url: string}
      */
-    public function create(User $user, int $bookingId, int $quantity): array
+    public function create(User $user, int $bookingId, int $quantity, int $nights): array
     {
-        [$booking, $reservation, $payment] = DB::transaction(function () use ($bookingId, $quantity, $user): array {
+        [$booking, $reservation, $payment] = DB::transaction(function () use ($bookingId, $quantity, $nights, $user): array {
             $booking = Booking::query()
                 ->lockForUpdate()
                 ->findOrFail($bookingId);
@@ -33,13 +33,26 @@ class PayMayaCheckoutFlow
                 ]);
             }
 
-            $unitPrice = $this->discountedPrice($booking->price, $booking->discount_percentage);
+            $basePrice = $this->discountedPrice($booking->price, $booking->discount_percentage);
+            $extraRate = $booking->extra_rate !== null
+                ? $this->discountedPrice((float) $booking->extra_rate, $booking->discount_percentage)
+                : null;
+            $defaults = Booking::typeDefaults((string) $booking->booking_type);
+            $requiresNights = (bool) ($defaults['nights_required'] ?? false);
+            $stayLength = $requiresNights ? max(1, $nights) : 1;
+
+            if ($requiresNights && $nights < 1) {
+                throw ValidationException::withMessages([
+                    'nights' => ['Nights is required for this booking type.'],
+                ]);
+            }
 
             $reservation = Reservation::query()->create([
                 'user_id' => $user->id,
                 'booking_id' => $booking->id,
                 'quantity' => $quantity,
-                'total_price' => $unitPrice * $quantity,
+                'nights' => $stayLength,
+                'total_price' => $this->calculateTotal($basePrice, $extraRate, $quantity, $stayLength, $requiresNights),
                 'status' => 'pending',
             ]);
 
@@ -89,6 +102,21 @@ class PayMayaCheckoutFlow
             'payment' => $payment,
             'checkout_url' => $checkoutUrl,
         ];
+    }
+
+    private function calculateTotal(float $basePrice, ?float $extraRate, int $quantity, int $nights, bool $requiresNights): float
+    {
+        if (!$requiresNights) {
+            return $basePrice * $quantity;
+        }
+
+        if ($extraRate === null) {
+            return $basePrice * $quantity * $nights;
+        }
+
+        $extraNights = max(0, $nights - 1);
+
+        return ($basePrice * $quantity) + ($extraRate * $quantity * $extraNights);
     }
 
     private function discountedPrice(float $price, int $discountPercentage): float

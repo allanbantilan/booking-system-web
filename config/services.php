@@ -42,6 +42,7 @@ return [
         'redirect_success' => env('PAYMAYA_REDIRECT_SUCCESS'),
         'redirect_cancel' => env('PAYMAYA_REDIRECT_CANCEL'),
         'redirect_failure' => env('PAYMAYA_REDIRECT_FAILURE'),
+        'webhook_token' => env('PAYMAYA_WEBHOOK_TOKEN'),
     ],
 
 ];

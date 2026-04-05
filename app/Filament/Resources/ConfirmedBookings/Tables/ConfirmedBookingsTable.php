@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\Reservations\Tables;
+namespace App\Filament\Resources\ConfirmedBookings\Tables;
 
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use App\Types\StatusType;
 
-class ReservationsTable
+class ConfirmedBookingsTable
 {
     public static function configure(Table $table): Table
     {
@@ -34,18 +33,6 @@ class ReservationsTable
                     ->money('PHP')
                     ->label('Total')
                     ->sortable(),
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->formatStateUsing(function ($state) {
-                        if ($state instanceof StatusType) {
-                            return $state->label();
-                        }
-
-                        return StatusType::tryFrom($state)?->label() ?? $state;
-                    })
-                    ->badge()
-                    ->color(fn ($state) => $state === 'confirmed' ? 'success' : 'warning')
-                    ->sortable(),
                 BadgeColumn::make('payment.status')
                     ->label('Payment')
                     ->formatStateUsing(fn ($state) => $state ?: 'n/a')
@@ -64,8 +51,6 @@ class ReservationsTable
                     ->sortable(),
             ])
             ->filters([
-                SelectFilter::make('status')
-                    ->options(StatusType::options()),
                 SelectFilter::make('payment_status')
                     ->label('Payment Status')
                     ->options([

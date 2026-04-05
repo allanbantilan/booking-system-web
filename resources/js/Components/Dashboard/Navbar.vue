@@ -23,8 +23,8 @@ const logout = () => {
 <template>
     <nav class="w-full z-50 bg-transparent border-b border-white/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-            <div class="flex flex-col gap-4 lg:h-16 lg:flex-row lg:items-center">
-                <div class="flex w-full items-center gap-3 lg:w-1/3">
+            <div class="grid grid-cols-2 gap-4 lg:h-16 lg:grid-cols-3 lg:items-center">
+                <div class="order-1 col-span-1 flex w-full items-center gap-3">
                     <Link
                         :href="route('dashboard')"
                         class="flex items-center space-x-2 group"
@@ -57,13 +57,13 @@ const logout = () => {
                     </Link>
                 </div>
 
-                <div class="flex w-full items-center justify-center lg:w-1/3">
+                <div class="order-3 col-span-2 flex w-full items-center justify-center lg:order-2 lg:col-span-1 mb-4">
                     <nav
-                        class="flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200 sm:text-sm"
+                        class="no-scrollbar flex flex-nowrap items-center justify-start gap-2 overflow-x-auto rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200 sm:justify-center sm:text-sm"
                     >
                         <Link
                             :href="route('dashboard')"
-                            class="rounded-full px-3 py-1.5 font-semibold transition"
+                            class="whitespace-nowrap rounded-full px-3 py-1.5 font-semibold transition"
                             :class="
                                 route().current('dashboard')
                                     ? 'bg-white/10 text-cyan-300'
@@ -74,18 +74,18 @@ const logout = () => {
                         </Link>
                         <Link
                             :href="route('bookings.index')"
-                            class="rounded-full px-3 py-1.5 font-semibold transition"
+                            class="whitespace-nowrap rounded-full px-3 py-1.5 font-semibold transition"
                             :class="
                                 route().current('bookings.index') || route().current('bookings.show')
                                     ? 'bg-white/10 text-cyan-300'
                                     : 'text-slate-200 hover:text-white hover:bg-white/5'
                             "
                         >
-                            Bookings
+                            Available Bookings
                         </Link>
                         <Link
                             :href="route('bookings.history')"
-                            class="rounded-full px-3 py-1.5 font-semibold transition"
+                            class="whitespace-nowrap rounded-full px-3 py-1.5 font-semibold transition"
                             :class="
                                 route().current('bookings.history')
                                     ? 'bg-white/10 text-cyan-300'
@@ -97,7 +97,7 @@ const logout = () => {
                     </nav>
                 </div>
 
-                <div class="flex w-full items-center justify-end space-x-3 lg:w-1/3">
+                <div class="order-2 col-span-1 flex w-full items-center justify-end space-x-3 lg:order-3">
                     <Dropdown
                         align="right"
                         width="64"

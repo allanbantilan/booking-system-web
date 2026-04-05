@@ -5,6 +5,7 @@ namespace App\Services\Payments;
 use App\Models\Payment;
 use App\Models\Receipt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentFinalizer
 {
@@ -15,16 +16,17 @@ class PaymentFinalizer
             $status = 'succeeded';
         }
 
-        $payment->status = $status;
-        $payment->raw_response = $raw;
-        $payment->raw_webhook = $webhook;
-        $payment->save();
+        DB::transaction(function () use ($payment, $status, $raw, $webhook): void {
+            $payment->status = $status;
+            $payment->raw_response = $raw;
+            $payment->raw_webhook = $webhook;
+            $payment->save();
 
-        if ($status !== 'succeeded') {
-            return $payment;
-        }
+            if ($status !== 'succeeded') {
+                return;
+            }
 
-        DB::transaction(function () use ($payment): void {
+            $now = now();
             $reservation = $payment->reservation()->lockForUpdate()->first();
             if (!$reservation) {
                 return;
@@ -33,6 +35,14 @@ class PaymentFinalizer
             if ($reservation->status !== 'confirmed') {
                 $booking = $reservation->booking()->lockForUpdate()->first();
                 if ($booking) {
+                    if ($booking->capacity < $reservation->quantity) {
+                        Log::warning('Booking capacity below reservation quantity during payment finalization.', [
+                            'booking_id' => $booking->id,
+                            'reservation_id' => $reservation->id,
+                            'capacity' => $booking->capacity,
+                            'quantity' => $reservation->quantity,
+                        ]);
+                    }
                     $booking->update([
                         'capacity' => max(0, $booking->capacity - $reservation->quantity),
                     ]);
@@ -45,10 +55,10 @@ class PaymentFinalizer
                 ['payment_id' => $payment->id],
                 [
                     'reservation_id' => $reservation->id,
-                    'receipt_number' => 'RCPT-' . now()->format('Ymd') . '-' . str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
+                    'receipt_number' => 'RCPT-' . $now->format('Ymd') . '-' . str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
                     'amount' => $payment->amount,
                     'currency' => $payment->currency,
-                    'issued_at' => now(),
+                    'issued_at' => $now,
                     'metadata' => [
                         'reference' => $payment->reference,
                         'customer_name' => $reservation->user?->name,

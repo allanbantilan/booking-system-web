@@ -10,10 +10,9 @@ class PaymentFinalizer
 {
     public function apply(Payment $payment, string $status, array $raw = [], array $webhook = []): Payment
     {
-        // Only allow forward transitions. If already succeeded, no-op.
         $current = $payment->status;
         if ($current === 'succeeded') {
-            return $payment;
+            $status = 'succeeded';
         }
 
         $payment->status = $status;

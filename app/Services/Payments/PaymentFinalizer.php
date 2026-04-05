@@ -17,12 +17,8 @@ class PaymentFinalizer
         }
 
         $payment->status = $status;
-        if (!empty($raw)) {
-            $payment->raw_response = $raw;
-        }
-        if (!empty($webhook)) {
-            $payment->raw_webhook = $webhook;
-        }
+        $payment->raw_response = $raw;
+        $payment->raw_webhook = $webhook;
         $payment->save();
 
         if ($status !== 'succeeded') {

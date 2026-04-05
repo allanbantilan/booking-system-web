@@ -11,24 +11,34 @@ class PaymentFinalizer
 {
     public function apply(Payment $payment, string $status, array $raw = [], array $webhook = []): Payment
     {
-        $current = $payment->status;
-        if ($current === 'succeeded') {
-            $status = 'succeeded';
-        }
-
         DB::transaction(function () use ($payment, $status, $raw, $webhook): void {
-            $payment->status = $status;
-            $payment->raw_response = $raw;
-            $payment->raw_webhook = $webhook;
-            $payment->save();
+            $lockedPayment = Payment::query()
+                ->lockForUpdate()
+                ->find($payment->id);
+
+            if (!$lockedPayment) {
+                return;
+            }
+
+            if ($lockedPayment->status === 'succeeded') {
+                $status = 'succeeded';
+            }
+
+            $lockedPayment->status = $status;
+            $lockedPayment->raw_response = $raw;
+            $lockedPayment->raw_webhook = $webhook;
+            $lockedPayment->save();
 
             if ($status !== 'succeeded') {
                 return;
             }
 
             $now = now();
-            $reservation = $payment->reservation()->lockForUpdate()->first();
+            $reservation = $lockedPayment->reservation()->lockForUpdate()->first();
             if (!$reservation) {
+                Log::warning('Reservation missing during payment finalization.', [
+                    'payment_id' => $lockedPayment->id,
+                ]);
                 return;
             }
 
@@ -52,15 +62,15 @@ class PaymentFinalizer
             }
 
             Receipt::firstOrCreate(
-                ['payment_id' => $payment->id],
+                ['payment_id' => $lockedPayment->id],
                 [
                     'reservation_id' => $reservation->id,
-                    'receipt_number' => 'RCPT-' . $now->format('Ymd') . '-' . str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
-                    'amount' => $payment->amount,
-                    'currency' => $payment->currency,
+                    'receipt_number' => 'RCPT-' . $now->format('Ymd') . '-' . str_pad((string) $lockedPayment->id, 6, '0', STR_PAD_LEFT),
+                    'amount' => $lockedPayment->amount,
+                    'currency' => $lockedPayment->currency,
                     'issued_at' => $now,
                     'metadata' => [
-                        'reference' => $payment->reference,
+                        'reference' => $lockedPayment->reference,
                         'customer_name' => $reservation->user?->name,
                         'booking_title' => $reservation->booking?->title,
                         'booking_date' => $reservation->booking?->event_date?->toIso8601String(),

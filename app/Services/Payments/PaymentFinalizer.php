@@ -9,14 +9,27 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentFinalizer
 {
+    private const VALID_STATUSES = ['pending', 'succeeded', 'failed', 'cancelled'];
+
     public function apply(Payment $payment, string $status, array $raw = [], array $webhook = []): Payment
     {
+        if (!in_array($status, self::VALID_STATUSES, true)) {
+            Log::warning('Invalid payment status provided to finalizer. Defaulting to pending.', [
+                'payment_id' => $payment->id,
+                'status' => $status,
+            ]);
+            $status = 'pending';
+        }
+
         DB::transaction(function () use ($payment, $status, $raw, $webhook): void {
             $lockedPayment = Payment::query()
                 ->lockForUpdate()
                 ->find($payment->id);
 
             if (!$lockedPayment) {
+                Log::warning('Payment missing during finalization.', [
+                    'payment_id' => $payment->id,
+                ]);
                 return;
             }
 
@@ -79,6 +92,6 @@ class PaymentFinalizer
             );
         });
 
-        return $payment;
+        return Payment::query()->find($payment->id) ?? $payment;
     }
 }

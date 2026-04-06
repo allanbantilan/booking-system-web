@@ -79,6 +79,15 @@ const isNightsRequired = computed(() => getTypeDefaults().nightsRequired);
 const requiresDateRange = computed(() =>
     ["rental", "accommodation"].includes(props.booking.booking_type || "event"),
 );
+const isDateRangeInvalid = computed(() => {
+    if (!requiresDateRange.value) return false;
+    if (!checkInDate.value || !checkOutDate.value) return true;
+
+    const start = new Date(`${checkInDate.value}T00:00:00Z`);
+    const end = new Date(`${checkOutDate.value}T00:00:00Z`);
+
+    return end.getTime() <= start.getTime();
+});
 const getDurationLabel = () => getTypeDefaults().durationLabel || "Duration";
 
 const getDiscountPercentage = () =>
@@ -520,7 +529,7 @@ const startPayMayaCheckout = () => {
                     <button
                         type="button"
                         @click="startPayMayaCheckout"
-                        :disabled="isProcessing"
+                        :disabled="isProcessing || isDateRangeInvalid"
                         class="w-full rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {{

@@ -25,6 +25,8 @@ const quantity = ref(
 const nights = ref(
     Number.isFinite(initialNights) && initialNights > 0 ? initialNights : 1,
 );
+const checkInDate = ref("");
+const checkOutDate = ref("");
 const isProcessing = ref(false);
 
 const formatCurrency = (value) =>
@@ -74,6 +76,9 @@ const getQuantityLabel = () => {
 };
 
 const isNightsRequired = computed(() => getTypeDefaults().nightsRequired);
+const requiresDateRange = computed(() =>
+    ["rental", "accommodation"].includes(props.booking.booking_type || "event"),
+);
 const getDurationLabel = () => getTypeDefaults().durationLabel || "Duration";
 
 const getDiscountPercentage = () =>
@@ -84,9 +89,24 @@ const getDiscountedBasePrice = () => {
     return props.booking.price * (1 - discount / 100);
 };
 
+const stayLength = computed(() => {
+    if (!requiresDateRange.value) {
+        return isNightsRequired.value ? Number(nights.value || 1) : 1;
+    }
+
+    if (!checkInDate.value || !checkOutDate.value) return 1;
+
+    const start = new Date(`${checkInDate.value}T00:00:00Z`);
+    const end = new Date(`${checkOutDate.value}T00:00:00Z`);
+    const diffMs = end.getTime() - start.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return diffDays > 0 ? diffDays : 1;
+});
+
 const totalPrice = computed(() => {
     const unitCount = Number(quantity.value || 1);
-    const stayLength = isNightsRequired.value ? Number(nights.value || 1) : 1;
+    const stay = stayLength.value;
     const basePrice = getDiscountedBasePrice();
     const extraRate = props.booking.extra_rate !== null && props.booking.extra_rate !== undefined
         ? props.booking.extra_rate * (1 - getDiscountPercentage() / 100)
@@ -97,10 +117,10 @@ const totalPrice = computed(() => {
     }
 
     if (extraRate === null) {
-        return basePrice * unitCount * stayLength;
+        return basePrice * unitCount * stay;
     }
 
-    const extraNights = Math.max(0, stayLength - 1);
+    const extraNights = Math.max(0, stay - 1);
 
     return (basePrice * unitCount) + (extraRate * unitCount * extraNights);
 });
@@ -153,7 +173,9 @@ const startPayMayaCheckout = () => {
         {
             booking_id: props.booking.id,
             quantity: Number(quantity.value || 1),
-            nights: isNightsRequired.value ? Number(nights.value || 1) : 1,
+            nights: requiresDateRange.value ? 1 : Number(nights.value || 1),
+            check_in_date: requiresDateRange.value ? checkInDate.value : null,
+            check_out_date: requiresDateRange.value ? checkOutDate.value : null,
         },
         {
             preserveScroll: true,
@@ -447,7 +469,25 @@ const startPayMayaCheckout = () => {
                         min="1"
                         class="w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
                     />
-                    <div v-if="isNightsRequired">
+                    <div v-if="requiresDateRange" class="space-y-3">
+                        <div>
+                            <label class="text-sm text-slate-300">Check-in</label>
+                            <input
+                                v-model="checkInDate"
+                                type="date"
+                                class="w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            />
+                        </div>
+                        <div>
+                            <label class="text-sm text-slate-300">Check-out</label>
+                            <input
+                                v-model="checkOutDate"
+                                type="date"
+                                class="w-full rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            />
+                        </div>
+                    </div>
+                    <div v-else-if="isNightsRequired">
                         <label class="text-sm text-slate-300">{{ getDurationLabel() }}</label>
                         <input
                             v-model.number="nights"

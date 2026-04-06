@@ -168,15 +168,20 @@ const contactItems = computed(() => {
 const startPayMayaCheckout = () => {
     isProcessing.value = true;
 
+    const payload = {
+        booking_id: props.booking.id,
+        quantity: Number(quantity.value || 1),
+        check_in_date: requiresDateRange.value ? checkInDate.value : null,
+        check_out_date: requiresDateRange.value ? checkOutDate.value : null,
+    };
+
+    if (!requiresDateRange.value) {
+        payload.nights = Number(nights.value || 1);
+    }
+
     router.post(
         route("payments.paymaya.checkout"),
-        {
-            booking_id: props.booking.id,
-            quantity: Number(quantity.value || 1),
-            nights: requiresDateRange.value ? 1 : Number(nights.value || 1),
-            check_in_date: requiresDateRange.value ? checkInDate.value : null,
-            check_out_date: requiresDateRange.value ? checkOutDate.value : null,
-        },
+        payload,
         {
             preserveScroll: true,
             onFinish: () => {

@@ -17,6 +17,8 @@ class CreatePayMayaCheckoutRequest extends FormRequest
             'booking_id' => ['required', 'integer', 'exists:bookings,id'],
             'quantity' => ['required', 'integer', 'min:1'],
             'nights' => ['nullable', 'integer', 'min:1'],
+            'check_in_date' => ['nullable', 'date'],
+            'check_out_date' => ['nullable', 'date'],
         ];
     }
 }

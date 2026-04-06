@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -20,9 +21,9 @@ class PayMayaCheckoutFlow
     /**
      * @return array{payment: Payment, checkout_url: string}
      */
-    public function create(User $user, int $bookingId, int $quantity, int $nights): array
+    public function create(User $user, int $bookingId, int $quantity, int $nights, ?string $checkInDate, ?string $checkOutDate): array
     {
-        [$booking, $reservation, $payment] = DB::transaction(function () use ($bookingId, $quantity, $nights, $user): array {
+        [$booking, $reservation, $payment] = DB::transaction(function () use ($bookingId, $quantity, $nights, $user, $checkInDate, $checkOutDate): array {
             $booking = Booking::query()
                 ->lockForUpdate()
                 ->findOrFail($bookingId);
@@ -39,9 +40,38 @@ class PayMayaCheckoutFlow
                 : null;
             $defaults = Booking::typeDefaults((string) $booking->booking_type);
             $requiresNights = (bool) ($defaults['nights_required'] ?? false);
+            $requiresDateRange = in_array($booking->booking_type, [Booking::TYPE_RENTAL, Booking::TYPE_ACCOMMODATION], true);
+
+            $checkIn = null;
+            $checkOut = null;
             $stayLength = $requiresNights ? max(1, $nights) : 1;
 
-            if ($requiresNights && $nights < 1) {
+            if ($requiresDateRange) {
+                if (!$checkInDate || !$checkOutDate) {
+                    throw ValidationException::withMessages([
+                        'check_in_date' => ['Check-in date is required for this booking type.'],
+                        'check_out_date' => ['Check-out date is required for this booking type.'],
+                    ]);
+                }
+
+                $checkIn = Carbon::parse($checkInDate)->startOfDay();
+                $checkOut = Carbon::parse($checkOutDate)->startOfDay();
+                $today = now()->startOfDay();
+
+                if ($checkIn->lt($today)) {
+                    throw ValidationException::withMessages([
+                        'check_in_date' => ['Check-in date must be today or later.'],
+                    ]);
+                }
+
+                if ($checkOut->lte($checkIn)) {
+                    throw ValidationException::withMessages([
+                        'check_out_date' => ['Check-out date must be after check-in date.'],
+                    ]);
+                }
+
+                $stayLength = max(1, $checkIn->diffInDays($checkOut));
+            } elseif ($requiresNights && $nights < 1) {
                 throw ValidationException::withMessages([
                     'nights' => ['Nights is required for this booking type.'],
                 ]);
@@ -52,6 +82,8 @@ class PayMayaCheckoutFlow
                 'booking_id' => $booking->id,
                 'quantity' => $quantity,
                 'nights' => $stayLength,
+                'check_in_date' => $checkIn,
+                'check_out_date' => $checkOut,
                 'total_price' => $this->calculateTotal($basePrice, $extraRate, $quantity, $stayLength, $requiresNights),
                 'status' => 'pending',
             ]);

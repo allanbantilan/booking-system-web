@@ -19,6 +19,8 @@ class Reservation extends Model
         'nights',
         'total_price',
         'status',
+        'check_in_date',
+        'check_out_date',
     ];
 
     protected function casts(): array
@@ -27,6 +29,8 @@ class Reservation extends Model
             'total_price' => 'decimal:2',
             'status' => StatusType::class,
             'nights' => 'integer',
+            'check_in_date' => 'date',
+            'check_out_date' => 'date',
         ];
     }
 

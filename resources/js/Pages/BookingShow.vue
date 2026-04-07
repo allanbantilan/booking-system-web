@@ -494,7 +494,7 @@ const startPayMayaCheckout = () => {
                                 </a>
                                 <span v-else>
                                     {{
-                                        item.value || "Available after booking"
+                                        item.value || "Not set"
                                     }}
                                 </span>
                             </span>

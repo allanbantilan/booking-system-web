@@ -125,18 +125,19 @@ const stayLength = computed(() => {
 const totalPrice = computed(() => {
     const unitCount = Number(quantity.value || 1);
     const stay = stayLength.value;
-    const basePrice = getDiscountedBasePrice();
-    const extraRate = getDiscountedExtraRate();
+    const discount = getDiscountPercentage();
+    const basePrice = props.booking.price * (1 - discount / 100);
 
     if (!isNightsRequired.value) {
         return basePrice * unitCount;
     }
 
-    if (extraRate === null) {
+    if (props.booking.extra_rate === null || props.booking.extra_rate === undefined) {
         return basePrice * unitCount * stay;
     }
 
     const extraNights = Math.max(0, stay - 1);
+    const extraRate = props.booking.extra_rate * (1 - discount / 100);
 
     return (basePrice * unitCount) + (extraRate * unitCount * extraNights);
 });
@@ -290,31 +291,12 @@ const startPayMayaCheckout = () => {
                         <span class="text-sm text-slate-300">{{ getRateLabel() }}</span>
                         <div class="text-right">
                             <div class="text-lg font-black text-orange-300">
-                                {{ formatCurrency(getDiscountedBasePrice()) }}
-                            </div>
-                            <div
-                                v-if="isNightsRequired && booking.extra_rate"
-                                class="mt-1 text-xs text-slate-400"
-                            >
-                                {{ getExtraRateLabel() }}:
-                                <span
-                                    v-if="getDiscountPercentage() > 0"
-                                    class="text-slate-300"
-                                >
-                                    {{ formatCurrency(getDiscountedExtraRate()) }}
-                                </span>
-                                <span
-                                    v-else
-                                    class="text-slate-300"
-                                >
-                                    {{ formatCurrency(booking.extra_rate) }}
-                                </span>
-                                <span
-                                    v-if="getDiscountPercentage() > 0"
-                                    class="ml-1 text-[11px] text-slate-500 line-through"
-                                >
-                                    {{ formatCurrency(booking.extra_rate) }}
-                                </span>
+                                <template v-if="getDiscountPercentage() > 0">
+                                    {{ formatCurrency(getDiscountedBasePrice()) }}
+                                </template>
+                                <template v-else>
+                                    {{ formatCurrency(booking.price) }}
+                                </template>
                             </div>
                             <div
                                 v-if="getDiscountPercentage() > 0"
@@ -327,6 +309,28 @@ const startPayMayaCheckout = () => {
                                 class="text-[10px] uppercase tracking-[0.2em] text-emerald-300"
                             >
                                 -{{ getDiscountPercentage() }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        v-if="isNightsRequired && booking.extra_rate"
+                        class="flex items-start justify-between gap-4"
+                    >
+                        <span class="text-sm text-slate-300">{{ getExtraRateLabel() }}</span>
+                        <div class="text-right">
+                            <div class="text-sm font-semibold text-slate-200">
+                                <template v-if="getDiscountPercentage() > 0">
+                                    {{ formatCurrency(getDiscountedExtraRate()) }}
+                                </template>
+                                <template v-else>
+                                    {{ formatCurrency(booking.extra_rate) }}
+                                </template>
+                            </div>
+                            <div
+                                v-if="getDiscountPercentage() > 0"
+                                class="text-xs text-slate-500 line-through"
+                            >
+                                {{ formatCurrency(booking.extra_rate) }}
                             </div>
                         </div>
                     </div>

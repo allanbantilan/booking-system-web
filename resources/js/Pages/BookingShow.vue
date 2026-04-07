@@ -98,6 +98,15 @@ const getDiscountedBasePrice = () => {
     return props.booking.price * (1 - discount / 100);
 };
 
+const getDiscountedExtraRate = () => {
+    if (props.booking.extra_rate === null || props.booking.extra_rate === undefined) {
+        return null;
+    }
+
+    const discount = getDiscountPercentage();
+    return props.booking.extra_rate * (1 - discount / 100);
+};
+
 const stayLength = computed(() => {
     if (!requiresDateRange.value) {
         return isNightsRequired.value ? Number(nights.value || 1) : 1;
@@ -117,9 +126,7 @@ const totalPrice = computed(() => {
     const unitCount = Number(quantity.value || 1);
     const stay = stayLength.value;
     const basePrice = getDiscountedBasePrice();
-    const extraRate = props.booking.extra_rate !== null && props.booking.extra_rate !== undefined
-        ? props.booking.extra_rate * (1 - getDiscountPercentage() / 100)
-        : null;
+    const extraRate = getDiscountedExtraRate();
 
     if (!isNightsRequired.value) {
         return basePrice * unitCount;
@@ -294,7 +301,7 @@ const startPayMayaCheckout = () => {
                                     v-if="getDiscountPercentage() > 0"
                                     class="text-slate-300"
                                 >
-                                    {{ formatCurrency(booking.extra_rate * (1 - getDiscountPercentage() / 100)) }}
+                                    {{ formatCurrency(getDiscountedExtraRate()) }}
                                 </span>
                                 <span
                                     v-else

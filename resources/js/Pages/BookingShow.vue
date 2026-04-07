@@ -289,7 +289,25 @@ const startPayMayaCheckout = () => {
                                 v-if="isNightsRequired && booking.extra_rate"
                                 class="mt-1 text-xs text-slate-400"
                             >
-                                {{ getExtraRateLabel() }}: {{ formatCurrency(booking.extra_rate) }}
+                                {{ getExtraRateLabel() }}:
+                                <span
+                                    v-if="getDiscountPercentage() > 0"
+                                    class="text-slate-300"
+                                >
+                                    {{ formatCurrency(booking.extra_rate * (1 - getDiscountPercentage() / 100)) }}
+                                </span>
+                                <span
+                                    v-else
+                                    class="text-slate-300"
+                                >
+                                    {{ formatCurrency(booking.extra_rate) }}
+                                </span>
+                                <span
+                                    v-if="getDiscountPercentage() > 0"
+                                    class="ml-1 text-[11px] text-slate-500 line-through"
+                                >
+                                    {{ formatCurrency(booking.extra_rate) }}
+                                </span>
                             </div>
                             <div
                                 v-if="getDiscountPercentage() > 0"

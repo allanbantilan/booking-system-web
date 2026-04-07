@@ -31,4 +31,9 @@ class EditProfile extends BaseEditProfile
                 $this->getCurrentPasswordFormComponent(),
             ]);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return route('filament.admin.pages.dashboard');
+    }
 }

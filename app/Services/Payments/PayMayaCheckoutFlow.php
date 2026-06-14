@@ -143,17 +143,21 @@ class PayMayaCheckoutFlow
     }
 
     /**
-     * Roll back a capacity hold when checkout cannot complete: restore the slots,
-     * mark the payment failed, and remove the orphaned pending reservation.
+     * Roll back a capacity hold when checkout cannot complete before reaching
+     * PayMaya: restore the held slots and remove the pending reservation. The
+     * payment row is removed by the reservations -> payments cascade delete (it
+     * has no checkout_id at this point, so no webhook can ever match it).
      */
     private function releaseHold(Booking $booking, Reservation $reservation, Payment $payment, int $quantity, string $reason): void
     {
         DB::transaction(function () use ($booking, $reservation, $payment, $quantity, $reason): void {
             Booking::lockForUpdate()->findOrFail($booking->id)->increment('capacity', $quantity);
-            $payment->update([
+            // Record the reason before the cascade delete in case anything is
+            // observing the payment model events.
+            $payment->forceFill([
                 'status' => 'failed',
                 'raw_response' => ['error' => $reason],
-            ]);
+            ])->save();
             $reservation->delete();
         });
     }

@@ -1,17 +1,22 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE bookings MODIFY event_date DATETIME NULL');
+        Schema::table('bookings', function (Blueprint $table): void {
+            $table->dateTime('event_date')->nullable()->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE bookings MODIFY event_date DATETIME NOT NULL');
+        Schema::table('bookings', function (Blueprint $table): void {
+            $table->dateTime('event_date')->nullable(false)->change();
+        });
     }
 };

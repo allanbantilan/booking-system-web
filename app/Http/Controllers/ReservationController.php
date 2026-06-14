@@ -4,66 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Reservation;
+use App\Types\StatusType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ReservationController extends Controller
 {
-    public function store(Request $request, int $bookingId): RedirectResponse
-    {
-        $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
-            'nights' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $user = $request->user();
-
-        DB::transaction(function () use ($bookingId, $validated, $user): void {
-            $booking = Booking::query()
-                ->lockForUpdate()
-                ->findOrFail($bookingId);
-
-            if ($validated['quantity'] > $booking->capacity) {
-                throw ValidationException::withMessages([
-                    'quantity' => ["Only {$booking->capacity} slots left for this booking."],
-                ]);
-            }
-
-            $basePrice = $this->discountedPrice($booking->price, $booking->discount_percentage);
-            $extraRate = $booking->extra_rate !== null
-                ? $this->discountedPrice((float) $booking->extra_rate, $booking->discount_percentage)
-                : null;
-            $defaults = Booking::typeDefaults((string) $booking->booking_type);
-            $requiresNights = (bool) ($defaults['nights_required'] ?? false);
-            $stayLength = $requiresNights ? max(1, (int) ($validated['nights'] ?? 1)) : 1;
-
-            if ($requiresNights && empty($validated['nights'])) {
-                throw ValidationException::withMessages([
-                    'nights' => ['Nights is required for this booking type.'],
-                ]);
-            }
-
-            Reservation::query()->create([
-                'user_id' => $user->id,
-                'booking_id' => $booking->id,
-                'quantity' => $validated['quantity'],
-                'nights' => $stayLength,
-                'total_price' => $this->calculateTotal($basePrice, $extraRate, $validated['quantity'], $stayLength, $requiresNights),
-                'status' => 'confirmed',
-            ]);
-
-            $booking->update([
-                'capacity' => max(0, $booking->capacity - $validated['quantity']),
-            ]);
-        });
-
-        return back()->with('success', 'Reservation confirmed.');
-    }
-
     public function cancel(Request $request, int $reservationId): RedirectResponse
     {
         $reservation = Reservation::query()
@@ -72,26 +21,33 @@ class ReservationController extends Controller
             ->firstOrFail();
 
         if (!$this->canCancelReservation($reservation)) {
-            return back()->with('error', 'Reservations can only be cancelled within 3 days.');
+            return back()->withErrors(['error' => 'Reservations can only be cancelled within 3 days.']);
         }
 
-        DB::transaction(function () use ($reservation): void {
-            if ($reservation->status === 'confirmed') {
+        DB::transaction(function () use ($reservationId): void {
+            // Re-read with a lock to get the authoritative quantity (9.5).
+            $reservation = Reservation::lockForUpdate()->findOrFail($reservationId);
+
+            // Restore capacity for pending and confirmed reservations —
+            // both statuses hold capacity since checkout creation (A5).
+            $holdingCapacity = in_array($reservation->status->value, ['pending', 'confirmed'], true);
+            if ($holdingCapacity) {
                 $booking = Booking::query()
                     ->lockForUpdate()
                     ->find($reservation->booking_id);
 
                 if ($booking) {
-                    $booking->update([
-                        'capacity' => $booking->capacity + $reservation->quantity,
-                    ]);
+                    $booking->increment('capacity', $reservation->quantity);
                 }
             }
 
-            $reservation->delete();
+            $reservation->update([
+                'status' => StatusType::Cancelled,
+                'cancelled_at' => now(),
+            ]);
         });
 
-        return back()->with('success', 'Reservation cancelled and removed.');
+        return back()->with('success', 'Reservation cancelled.');
     }
 
     public function history(Request $request): Response
@@ -114,6 +70,7 @@ class ReservationController extends Controller
                 'quantity' => $reservation->quantity,
                 'total_price' => $reservation->total_price,
                 'status' => $reservation->status,
+                'cancelled_at' => $reservation->cancelled_at?->toIso8601String(),
                 'created_at' => $reservation->created_at?->toIso8601String(),
                 'can_cancel' => $this->canCancelReservation($reservation),
                 'nights' => $reservation->nights,
@@ -143,29 +100,11 @@ class ReservationController extends Controller
             return false;
         }
 
+        if ($reservation->status === StatusType::Cancelled) {
+            return false;
+        }
+
         return now()->lt($reservation->created_at->addDays(3));
-    }
-
-    private function discountedPrice(float $price, int $discountPercentage): float
-    {
-        $discount = max(0, min(100, $discountPercentage));
-
-        return round($price * (1 - ($discount / 100)), 2);
-    }
-
-    private function calculateTotal(float $basePrice, ?float $extraRate, int $quantity, int $nights, bool $requiresNights): float
-    {
-        if (!$requiresNights) {
-            return $basePrice * $quantity;
-        }
-
-        if ($extraRate === null) {
-            return $basePrice * $quantity * $nights;
-        }
-
-        $extraNights = max(0, $nights - 1);
-
-        return ($basePrice * $quantity) + ($extraRate * $quantity * $extraNights);
     }
 
     private function serializeBooking(Booking $booking): array

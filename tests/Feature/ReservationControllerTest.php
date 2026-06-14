@@ -14,64 +14,18 @@ class ReservationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    // ─── store() ────────────────────────────────────────────────────────────
+    // ─── store() route removed (A1) ─────────────────────────────────────────
+    // The direct-reserve route allowed any authenticated user to create a
+    // confirmed reservation with zero payment. The route has been removed;
+    // all reservations must go through the PayMaya checkout flow.
 
-    public function test_store_requires_authentication(): void
-    {
-        $booking = $this->makeBooking(capacity: 5);
-
-        $this->post(route('reservations.store', $booking->id), ['quantity' => 1])
-            ->assertRedirect(route('login'));
-    }
-
-    public function test_store_creates_confirmed_reservation_and_decrements_capacity(): void
-    {
-        $user = User::factory()->create();
-        $booking = $this->makeBooking(capacity: 10);
-
-        $this->actingAs($user)
-            ->post(route('reservations.store', $booking->id), ['quantity' => 3])
-            ->assertRedirect();
-
-        $this->assertDatabaseHas('reservations', [
-            'user_id' => $user->id,
-            'booking_id' => $booking->id,
-            'quantity' => 3,
-            'status' => StatusType::Confirmed->value,
-        ]);
-
-        $this->assertSame(7, $booking->fresh()->capacity);
-    }
-
-    public function test_store_rejects_quantity_exceeding_capacity(): void
-    {
-        $user = User::factory()->create();
-        $booking = $this->makeBooking(capacity: 2);
-
-        $this->actingAs($user)
-            ->post(route('reservations.store', $booking->id), ['quantity' => 5])
-            ->assertSessionHasErrors('quantity');
-
-        $this->assertDatabaseMissing('reservations', ['booking_id' => $booking->id]);
-        $this->assertSame(2, $booking->fresh()->capacity);
-    }
-
-    public function test_store_rejects_zero_quantity(): void
+    public function test_direct_reserve_route_is_gone(): void
     {
         $user = User::factory()->create();
         $booking = $this->makeBooking(capacity: 5);
 
         $this->actingAs($user)
-            ->post(route('reservations.store', $booking->id), ['quantity' => 0])
-            ->assertSessionHasErrors('quantity');
-    }
-
-    public function test_store_returns_404_for_nonexistent_booking(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->post(route('reservations.store', 99999), ['quantity' => 1])
+            ->post("/bookings/{$booking->id}/reserve", ['quantity' => 1])
             ->assertNotFound();
     }
 

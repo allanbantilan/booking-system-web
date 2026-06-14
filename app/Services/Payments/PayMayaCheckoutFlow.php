@@ -112,21 +112,21 @@ class PayMayaCheckoutFlow
             $checkout = $this->payMaya->createCheckout($reservation, $booking, $user, $payment);
         } catch (\Throwable $exception) {
             // PayMaya API failed — release the capacity hold and clean up.
-            $errorMessage = $exception->getMessage();
-            DB::transaction(function () use ($booking, $reservation, $payment, $quantity, $errorMessage): void {
-                Booking::lockForUpdate()->findOrFail($booking->id)->increment('capacity', $quantity);
-                $payment->update([
-                    'status' => 'failed',
-                    'raw_response' => ['error' => $errorMessage],
-                ]);
-                $reservation->delete();
-            });
+            $this->releaseHold($booking, $reservation, $payment, $quantity, $exception->getMessage());
 
-            throw new RuntimeException('Unable to create PayMaya checkout. ' . $errorMessage, 0, $exception);
+            throw new RuntimeException('Unable to create PayMaya checkout. ' . $exception->getMessage(), 0, $exception);
         }
 
         $response = $checkout['response'] ?? [];
         $checkoutUrl = $response['redirectUrl'] ?? $response['checkoutUrl'] ?? null;
+
+        if (!$checkoutUrl) {
+            // API responded but gave us no redirect URL — the hold would otherwise
+            // leak, so release it and clean up before failing.
+            $this->releaseHold($booking, $reservation, $payment, $quantity, 'Missing PayMaya checkout URL.');
+
+            throw new RuntimeException('Missing PayMaya checkout URL.');
+        }
 
         $payment->update([
             'status' => 'pending',
@@ -136,14 +136,26 @@ class PayMayaCheckoutFlow
             'raw_response' => $response,
         ]);
 
-        if (!$checkoutUrl) {
-            throw new RuntimeException('Missing PayMaya checkout URL.');
-        }
-
         return [
             'payment' => $payment,
             'checkout_url' => $checkoutUrl,
         ];
+    }
+
+    /**
+     * Roll back a capacity hold when checkout cannot complete: restore the slots,
+     * mark the payment failed, and remove the orphaned pending reservation.
+     */
+    private function releaseHold(Booking $booking, Reservation $reservation, Payment $payment, int $quantity, string $reason): void
+    {
+        DB::transaction(function () use ($booking, $reservation, $payment, $quantity, $reason): void {
+            Booking::lockForUpdate()->findOrFail($booking->id)->increment('capacity', $quantity);
+            $payment->update([
+                'status' => 'failed',
+                'raw_response' => ['error' => $reason],
+            ]);
+            $reservation->delete();
+        });
     }
 
     private function calculateTotal(float $basePrice, ?float $extraRate, int $quantity, int $nights, bool $requiresNights): float

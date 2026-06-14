@@ -54,7 +54,7 @@ class PaymentFinalizerTest extends TestCase
         $this->assertCount(1, $payment->receipt()->get());
     }
 
-    public function test_it_updates_payment_status_on_failure(): void
+    public function test_it_releases_capacity_hold_on_failure(): void
     {
         [$user, $booking, $reservation, $payment] = $this->createPaymentScenario();
 
@@ -64,10 +64,48 @@ class PaymentFinalizerTest extends TestCase
 
         $payment->refresh();
         $reservation->refresh();
+        $booking->refresh();
 
         $this->assertSame('failed', $payment->status);
-        // Reservation stays pending on failed payment (expiry job handles cleanup).
-        $this->assertSame(StatusType::Pending->value, $reservation->status->value);
+        // Reservation cancelled and the checkout hold (3 slots) released back.
+        $this->assertSame(StatusType::Cancelled->value, $reservation->status->value);
+        $this->assertSame(10, $booking->capacity);
+    }
+
+    public function test_failure_release_is_idempotent(): void
+    {
+        [$user, $booking, $reservation, $payment] = $this->createPaymentScenario();
+
+        $finalizer = app(PaymentFinalizer::class);
+
+        $finalizer->apply($payment, 'failed');
+        $finalizer->apply($payment, 'cancelled');
+
+        $booking->refresh();
+
+        // Hold released exactly once despite two terminal webhooks.
+        $this->assertSame(10, $booking->capacity);
+    }
+
+    public function test_success_after_failure_retakes_the_hold(): void
+    {
+        [$user, $booking, $reservation, $payment] = $this->createPaymentScenario();
+
+        $finalizer = app(PaymentFinalizer::class);
+
+        // Out-of-order webhooks: failed first (releases hold), then succeeded.
+        $finalizer->apply($payment, 'failed');
+        $finalizer->apply($payment, 'succeeded', ['status' => 'PAYMENT_SUCCESS']);
+
+        $payment->refresh();
+        $reservation->refresh();
+        $booking->refresh();
+
+        $this->assertSame('succeeded', $payment->status);
+        $this->assertSame(StatusType::Confirmed->value, $reservation->status->value);
+        // Hold re-taken so capacity is back to the held value, not leaked.
+        $this->assertSame(7, $booking->capacity);
+        $this->assertNotNull($payment->receipt);
     }
 
     private function createPaymentScenario(): array

@@ -28,19 +28,47 @@ class PaymentFinalizer
             $payment->status = $status;
             $payment->save();
 
+            $reservation = $payment->reservation()->lockForUpdate()->first();
+
             if ($status !== 'succeeded') {
+                // Payment failed or was cancelled. Release the capacity hold that
+                // was taken at checkout (A5) — but only once, while the reservation
+                // is still pending, so duplicate webhooks stay idempotent. A
+                // confirmed reservation is left untouched (refunds are out of scope).
+                if ($reservation && $reservation->status->value === 'pending') {
+                    $booking = $reservation->booking()->lockForUpdate()->first();
+                    if ($booking) {
+                        $booking->increment('capacity', $reservation->quantity);
+                    }
+                    $reservation->update([
+                        'status' => 'cancelled',
+                        'cancelled_at' => now(),
+                    ]);
+                }
+
                 return $payment;
             }
 
-            $reservation = $payment->reservation()->lockForUpdate()->first();
             if (!$reservation) {
                 return $payment;
             }
 
-            if ($reservation->status !== 'confirmed') {
-                // Capacity was already decremented at checkout creation time (A5).
-                // We only need to transition the reservation to confirmed here.
-                $reservation->update(['status' => 'confirmed']);
+            if ($reservation->status->value !== 'confirmed') {
+                // If a prior failed/cancelled webhook already released the hold,
+                // re-take it before confirming so capacity stays accurate.
+                if ($reservation->status->value === 'cancelled') {
+                    $booking = $reservation->booking()->lockForUpdate()->first();
+                    if ($booking) {
+                        $booking->decrement('capacity', $reservation->quantity);
+                    }
+                }
+
+                // For a pending reservation the capacity is already held from
+                // checkout creation (A5); just transition it to confirmed.
+                $reservation->update([
+                    'status' => 'confirmed',
+                    'cancelled_at' => null,
+                ]);
             }
 
             Receipt::firstOrCreate(

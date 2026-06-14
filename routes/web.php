@@ -33,7 +33,6 @@ Route::middleware([
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/history', [ReservationController::class, 'history'])->name('bookings.history');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
-    Route::post('/bookings/{bookingId}/reserve', [ReservationController::class, 'store'])->name('reservations.store');
     Route::patch('/reservations/{reservationId}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
     Route::post('/payments/paymaya/checkout', PayMayaCheckoutController::class)->name('payments.paymaya.checkout');
     Route::get('/payments/paymaya/return', PayMayaReturnController::class)->name('payments.paymaya.return');

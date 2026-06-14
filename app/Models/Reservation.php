@@ -21,6 +21,7 @@ class Reservation extends Model
         'status',
         'check_in_date',
         'check_out_date',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -31,6 +32,7 @@ class Reservation extends Model
             'nights' => 'integer',
             'check_in_date' => 'date',
             'check_out_date' => 'date',
+            'cancelled_at' => 'datetime',
         ];
     }
 

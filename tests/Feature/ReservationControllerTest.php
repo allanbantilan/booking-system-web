@@ -102,10 +102,11 @@ class ReservationControllerTest extends TestCase
         ]);
     }
 
-    public function test_cancel_does_not_restore_capacity_for_pending_reservation(): void
+    public function test_cancel_restores_capacity_for_pending_reservation(): void
     {
         $user = User::factory()->create();
-        $booking = $this->makeBooking(capacity: 10);
+        // Capacity is 7: 10 original minus 3 held at checkout (A5).
+        $booking = $this->makeBooking(capacity: 7);
 
         $reservation = Reservation::create([
             'user_id' => $user->id,
@@ -119,7 +120,7 @@ class ReservationControllerTest extends TestCase
             ->patch(route('reservations.cancel', $reservation->id))
             ->assertRedirect();
 
-        // Capacity not changed for pending (no hold yet in current flow)
+        // Capacity restored for pending since A5 holds capacity at checkout.
         $this->assertSame(10, $booking->fresh()->capacity);
 
         $this->assertDatabaseHas('reservations', [

@@ -99,20 +99,30 @@ class PayMayaCheckoutFlow
                 'raw_request' => null,
             ]);
 
+            // Hold capacity immediately so concurrent checkouts cannot both
+            // claim the last slot. The hold is released by PaymentFinalizer
+            // on success (it sets status=confirmed and leaves capacity as-is),
+            // or restored by the pending-expiry job / failure path below.
+            $booking->decrement('capacity', $quantity);
+
             return [$booking, $reservation, $payment];
         });
 
         try {
             $checkout = $this->payMaya->createCheckout($reservation, $booking, $user, $payment);
         } catch (\Throwable $exception) {
-            $payment->update([
-                'status' => 'failed',
-                'raw_response' => ['error' => $exception->getMessage()],
-            ]);
+            // PayMaya API failed — release the capacity hold and clean up.
+            $errorMessage = $exception->getMessage();
+            DB::transaction(function () use ($booking, $reservation, $payment, $quantity, $errorMessage): void {
+                Booking::lockForUpdate()->findOrFail($booking->id)->increment('capacity', $quantity);
+                $payment->update([
+                    'status' => 'failed',
+                    'raw_response' => ['error' => $errorMessage],
+                ]);
+                $reservation->delete();
+            });
 
-            $reservation->delete();
-
-            throw new RuntimeException('Unable to create PayMaya checkout. ' . $exception->getMessage(), 0, $exception);
+            throw new RuntimeException('Unable to create PayMaya checkout. ' . $errorMessage, 0, $exception);
         }
 
         $response = $checkout['response'] ?? [];

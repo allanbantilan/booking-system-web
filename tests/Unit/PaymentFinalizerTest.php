@@ -15,7 +15,7 @@ class PaymentFinalizerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_confirms_reservation_decrements_capacity_and_creates_receipt_once(): void
+    public function test_it_confirms_reservation_and_creates_receipt_once(): void
     {
         [$user, $booking, $reservation, $payment] = $this->createPaymentScenario();
 
@@ -30,18 +30,44 @@ class PaymentFinalizerTest extends TestCase
         $this->assertSame('succeeded', $payment->status);
         $this->assertSame(['status' => 'PAYMENT_SUCCESS'], $payment->raw_response);
         $this->assertSame('confirmed', $reservation->status->value);
+        // Capacity was already held at checkout (A5) — finalizer must not change it.
         $this->assertSame(7, $booking->capacity);
         $this->assertNotNull($payment->receipt);
+    }
 
+    public function test_it_is_idempotent_on_duplicate_apply(): void
+    {
+        [$user, $booking, $reservation, $payment] = $this->createPaymentScenario();
+
+        $finalizer = app(PaymentFinalizer::class);
+
+        $finalizer->apply($payment, 'succeeded', ['status' => 'PAYMENT_SUCCESS']);
         $finalizer->apply($payment, 'succeeded', ['status' => 'PAYMENT_SUCCESS']);
 
         $booking->refresh();
         $reservation->refresh();
         $payment->refresh();
 
+        // Capacity unchanged after second call.
         $this->assertSame(7, $booking->capacity);
         $this->assertSame('confirmed', $reservation->status->value);
-        $this->assertNotNull($payment->receipt);
+        $this->assertCount(1, $payment->receipt()->get());
+    }
+
+    public function test_it_updates_payment_status_on_failure(): void
+    {
+        [$user, $booking, $reservation, $payment] = $this->createPaymentScenario();
+
+        $finalizer = app(PaymentFinalizer::class);
+
+        $finalizer->apply($payment, 'failed');
+
+        $payment->refresh();
+        $reservation->refresh();
+
+        $this->assertSame('failed', $payment->status);
+        // Reservation stays pending on failed payment (expiry job handles cleanup).
+        $this->assertSame(StatusType::Pending->value, $reservation->status->value);
     }
 
     private function createPaymentScenario(): array
@@ -53,7 +79,8 @@ class PaymentFinalizerTest extends TestCase
             'description' => 'Test booking description.',
             'location' => 'Test Location',
             'event_date' => now()->addDay(),
-            'capacity' => 10,
+            // Capacity is 7: 10 original slots minus the 3 held at checkout (A5).
+            'capacity' => 7,
             'price' => 100,
             'created_by' => null,
         ]);

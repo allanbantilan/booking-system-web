@@ -38,13 +38,8 @@ class PaymentFinalizer
             }
 
             if ($reservation->status !== 'confirmed') {
-                $booking = $reservation->booking()->lockForUpdate()->first();
-                if ($booking) {
-                    $booking->update([
-                        'capacity' => max(0, $booking->capacity - $reservation->quantity),
-                    ]);
-                }
-
+                // Capacity was already decremented at checkout creation time (A5).
+                // We only need to transition the reservation to confirmed here.
                 $reservation->update(['status' => 'confirmed']);
             }
 

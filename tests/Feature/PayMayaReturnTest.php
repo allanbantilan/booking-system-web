@@ -30,7 +30,7 @@ class PayMayaReturnTest extends TestCase
 
         $this->assertSame('pending', $payment->status);
         $this->assertSame('pending', $reservation->status->value);
-        $this->assertSame(10, $booking->capacity);
+        $this->assertSame(7, $booking->capacity);
         $this->assertNull($payment->receipt);
     }
 
@@ -63,7 +63,8 @@ class PayMayaReturnTest extends TestCase
             'description' => 'Test booking description.',
             'location' => 'Test Location',
             'event_date' => now()->addDay(),
-            'capacity' => 10,
+            // Capacity is 7: 10 original minus 3 held at checkout (A5 fix).
+            'capacity' => 7,
             'price' => 100,
             'created_by' => null,
         ]);

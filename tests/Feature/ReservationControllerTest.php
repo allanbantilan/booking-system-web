@@ -71,9 +71,13 @@ class ReservationControllerTest extends TestCase
             'quantity' => 2,
             'total_price' => 200,
             'status' => StatusType::Confirmed,
-            'created_at' => now()->subDays(4),
-            'updated_at' => now()->subDays(4),
         ]);
+
+        // Force created_at to 4 days ago — Eloquent ignores it in create() for timestamps.
+        \Illuminate\Support\Facades\DB::table('reservations')
+            ->where('id', $reservation->id)
+            ->update(['created_at' => now()->subDays(4)]);
+        $reservation->refresh();
 
         $this->actingAs($user)
             ->patch(route('reservations.cancel', $reservation->id))
@@ -172,7 +176,9 @@ class ReservationControllerTest extends TestCase
 
     private function makeConfirmedReservation(User $user, int $capacity, int $quantity): Reservation
     {
-        $booking = $this->makeBooking(capacity: $capacity);
+        // Capacity starts at ($capacity - $quantity) — the checkout hold (A5) already
+        // decremented it. Cancel should restore it back to $capacity.
+        $booking = $this->makeBooking(capacity: $capacity - $quantity);
 
         return Reservation::create([
             'user_id' => $user->id,

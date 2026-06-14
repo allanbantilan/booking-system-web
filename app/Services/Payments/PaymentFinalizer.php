@@ -10,27 +10,31 @@ class PaymentFinalizer
 {
     public function apply(Payment $payment, string $status, array $raw = [], array $webhook = []): Payment
     {
-        if ($payment->status === 'succeeded') {
-            return $payment;
-        }
+        return DB::transaction(function () use ($payment, $status, $raw, $webhook): Payment {
+            // Re-read with a lock so concurrent webhooks queue behind each other.
+            $payment = Payment::lockForUpdate()->findOrFail($payment->id);
 
-        $payment->status = $status;
-        if (!empty($raw)) {
-            $payment->raw_response = $raw;
-        }
-        if (!empty($webhook)) {
-            $payment->raw_webhook = $webhook;
-        }
-        $payment->save();
+            // Idempotency: if already succeeded, nothing to do.
+            if ($payment->status === 'succeeded') {
+                return $payment;
+            }
 
-        if ($status !== 'succeeded') {
-            return $payment;
-        }
+            if (!empty($raw)) {
+                $payment->raw_response = $raw;
+            }
+            if (!empty($webhook)) {
+                $payment->raw_webhook = $webhook;
+            }
+            $payment->status = $status;
+            $payment->save();
 
-        DB::transaction(function () use ($payment): void {
+            if ($status !== 'succeeded') {
+                return $payment;
+            }
+
             $reservation = $payment->reservation()->lockForUpdate()->first();
             if (!$reservation) {
-                return;
+                return $payment;
             }
 
             if ($reservation->status !== 'confirmed') {
@@ -60,8 +64,8 @@ class PaymentFinalizer
                     ],
                 ]
             );
-        });
 
-        return $payment;
+            return $payment;
+        });
     }
 }

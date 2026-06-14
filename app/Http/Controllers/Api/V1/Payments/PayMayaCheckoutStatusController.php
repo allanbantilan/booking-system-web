@@ -7,6 +7,7 @@ use App\Http\Resources\Api\PaymentResource;
 use App\Models\Payment;
 use App\Services\Payments\PayMayaService;
 use App\Services\Payments\PaymentFinalizer;
+use App\Services\Payments\PaymentStatusNormalizer;
 use Illuminate\Http\JsonResponse;
 
 class PayMayaCheckoutStatusController extends Controller
@@ -24,7 +25,7 @@ class PayMayaCheckoutStatusController extends Controller
 
         $response = $payMaya->fetchCheckout($checkoutId);
 
-        $status = $this->normalizeStatus($response['status'] ?? $response['paymentStatus'] ?? null);
+        $status = PaymentStatusNormalizer::normalize($response['status'] ?? $response['paymentStatus'] ?? null);
 
         if ($status) {
             $finalizer->apply($payment, $status, $response);
@@ -38,26 +39,4 @@ class PayMayaCheckoutStatusController extends Controller
             ->response();
     }
 
-    private function normalizeStatus(?string $status): ?string
-    {
-        if (!$status) {
-            return null;
-        }
-
-        $upper = strtoupper($status);
-
-        if (in_array($upper, ['PAYMENT_SUCCESS', 'SUCCESS', 'COMPLETED', 'CAPTURED', 'PAID', 'AUTHORIZED'], true)) {
-            return 'succeeded';
-        }
-
-        if (in_array($upper, ['PAYMENT_FAILED', 'FAILED', 'EXPIRED'], true)) {
-            return 'failed';
-        }
-
-        if (in_array($upper, ['CANCELLED', 'CANCELED'], true)) {
-            return 'cancelled';
-        }
-
-        return 'pending';
-    }
 }

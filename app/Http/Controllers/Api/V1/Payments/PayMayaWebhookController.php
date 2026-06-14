@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Payments;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\Payments\PaymentFinalizer;
+use App\Services\Payments\PaymentStatusNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -53,7 +54,7 @@ class PayMayaWebhookController extends Controller
             ], 404);
         }
 
-        $status = $this->normalizeStatus($payload['status'] ?? Arr::get($payload, 'paymentStatus'));
+        $status = PaymentStatusNormalizer::normalize($payload['status'] ?? Arr::get($payload, 'paymentStatus'));
 
         if ($status) {
             $finalizer->apply($payment, $status, [], $payload);
@@ -66,26 +67,4 @@ class PayMayaWebhookController extends Controller
         ]);
     }
 
-    private function normalizeStatus(?string $status): ?string
-    {
-        if (!$status) {
-            return null;
-        }
-
-        $upper = strtoupper($status);
-
-        if (in_array($upper, ['PAYMENT_SUCCESS', 'SUCCESS', 'COMPLETED', 'CAPTURED', 'PAID', 'AUTHORIZED'], true)) {
-            return 'succeeded';
-        }
-
-        if (in_array($upper, ['PAYMENT_FAILED', 'FAILED', 'EXPIRED'], true)) {
-            return 'failed';
-        }
-
-        if (in_array($upper, ['CANCELLED', 'CANCELED'], true)) {
-            return 'cancelled';
-        }
-
-        return 'pending';
-    }
 }

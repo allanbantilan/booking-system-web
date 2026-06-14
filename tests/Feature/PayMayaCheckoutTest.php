@@ -60,5 +60,76 @@ class PayMayaCheckoutTest extends TestCase
         $this->assertSame('pending', $payment->status);
         $this->assertSame('CHK-CREATE-1', $payment->checkout_id);
         $this->assertSame('https://example.test/checkout', $payment->checkout_url);
+
+        // Capacity is held at checkout creation (A5): 10 - 2 = 8.
+        $this->assertSame(8, $booking->fresh()->capacity);
+    }
+
+    public function test_it_releases_hold_when_paymaya_api_fails(): void
+    {
+        $user = User::factory()->create();
+        $booking = $this->makeBooking(capacity: 10);
+
+        Sanctum::actingAs($user);
+
+        $this->mock(PayMayaService::class, function ($mock): void {
+            $mock->shouldReceive('createCheckout')
+                ->once()
+                ->andThrow(new \RuntimeException('PayMaya is down'));
+        });
+
+        $response = $this->postJson('/api/payments/paymaya/checkout', [
+            'booking_id' => $booking->id,
+            'quantity' => 2,
+        ]);
+
+        $response->assertStatus(502);
+
+        // Hold released; reservation and its cascade-linked payment cleaned up.
+        $this->assertSame(10, $booking->fresh()->capacity);
+        $this->assertSame(0, Reservation::query()->count());
+        $this->assertSame(0, Payment::query()->count());
+    }
+
+    public function test_it_releases_hold_when_checkout_url_is_missing(): void
+    {
+        $user = User::factory()->create();
+        $booking = $this->makeBooking(capacity: 10);
+
+        Sanctum::actingAs($user);
+
+        $this->mock(PayMayaService::class, function ($mock): void {
+            $mock->shouldReceive('createCheckout')
+                ->once()
+                ->andReturn([
+                    'payload' => ['stub' => true],
+                    'response' => ['checkoutId' => 'CHK-NO-URL', 'status' => 'CREATED'],
+                ]);
+        });
+
+        $response = $this->postJson('/api/payments/paymaya/checkout', [
+            'booking_id' => $booking->id,
+            'quantity' => 2,
+        ]);
+
+        $response->assertStatus(502);
+
+        // Even though the API call succeeded, a missing URL must not leak the hold.
+        $this->assertSame(10, $booking->fresh()->capacity);
+        $this->assertSame(0, Reservation::query()->count());
+        $this->assertSame(0, Payment::query()->count());
+    }
+
+    private function makeBooking(int $capacity): Booking
+    {
+        return Booking::create([
+            'title' => 'Test Booking',
+            'description' => 'Test booking description.',
+            'location' => 'Test Location',
+            'event_date' => now()->addDay(),
+            'capacity' => $capacity,
+            'price' => 100,
+            'created_by' => null,
+        ]);
     }
 }

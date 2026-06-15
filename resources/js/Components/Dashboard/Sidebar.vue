@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Link, router, usePage } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
 import Button from "primevue/button";
+import LogoutButton from "@/Components/LogoutButton.vue";
 
 defineProps<{
     collapsed?: boolean;
@@ -35,7 +36,6 @@ const initials = computed(() =>
         .toUpperCase(),
 );
 
-const logout = () => router.post(route("logout"));
 </script>
 
 <template>
@@ -108,14 +108,9 @@ const logout = () => router.post(route("logout"));
                     <p class="truncate text-sm font-bold text-ledger-text">{{ user?.name || "User" }}</p>
                     <p class="truncate text-xs text-ledger-muted">{{ user?.email || "" }}</p>
                 </div>
-                <Button
+                <LogoutButton
                     v-if="!collapsed || mobile"
-                    text
-                    rounded
-                    severity="danger"
-                    icon="pi pi-sign-out"
-                    aria-label="Log out"
-                    @click="logout"
+                    icon-only
                 />
             </div>
         </div>

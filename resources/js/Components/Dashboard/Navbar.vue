@@ -1,7 +1,8 @@
 <script setup>
-import { Link, router, usePage } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
 import Dropdown from "@/Components/Dropdown.vue";
+import LogoutButton from "@/Components/LogoutButton.vue";
 
 defineProps({
     title: {
@@ -15,9 +16,6 @@ const appName = computed(() => page.props.appName || "BookFlow");
 const userName = computed(() => page.props.auth?.user?.name || "User");
 const userEmail = computed(() => page.props.auth?.user?.email || "");
 
-const logout = () => {
-    router.post(route("logout"));
-};
 </script>
 
 <template>
@@ -171,14 +169,9 @@ const logout = () => {
 
                             <div class="border-t border-white/10"></div>
 
-                            <form @submit.prevent="logout">
-                                <button
-                                    type="submit"
-                                    class="block w-full px-4 py-2 text-left text-sm font-semibold text-rose-200 transition hover:bg-white/10"
-                                >
-                                    Log Out
-                                </button>
-                            </form>
+                            <div class="px-2 py-1">
+                                <LogoutButton label="Log Out" />
+                            </div>
                         </template>
                     </Dropdown>
                 </div>

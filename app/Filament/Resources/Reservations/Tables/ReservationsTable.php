@@ -27,6 +27,10 @@ class ReservationsTable
                     ->label('Email')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user.roles.name')
+                    ->label('Role')
+                    ->badge()
+                    ->separator(',')
                 TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),

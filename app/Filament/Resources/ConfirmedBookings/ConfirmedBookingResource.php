@@ -42,7 +42,7 @@ class ConfirmedBookingResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['booking', 'user', 'payment'])
+            ->with(['booking', 'user.roles', 'payment'])
             ->where('status', 'confirmed');
 
         $user = auth('backend')->user();

@@ -44,7 +44,7 @@ const statusTone = computed(() => {
     if (resolvedStatus.value === "succeeded") return "text-emerald-300";
     if (resolvedStatus.value === "failed") return "text-rose-300";
     if (resolvedStatus.value === "cancelled") return "text-amber-300";
-    return "text-slate-200";
+    return "text-ledger-text";
 });
 
 const statusHeadline = computed(() => {
@@ -88,8 +88,8 @@ const formatDate = (value) => {
 
 <template>
     <DashboardLayout title="Payment Status">
-        <section class="rounded-2xl border border-white/10 bg-white/5 p-8">
-            <p class="text-xs uppercase tracking-[0.3em] text-slate-400">
+        <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-8">
+            <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">
                 PayMaya Payment
             </p>
             <h1 class="mt-3 text-2xl font-bold" :class="statusTone">
@@ -97,7 +97,7 @@ const formatDate = (value) => {
             </h1>
             <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
                 <span
-                    class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-slate-100"
+                    class="inline-flex items-center gap-2 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 font-semibold text-ledger-text"
                 >
                     <span
                         class="h-2 w-2 rounded-full"
@@ -113,20 +113,20 @@ const formatDate = (value) => {
                     ></span>
                     {{ resolvedStatus }}
                 </span>
-                <span v-if="payment?.reference" class="text-slate-400">
+                <span v-if="payment?.reference" class="text-ledger-muted">
                     Ref: {{ payment.reference }}
                 </span>
             </div>
-            <p class="mt-3 text-sm text-slate-300">
+            <p class="mt-3 text-sm text-ledger-muted">
                 {{ statusMessage }}
             </p>
 
-            <div class="mt-6 rounded-xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-200">
+            <div class="mt-6 rounded-xl border border-ledger-border bg-ledger-elevated p-4 text-sm text-ledger-text">
                 <div class="flex items-center justify-between">
                     <span>Status</span>
-                    <span class="font-semibold text-white">{{ resolvedStatus }}</span>
+                    <span class="font-semibold text-ledger-text">{{ resolvedStatus }}</span>
                 </div>
-                <div v-if="payment" class="mt-3 space-y-2 text-xs text-slate-300">
+                <div v-if="payment" class="mt-3 space-y-2 text-xs text-ledger-muted">
                     <p>Payment Reference: {{ payment.reference || "-" }}</p>
                     <p>Amount: {{ formatCurrency(payment.amount) }}</p>
                 </div>
@@ -180,7 +180,7 @@ const formatDate = (value) => {
                 </Link>
                 <Link
                     :href="route('bookings.index')"
-                    class="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                    class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
                 >
                     Back to bookings
                 </Link>

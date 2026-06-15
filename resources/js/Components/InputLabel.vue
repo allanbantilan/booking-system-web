@@ -11,7 +11,7 @@ defineProps({
 <template>
     <label
         class="block font-medium text-sm"
-        :class="variant === 'dashboard' ? 'text-slate-200' : 'text-gray-700'"
+        :class="variant === 'dashboard' ? 'text-ledger-text' : 'text-ledger-muted'"
     >
         <span v-if="value">{{ value }}</span>
         <span v-else><slot /></span>

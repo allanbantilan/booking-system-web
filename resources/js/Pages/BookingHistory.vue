@@ -80,21 +80,21 @@ const cancelBookingScaffold = (reservationId) => {
 <template>
     <DashboardLayout title="Booking History">
         <section
-            class="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
+            class="mb-5 rounded-xl border border-ledger-border bg-ledger-surface p-4 backdrop-blur"
         >
             <h1 class="text-xl font-bold md:text-2xl">Booking History</h1>
-            <p class="mt-1 text-sm text-slate-300">
+            <p class="mt-1 text-sm text-ledger-muted">
                 Track your pending and confirmed bookings.
             </p>
         </section>
 
-        <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
             <div v-if="reservations.length" class="overflow-x-auto">
                 <table
                     class="min-w-full border-separate border-spacing-y-2 text-sm"
                 >
                     <thead>
-                        <tr class="text-left text-slate-300">
+                        <tr class="text-left text-ledger-muted">
                             <th class="px-3 py-2">Booking</th>
                             <th class="px-3 py-2">Booking Date</th>
                             <th class="px-3 py-2">Total</th>
@@ -108,18 +108,18 @@ const cancelBookingScaffold = (reservationId) => {
                         <tr
                             v-for="reservation in reservations"
                             :key="reservation.id"
-                            class="rounded-xl border border-white/10 bg-slate-900/60"
+                            class="rounded-xl border border-ledger-border bg-ledger-surface/60"
                         >
                             <td class="px-3 py-3">
                                 {{ reservation.booking?.title || "Booking" }}
                             </td>
-                            <td class="px-3 py-3 text-slate-300">
+                            <td class="px-3 py-3 text-ledger-muted">
                                 {{ formatDate(reservation.booking?.event_date) }}
                             </td>
                             <td class="px-3 py-3">
                                 {{ formatCurrency(reservation.total_price) }}
                             </td>
-                            <td class="px-3 py-3 text-slate-300">
+                            <td class="px-3 py-3 text-ledger-muted">
                                 <span v-if="isNightsRequired(reservation)">
                                     {{ reservation.nights || 1 }} {{ getDurationLabel(reservation) }}
                                 </span>
@@ -141,12 +141,12 @@ const cancelBookingScaffold = (reservationId) => {
                                 <button
                                     v-if="reservation.receipt && reservation.payment?.id"
                                     type="button"
-                                    class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400 hover:text-cyan-100"
+                                    class="inline-flex items-center rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400 hover:text-cyan-100"
                                     @click="openReceipt(reservation)"
                                 >
                                     View Receipt
                                 </button>
-                                <span v-else class="text-xs text-slate-400">
+                                <span v-else class="text-xs text-ledger-muted">
                                     -
                                 </span>
                             </td>
@@ -155,13 +155,13 @@ const cancelBookingScaffold = (reservationId) => {
                                     v-if="reservation.can_cancel"
                                     type="button"
                                     @click="cancelBookingScaffold(reservation.id)"
-                                    class="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/10"
+                                    class="rounded-lg border border-ledger-border px-3 py-1.5 text-xs font-semibold transition hover:bg-ledger-elevated"
                                 >
                                     Cancel Reservation
                                 </button>
                                 <span
                                     v-else
-                                    class="inline-flex items-center text-xs text-slate-400"
+                                    class="inline-flex items-center text-xs text-ledger-muted"
                                     title="Cant be cancelled"
                                 >
                                     Cant be cancelled
@@ -174,7 +174,7 @@ const cancelBookingScaffold = (reservationId) => {
 
             <p
                 v-else
-                class="rounded-xl border border-dashed border-white/20 bg-slate-900/40 p-4 text-sm text-slate-300"
+                class="rounded-xl border border-dashed border-ledger-border bg-ledger-surface/40 p-4 text-sm text-ledger-muted"
             >
                 No booking history yet.
             </p>
@@ -183,23 +183,23 @@ const cancelBookingScaffold = (reservationId) => {
 
     <div
         v-if="activeReceipt"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6"
         @click.self="closeReceipt"
     >
-        <div class="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-xl">
+        <div class="w-full max-w-xl rounded-2xl border border-ledger-border bg-ledger-surface p-6 shadow-xl">
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-slate-400">E-Receipt</p>
-                    <h2 class="mt-2 text-xl font-semibold text-white">
+                    <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">E-Receipt</p>
+                    <h2 class="mt-2 text-xl font-semibold text-ledger-text">
                         {{ activeReceipt.booking?.title || "Booking" }}
                     </h2>
-                    <p class="mt-1 text-sm text-slate-300">
+                    <p class="mt-1 text-sm text-ledger-muted">
                         Reservation #{{ activeReceipt.id }}
                     </p>
                 </div>
                 <button
                     type="button"
-                    class="rounded-full border border-white/10 p-2 text-slate-200 transition hover:bg-white/10"
+                    class="rounded-full border border-ledger-border p-2 text-ledger-text transition hover:bg-ledger-elevated"
                     @click="closeReceipt"
                 >
                     ✕
@@ -207,42 +207,42 @@ const cancelBookingScaffold = (reservationId) => {
             </div>
 
             <div class="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Receipt</p>
-                    <p class="mt-2 text-base font-semibold text-white">
+                <div class="rounded-xl border border-ledger-border bg-ledger-surface p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] text-ledger-muted">Receipt</p>
+                    <p class="mt-2 text-base font-semibold text-ledger-text">
                         {{ activeReceipt.receipt?.receipt_number || "-" }}
                     </p>
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-ledger-muted">
                         Issued {{ formatDateTime(activeReceipt.receipt?.issued_at) }}
                     </p>
                 </div>
-                <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Payment Status</p>
-                    <p class="mt-2 text-base font-semibold text-white">
+                <div class="rounded-xl border border-ledger-border bg-ledger-surface p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] text-ledger-muted">Payment Status</p>
+                    <p class="mt-2 text-base font-semibold text-ledger-text">
                         {{ receiptStatus }}
                     </p>
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-ledger-muted">
                         Amount {{ formatCurrency(activeReceipt.total_price) }}
                     </p>
                 </div>
             </div>
 
-            <div class="mt-6 rounded-xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-200">
+            <div class="mt-6 rounded-xl border border-ledger-border bg-slate-950/60 p-4 text-sm text-ledger-text">
                 <div class="flex items-center justify-between">
                     <span>Booking Date</span>
-                    <span class="font-semibold text-white">
+                    <span class="font-semibold text-ledger-text">
                         {{ formatDate(activeReceipt.booking?.event_date) }}
                     </span>
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <span>{{ getQuantityLabel(activeReceipt) }}</span>
-                    <span class="font-semibold text-white">
+                    <span class="font-semibold text-ledger-text">
                         {{ activeReceipt.quantity }}
                     </span>
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <span>{{ getDurationLabel(activeReceipt) }}</span>
-                    <span class="font-semibold text-white">
+                    <span class="font-semibold text-ledger-text">
                         {{ isNightsRequired(activeReceipt) ? (activeReceipt.nights || 1) : "-" }}
                     </span>
                 </div>
@@ -251,7 +251,7 @@ const cancelBookingScaffold = (reservationId) => {
             <div class="mt-6 flex justify-end gap-2">
                 <button
                     type="button"
-                    class="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                    class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
                     @click="closeReceipt"
                 >
                     Close

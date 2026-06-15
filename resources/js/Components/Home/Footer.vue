@@ -1,113 +1,28 @@
-<script setup>
-const props = defineProps({
-    appName: {
-        type: String,
-        default: "BookFlow",
-    },
-});
+<script setup lang="ts">
+import { Link } from "@inertiajs/vue3";
 
+withDefaults(defineProps<{ appName?: string }>(), { appName: "BookFlow" });
 const currentYear = new Date().getFullYear();
-
-const links = {
-    product: [
-        { label: "Online Booking", href: "#" },
-        { label: "Calendar Sync", href: "#" },
-        { label: "Payments", href: "#" },
-        { label: "Client Reminders", href: "#" },
-    ],
-    company: [
-        { label: "About", href: "#" },
-        { label: "Careers", href: "#" },
-        { label: "Help Center", href: "#" },
-        { label: "Contact", href: "#" },
-    ],
-    legal: [
-        { label: "Privacy Policy", href: "#" },
-        { label: "Terms of Service", href: "#" },
-        { label: "Security", href: "#" },
-        { label: "License", href: "#" },
-    ],
-};
+const routeUrl = (name: string) => route(name);
 </script>
 
 <template>
-    <footer class="bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid md:grid-cols-4 gap-8">
+    <footer class="border-t border-ledger-border bg-ledger-surface/60 px-4 py-10 sm:px-6 lg:px-8">
+        <div class="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+                <span class="grid size-9 place-items-center rounded-lg bg-cyan-500 text-slate-950"><i class="pi pi-bolt" /></span>
                 <div>
-                    <div class="flex items-center space-x-2 mb-6">
-                        <div
-                            class="w-10 h-10 bg-cyan-500 rounded-xl flex items-center justify-center"
-                        >
-                            <svg
-                                class="w-6 h-6 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                />
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold">
-                            {{ appName }}
-                        </span>
-                    </div>
-                    <p class="text-slate-400">
-                        Booking software for service businesses that need faster scheduling and fewer no-shows.
-                    </p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Product</h3>
-                    <ul class="space-y-2 text-slate-400">
-                        <li v-for="(link, index) in links.product" :key="index">
-                            <a
-                                :href="link.href"
-                                class="hover:text-white transition-colors"
-                            >
-                                {{ link.label }}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Company</h3>
-                    <ul class="space-y-2 text-slate-400">
-                        <li v-for="(link, index) in links.company" :key="index">
-                            <a
-                                :href="link.href"
-                                class="hover:text-white transition-colors"
-                            >
-                                {{ link.label }}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Legal</h3>
-                    <ul class="space-y-2 text-slate-400">
-                        <li v-for="(link, index) in links.legal" :key="index">
-                            <a
-                                :href="link.href"
-                                class="hover:text-white transition-colors"
-                            >
-                                {{ link.label }}
-                            </a>
-                        </li>
-                    </ul>
+                    <p class="font-display font-bold text-ledger-text">{{ appName }}</p>
+                    <p class="text-xs text-ledger-muted">Booking, clearly accounted for.</p>
                 </div>
             </div>
-            <div
-                class="border-t border-white/10 mt-8 pt-8 text-center text-slate-400"
-            >
-                <p>
-                    &copy; {{ currentYear }} {{ appName }}. All rights reserved.
-                </p>
+            <div class="flex flex-wrap gap-5 text-sm font-semibold text-ledger-muted">
+                <Link :href="routeUrl('login')" class="hover:text-ledger-text">Sign in</Link>
+                <Link :href="routeUrl('register')" class="hover:text-ledger-text">Create account</Link>
+                <Link :href="routeUrl('policy.show')" class="hover:text-ledger-text">Privacy</Link>
+                <Link :href="routeUrl('terms.show')" class="hover:text-ledger-text">Terms</Link>
             </div>
+            <p class="text-xs text-ledger-muted">&copy; {{ currentYear }} {{ appName }}</p>
         </div>
     </footer>
 </template>

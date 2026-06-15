@@ -3,7 +3,8 @@ import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 import UpdatePasswordForm from "@/Pages/Profile/Partials/UpdatePasswordForm.vue";
 import UpdateProfileInformationForm from "@/Pages/Profile/Partials/UpdateProfileInformationForm.vue";
 import ActionMessage from "@/Components/ActionMessage.vue";
-import { router, useForm, useRemember } from "@inertiajs/vue3";
+import LogoutButton from "@/Components/LogoutButton.vue";
+import { useForm, useRemember } from "@inertiajs/vue3";
 
 defineProps({
     confirmsTwoFactorAuthentication: Boolean,
@@ -14,10 +15,6 @@ const merchantForm = useForm({
     message: "",
 });
 const merchantNotice = useRemember("", "merchant-notice");
-
-const logout = () => {
-    router.post(route("logout"));
-};
 
 const requestMerchantAccess = () => {
     merchantForm.post(route("merchant-account.store"), {
@@ -105,13 +102,9 @@ const requestMerchantAccess = () => {
                 <p class="mt-2 text-sm text-ledger-muted">
                     Use this button to end your current session.
                 </p>
-                <button
-                    type="button"
-                    class="mt-4 rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
-                    @click="logout"
-                >
-                    Log Out
-                </button>
+                <div class="mt-4">
+                    <LogoutButton label="Log Out" />
+                </div>
             </section>
         </div>
     </DashboardLayout>

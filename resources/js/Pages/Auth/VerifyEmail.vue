@@ -4,6 +4,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticationCard from '@/Components/AuthenticationCard.vue';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import LogoutButton from '@/Components/LogoutButton.vue';
 
 const props = defineProps({
     status: String,
@@ -47,14 +48,7 @@ const verificationLinkSent = computed(() => props.status === 'verification-link-
                     >
                         Edit Profile</Link>
 
-                    <Link
-                        :href="route('logout')"
-                        method="post"
-                        as="button"
-                        class="underline text-sm text-ledger-muted hover:text-ledger-text rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ms-2"
-                    >
-                        Log Out
-                    </Link>
+                    <LogoutButton label="Log Out" />
                 </div>
             </div>
         </form>

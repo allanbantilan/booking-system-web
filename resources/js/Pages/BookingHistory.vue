@@ -96,7 +96,7 @@ const cancelBookingScaffold = (reservationId) => {
                     <thead>
                         <tr class="text-left text-slate-300">
                             <th class="px-3 py-2">Booking</th>
-                            <th class="px-3 py-2">Date</th>
+                            <th class="px-3 py-2">Booking Date</th>
                             <th class="px-3 py-2">Total</th>
                             <th class="px-3 py-2">Duration</th>
                             <th class="px-3 py-2">Status</th>

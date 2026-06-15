@@ -8,11 +8,17 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700|space-grotesk:500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @routes
-        @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
+        <script>
+            document.documentElement.classList.toggle(
+                'app-dark',
+                localStorage.getItem('bookflow-theme') !== 'light',
+            );
+        </script>
+        @vite(['resources/js/app.ts', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

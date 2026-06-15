@@ -1,14 +1,16 @@
 import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/css/app.css", "resources/js/app.js"],
+            input: ["resources/css/app.css", "resources/js/app.ts"],
             refresh: true,
         }),
         vue(),
+        tailwindcss(),
     ],
     resolve: {
         alias: {
@@ -16,11 +18,11 @@ export default defineConfig({
         },
     },
     server: {
-        host: "0.0.0.0",        // container binding
+        host: "0.0.0.0",
         port: 5173,
         strictPort: true,
         hmr: {
-            host: "localhost", // 🔴 browser-facing host
+            host: "localhost",
         },
     },
 });

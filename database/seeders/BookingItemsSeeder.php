@@ -257,32 +257,54 @@ class BookingItemsSeeder extends Seeder
                     ]
                 );
 
-                if ($shouldSeedImages && $booking->getMedia('images')->isEmpty()) {
-                    $queries = $template['queries'] ?? [Str::slug($category->name)];
-                    $query = $queries[0] ?? 'booking';
+                if ($booking->getMedia('images')->isEmpty()) {
+                    // Build keywords from the template so the photo matches the item
+                    // (e.g. "hotel room,resort" for the Boracay room).
+                    $keywords = collect($template['queries'] ?? [Str::slug($category->name)])
+                        ->map(fn ($query) => Str::slug($query))
+                        ->filter()
+                        ->take(2)
+                        ->implode(',') ?: 'booking';
+
                     $downloaded = 0;
 
-                    for ($imageIndex = 1; $imageIndex <= 3; $imageIndex++) {
-                        $seed = Str::slug($query) ?: 'booking-item';
-                        $url = "https://picsum.photos/seed/{$seed}-{$imageIndex}/1200/800";
+                    if ($shouldSeedImages) {
+                        for ($imageIndex = 1; $imageIndex <= 3; $imageIndex++) {
+                            // loremflickr returns a real photo tagged with these keywords,
+                            // so the image actually matches the booking item. `lock` pins
+                            // the same photo per booking across re-runs.
+                            $url = "https://loremflickr.com/1200/800/{$keywords}?lock={$booking->id}{$imageIndex}";
 
-                        try {
-                            $booking
-                                ->addMediaFromUrl($url)
-                                ->toMediaCollection('images');
-                            $downloaded++;
-                        } catch (\Throwable $exception) {
-                            continue;
+                            try {
+                                $booking
+                                    ->addMediaFromUrl($url)
+                                    ->toMediaCollection('images');
+                                $downloaded++;
+                            } catch (\Throwable $exception) {
+                                continue;
+                            }
                         }
                     }
 
-                    if ($downloaded > 0) {
-                        return;
+                    // Offline / failed download: a placeholder that still names the item.
+                    if ($downloaded === 0) {
+                        $booking
+                            ->addMediaFromString($this->placeholderSvg($booking->title, $category->name, (float) $booking->price))
+                            ->usingFileName('booking-placeholder.svg')
+                            ->toMediaCollection('images');
                     }
                 }
+            });
+    }
 
-                if ($booking->getMedia('images')->isEmpty()) {
-                    $svg = <<<'SVG'
+    private function placeholderSvg(string $title, string $category, float $price): string
+    {
+        $flags = ENT_QUOTES | ENT_XML1;
+        $title = htmlspecialchars(Str::limit($title, 40), $flags, 'UTF-8');
+        $category = htmlspecialchars(Str::upper(Str::limit($category, 36)), $flags, 'UTF-8');
+        $priceLabel = htmlspecialchars('PHP ' . number_format($price, 2), $flags, 'UTF-8');
+
+        return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -292,16 +314,10 @@ class BookingItemsSeeder extends Seeder
   </defs>
   <rect width="1200" height="800" fill="url(#bg)"/>
   <rect x="80" y="90" width="1040" height="620" rx="28" fill="#111827" stroke="#334155" stroke-width="4"/>
-  <text x="120" y="210" fill="#e2e8f0" font-size="48" font-family="Arial, sans-serif" font-weight="700">Sample Booking</text>
-  <text x="120" y="280" fill="#94a3b8" font-size="28" font-family="Arial, sans-serif">Placeholder Image</text>
+  <text x="120" y="210" fill="#38bdf8" font-size="26" font-family="Arial, sans-serif" font-weight="600" letter-spacing="2">{$category}</text>
+  <text x="120" y="310" fill="#e2e8f0" font-size="56" font-family="Arial, sans-serif" font-weight="700">{$title}</text>
+  <text x="120" y="390" fill="#94a3b8" font-size="34" font-family="Arial, sans-serif">{$priceLabel}</text>
 </svg>
 SVG;
-
-                    $booking
-                        ->addMediaFromString($svg)
-                        ->usingFileName('booking-placeholder.svg')
-                        ->toMediaCollection('images');
-                }
-            });
     }
 }

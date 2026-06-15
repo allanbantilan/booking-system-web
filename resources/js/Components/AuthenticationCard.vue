@@ -1,22 +1,11 @@
-<script setup>
-import { computed } from "vue";
-
-defineProps({
-    title: String,
-});
-
-const classes = computed(
-    () =>
-        "min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4"
-);
-</script>
-
 <template>
-    <div :class="classes">
-        <div
-            class="w-full sm:max-w-md mt-6 px-6 py-8 bg-white dark:bg-gray-800 shadow-xl overflow-hidden sm:rounded-2xl border border-gray-200 dark:border-gray-700"
-        >
-            <slot />
+    <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-ledger-bg px-4 py-24 text-ledger-text">
+        <div class="pointer-events-none absolute inset-0 ledger-grid opacity-25" />
+        <div class="pointer-events-none absolute left-[15%] top-20 size-72 rounded-full bg-cyan-500/15 blur-3xl" />
+        <div class="pointer-events-none absolute bottom-10 right-[12%] size-64 rounded-full bg-orange-500/15 blur-3xl" />
+        <div class="relative w-full max-w-md">
+            <div class="mb-7 flex justify-center"><slot name="logo" /></div>
+            <div class="ledger-panel rounded-3xl p-6 sm:p-8"><slot /></div>
         </div>
     </div>
 </template>

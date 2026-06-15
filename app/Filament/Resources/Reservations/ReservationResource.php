@@ -28,7 +28,7 @@ class ReservationResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['booking', 'user', 'payment']);
+            ->with(['booking', 'user.roles', 'payment']);
 
         $user = auth('backend')->user();
 

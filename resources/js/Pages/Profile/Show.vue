@@ -57,7 +57,7 @@ const requestMerchantAccess = () => {
             <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
                 <h2 class="text-lg font-semibold text-ledger-text">List Your Services</h2>
                 <p class="mt-2 text-sm text-ledger-muted">
-                    Offer experiences, spaces, rentals, or services through BookFlow. Submit a request and we’ll email your merchant dashboard access after approval.
+                    Offer experiences, spaces, rentals, or services through BookBound. Submit a request and we’ll email your merchant dashboard access after approval.
                 </p>
                 <div class="mt-4">
                     <label class="text-sm font-medium text-ledger-text">

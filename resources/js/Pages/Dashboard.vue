@@ -1,78 +1,143 @@
-<script setup>
+<script setup lang="ts">
+import { Link, usePage } from "@inertiajs/vue3";
+import { computed } from "vue";
+import Button from "primevue/button";
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
-import { router } from "@inertiajs/vue3";
+import MetricCard from "@/Components/Dashboard/MetricCard.vue";
+import StatusBadge from "@/Components/Dashboard/StatusBadge.vue";
 
-defineProps({
-    totals: {
-        type: Object,
-        default: () => ({
-            bookings: 0,
-            bookingHistory: 0,
-            confirmedBookings: 0,
-        }),
-    },
+type ReservationSummary = {
+    id: number;
+    status: string;
+    total_price: string | number;
+    scheduled_for?: string | null;
+    created_at?: string | null;
+    booking?: { id: number; title: string; location?: string; category?: string } | null;
+};
+
+const props = withDefaults(defineProps<{
+    totals?: { bookings: number; bookingHistory: number; confirmedBookings: number };
+    statusBreakdown?: { pending: number; confirmed: number; cancelled: number };
+    upcomingReservation?: ReservationSummary | null;
+    recentReservations?: ReservationSummary[];
+}>(), {
+    totals: () => ({ bookings: 0, bookingHistory: 0, confirmedBookings: 0 }),
+    statusBreakdown: () => ({ pending: 0, confirmed: 0, cancelled: 0 }),
+    upcomingReservation: null,
+    recentReservations: () => [],
 });
+
+const page = usePage();
+const firstName = computed(() => String((page.props as any).auth?.user?.name || "there").split(" ")[0]);
+const routeUrl = (name: string, params?: unknown) => route(name, params);
+const formatCurrency = (value: string | number) => new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    maximumFractionDigits: 0,
+}).format(Number(value || 0));
+const formatDate = (value?: string | null) => value
+    ? new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value))
+    : "Schedule to be confirmed";
 </script>
 
 <template>
-    <DashboardLayout :title="`Booking Dashboard`">
-        <section
-            class="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
-        >
-            <h1 class="text-xl font-bold md:text-2xl">Booking Dashboard</h1>
-            <p class="mt-1 text-sm text-slate-300">
-                Track high-level activity and jump into bookings or booking
-                history.
-            </p>
+    <DashboardLayout title="Dashboard">
+        <section class="relative overflow-hidden rounded-3xl border border-ledger-border bg-ledger-surface px-6 py-7 shadow-ledger sm:px-8">
+            <div class="absolute -right-16 -top-24 size-64 rounded-full bg-cyan-500/14 blur-3xl" />
+            <div class="absolute -bottom-28 right-40 size-56 rounded-full bg-orange-500/12 blur-3xl" />
+            <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.24em] text-cyan-400">Night Ledger</p>
+                    <h2 class="mt-3 max-w-2xl font-display text-3xl font-bold leading-tight text-ledger-text sm:text-4xl">
+                        Good to see you, {{ firstName }}.
+                    </h2>
+                    <p class="mt-3 max-w-xl text-sm leading-6 text-ledger-muted">
+                        Your bookings, upcoming plans, and payment activity are organized in one place.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <Link :href="routeUrl('bookings.index')">
+                        <Button label="Explore bookings" icon="pi pi-compass" />
+                    </Link>
+                    <Link :href="routeUrl('bookings.history')">
+                        <Button label="View history" icon="pi pi-calendar-clock" severity="secondary" outlined />
+                    </Link>
+                </div>
+            </div>
         </section>
 
-        <section class="mb-8 grid gap-4 sm:grid-cols-2">
-            <article class="rounded-xl border border-white/10 bg-white/5 p-5">
-                <p class="text-xs uppercase tracking-[0.15em] text-slate-300">
-                    Booking History
-                </p>
-                <p class="mt-2 text-3xl font-black text-cyan-300">
-                    {{ totals.bookingHistory }}
-                </p>
-            </article>
-            <article class="rounded-xl border border-white/10 bg-white/5 p-5">
-                <p class="text-xs uppercase tracking-[0.15em] text-slate-300">
-                    Confirmed Bookings
-                </p>
-                <p class="mt-2 text-3xl font-black text-cyan-300">
-                    {{ totals.confirmedBookings }}
-                </p>
-            </article>
+        <section class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Available listings" :value="totals.bookings" icon="pi pi-compass" tone="cyan" />
+            <MetricCard label="Confirmed" :value="statusBreakdown.confirmed" icon="pi pi-check-circle" tone="emerald" />
+            <MetricCard label="Pending" :value="statusBreakdown.pending" icon="pi pi-clock" tone="orange" />
+            <MetricCard label="Cancelled" :value="statusBreakdown.cancelled" icon="pi pi-times-circle" tone="rose" />
         </section>
 
-        <section class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <h2 class="text-xl font-bold">Manage Available Bookings</h2>
-                <p class="mt-2 text-sm text-slate-300">
-                    Browse all booking options, view details, and reserve.
-                </p>
-                <button
-                    type="button"
-                    class="mt-4 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-                    @click="router.visit(route('bookings.index'))"
-                >
-                    Go to Available Bookings
-                </button>
-            </div>
+        <section class="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.4fr]">
+            <article class="ledger-panel rounded-3xl p-6">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-ledger-muted">Next up</p>
+                        <h3 class="mt-2 font-display text-xl font-bold text-ledger-text">Upcoming booking</h3>
+                    </div>
+                    <span class="grid size-12 place-items-center rounded-2xl bg-cyan-500/12 text-cyan-400">
+                        <i class="pi pi-calendar text-lg" />
+                    </span>
+                </div>
 
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <h2 class="text-xl font-bold">Booking History</h2>
-                <p class="mt-2 text-sm text-slate-300">
-                    Review confirmed and cancelled bookings in one place.
-                </p>
-                <button
-                    type="button"
-                    class="mt-4 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-                    @click="router.visit(route('bookings.history'))"
-                >
-                    View History
-                </button>
-            </div>
+                <div v-if="upcomingReservation" class="mt-7">
+                    <StatusBadge :status="upcomingReservation.status" />
+                    <h4 class="mt-4 font-display text-2xl font-bold text-ledger-text">{{ upcomingReservation.booking?.title }}</h4>
+                    <p class="mt-2 text-sm text-ledger-muted">
+                        <i class="pi pi-map-marker mr-2 text-cyan-400" />{{ upcomingReservation.booking?.location || "Location to be confirmed" }}
+                    </p>
+                    <p class="mt-2 text-sm text-ledger-muted">
+                        <i class="pi pi-calendar mr-2 text-orange-400" />{{ formatDate(upcomingReservation.scheduled_for) }}
+                    </p>
+                    <Link :href="routeUrl('bookings.show', upcomingReservation.booking?.id)" class="mt-6 inline-block">
+                        <Button label="View booking" icon="pi pi-arrow-right" icon-pos="right" text />
+                    </Link>
+                </div>
+                <div v-else class="mt-7 rounded-2xl border border-dashed border-ledger-border bg-ledger-elevated p-6 text-center">
+                    <i class="pi pi-calendar-plus text-2xl text-cyan-400" />
+                    <p class="mt-3 font-semibold text-ledger-text">No upcoming booking yet</p>
+                    <p class="mt-1 text-sm text-ledger-muted">Explore available listings when you are ready.</p>
+                </div>
+            </article>
+
+            <article class="ledger-panel rounded-3xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-ledger-muted">Activity</p>
+                        <h3 class="mt-2 font-display text-xl font-bold text-ledger-text">Recent reservations</h3>
+                    </div>
+                    <Link :href="routeUrl('bookings.history')" class="text-sm font-bold text-cyan-400 hover:text-cyan-300">View all</Link>
+                </div>
+
+                <div v-if="recentReservations.length" class="mt-5 divide-y divide-ledger-border">
+                    <Link
+                        v-for="reservation in recentReservations"
+                        :key="reservation.id"
+                        :href="routeUrl('bookings.show', reservation.booking?.id)"
+                        class="flex items-center gap-4 py-4 transition hover:translate-x-1"
+                    >
+                        <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-ledger-elevated text-cyan-400">
+                            <i class="pi pi-ticket" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-semibold text-ledger-text">{{ reservation.booking?.title || "Booking" }}</p>
+                            <p class="mt-1 text-xs text-ledger-muted">{{ formatDate(reservation.scheduled_for || reservation.created_at) }}</p>
+                        </div>
+                        <div class="hidden text-right sm:block">
+                            <StatusBadge :status="reservation.status" />
+                            <p class="mt-1 text-xs font-semibold text-ledger-muted">{{ formatCurrency(reservation.total_price) }}</p>
+                        </div>
+                    </Link>
+                </div>
+                <div v-else class="mt-6 rounded-2xl border border-dashed border-ledger-border p-8 text-center text-sm text-ledger-muted">
+                    Your recent reservations will appear here.
+                </div>
+            </article>
         </section>
     </DashboardLayout>
 </template>

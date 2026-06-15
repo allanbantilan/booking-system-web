@@ -1,15 +1,90 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+@source "../js/**/*.{vue,js,ts}";
+@source "../views/**/*.blade.php";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../vendor/laravel/jetstream/**/*.blade.php";
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+@theme {
+    --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Space Grotesk", "Figtree", ui-sans-serif, system-ui, sans-serif;
+    --color-ledger-bg: var(--ledger-bg);
+    --color-ledger-surface: var(--ledger-surface);
+    --color-ledger-elevated: var(--ledger-elevated);
+    --color-ledger-border: var(--ledger-border);
+    --color-ledger-text: var(--ledger-text);
+    --color-ledger-muted: var(--ledger-muted);
+    --color-ledger-primary: var(--ledger-primary);
+    --color-ledger-accent: var(--ledger-accent);
+    --shadow-ledger: 0 24px 70px rgb(2 8 23 / 0.24);
+}
 
 @layer base {
+    :root {
+        color-scheme: light;
+        --ledger-bg: #edf4f7;
+        --ledger-surface: #ffffff;
+        --ledger-elevated: #f7fbfc;
+        --ledger-border: #cbdbe2;
+        --ledger-text: #10212c;
+        --ledger-muted: #526773;
+        --ledger-primary: #0891b2;
+        --ledger-accent: #ea580c;
+    }
+
+    :root.app-dark {
+        color-scheme: dark;
+        --ledger-bg: #07121f;
+        --ledger-surface: #0d1b2a;
+        --ledger-elevated: #122438;
+        --ledger-border: #23384a;
+        --ledger-text: #f4fbfd;
+        --ledger-muted: #9bb0bc;
+        --ledger-primary: #22d3ee;
+        --ledger-accent: #fb923c;
+    }
+
+    html,
+    body {
+        min-width: 320px;
+        background: var(--ledger-bg);
+        color: var(--ledger-text);
+        font-family: var(--font-sans);
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        outline-color: var(--ledger-primary);
+    }
+
     input[type="date"]::-webkit-calendar-picker-indicator {
-        filter: invert(1);
         opacity: 0.9;
+    }
+
+    .app-dark input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
     }
 }
 
 @layer utilities {
+    .ledger-panel {
+        border: 1px solid var(--ledger-border);
+        background: color-mix(in srgb, var(--ledger-surface) 92%, transparent);
+        box-shadow: var(--shadow-ledger);
+    }
+
+    .ledger-grid {
+        background-image:
+            linear-gradient(color-mix(in srgb, var(--ledger-border) 28%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--ledger-border) 28%, transparent) 1px, transparent 1px);
+        background-size: 32px 32px;
+    }
+
     .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -22,4 +97,15 @@
 
 [x-cloak] {
     display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }

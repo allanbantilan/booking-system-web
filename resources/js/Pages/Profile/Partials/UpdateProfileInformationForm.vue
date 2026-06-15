@@ -159,14 +159,14 @@ const clearPhotoFileInput = () => {
                 <InputError :message="form.errors.email" class="mt-2" variant="dashboard" />
 
                 <div v-if="$page.props.jetstream.hasEmailVerification && user.email_verified_at === null">
-                    <p class="text-sm mt-2 text-slate-300">
+                    <p class="text-sm mt-2 text-ledger-muted">
                         Your email address is unverified.
 
                         <Link
                             :href="route('verification.send')"
                             method="post"
                             as="button"
-                            class="underline text-sm text-cyan-200 hover:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 focus:ring-offset-slate-950"
+                            class="underline text-sm text-cyan-200 hover:text-ledger-text rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 focus:ring-offset-slate-950"
                             @click.prevent="sendEmailVerification"
                         >
                             Click here to re-send the verification email.

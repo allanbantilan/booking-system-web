@@ -14,7 +14,7 @@ defineProps({
             <div
                 v-show="on"
                 class="text-sm"
-                :class="variant === 'dashboard' ? 'text-slate-300' : 'text-gray-600'"
+                :class="variant === 'dashboard' ? 'text-ledger-muted' : 'text-ledger-muted'"
             >
                 <slot />
             </div>

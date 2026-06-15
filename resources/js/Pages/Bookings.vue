@@ -189,23 +189,23 @@ const toggleDescription = (bookingId) => {
 <template>
     <DashboardLayout title="Available Bookings">
         <section
-            class="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
+            class="mb-5 rounded-xl border border-ledger-border bg-ledger-surface p-4 backdrop-blur"
         >
             <h1 class="text-xl font-bold md:text-2xl">Available Bookings</h1>
-            <p class="mt-1 text-sm text-slate-300">
+            <p class="mt-1 text-sm text-ledger-muted">
                 Browse available bookings and reserve with Maya payment.
             </p>
         </section>
 
-        <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
             <div class="mb-5 flex flex-wrap items-end gap-3">
                 <div class="min-w-[200px]">
-                    <label class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
                         Category
                     </label>
                     <select
                         v-model="filters.categoryId"
-                        class="mt-2 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
                     >
                         <option value="all">All categories</option>
                         <option
@@ -219,34 +219,34 @@ const toggleDescription = (bookingId) => {
                 </div>
 
                 <div class="min-w-[140px]">
-                    <label class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
                         Min Price
                     </label>
                     <input
                         v-model="filters.minPrice"
                         type="number"
                         min="0"
-                        class="mt-2 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
                         placeholder="0"
                     />
                 </div>
 
                 <div class="min-w-[140px]">
-                    <label class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
                         Max Price
                     </label>
                     <input
                         v-model="filters.maxPrice"
                         type="number"
                         min="0"
-                        class="mt-2 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
                         placeholder="Any"
                     />
                 </div>
 
                 <button
                     type="button"
-                    class="rounded-lg border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-200 transition hover:bg-white/10"
+                    class="rounded-lg border border-ledger-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ledger-text transition hover:bg-ledger-elevated"
                     @click="clearFilters"
                 >
                     Clear
@@ -257,12 +257,12 @@ const toggleDescription = (bookingId) => {
                 <article
                     v-for="booking in bookings"
                     :key="booking.id"
-                    class="group flex flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+                    class="group flex flex-col rounded-2xl border border-ledger-border bg-ledger-surface/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-ledger-border"
                     :class="getAccent(booking).glow"
                 >
                     <div
                         v-if="booking.image_urls?.length"
-                        class="relative mb-4 overflow-hidden rounded-xl border border-white/10"
+                        class="relative mb-4 overflow-hidden rounded-xl border border-ledger-border"
                     >
                         <img
                             :src="booking.image_urls[0]"
@@ -284,11 +284,11 @@ const toggleDescription = (bookingId) => {
                         :class="getAccent(booking).border"
                     >
                         <div class="flex items-start justify-between gap-3">
-                            <h3 class="text-lg font-bold text-white">
+                            <h3 class="text-lg font-bold text-ledger-text">
                                 {{ booking.title }}
                             </h3>
                             <span
-                                class="rounded-full border border-white/20 px-3 py-1 text-xs text-slate-200"
+                                class="rounded-full border border-ledger-border px-3 py-1 text-xs text-ledger-text"
                             >
                                 <template v-if="getAvailabilityValue(booking) !== null">
                                     {{ getAvailabilityLabel(booking) }}:
@@ -300,14 +300,14 @@ const toggleDescription = (bookingId) => {
                             </span>
                         </div>
 
-                        <p class="mt-1 text-sm text-slate-300">
+                        <p class="mt-1 text-sm text-ledger-muted">
                             {{ getMetaLine(booking) }}
                         </p>
                     </div>
 
                     <div class="mt-3 min-h-[4.5rem]">
                         <p
-                            class="text-sm text-slate-300"
+                            class="text-sm text-ledger-muted"
                             :style="
                                 expandedDescriptions[booking.id]
                                     ? {}
@@ -338,7 +338,7 @@ const toggleDescription = (bookingId) => {
                         <div
                             v-for="amenity in getAmenities(booking)"
                             :key="amenity.key"
-                            class="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 leading-none"
+                            class="flex items-center gap-1 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 text-xs text-ledger-text leading-none"
                         >
                             <span class="inline-flex leading-none">{{ amenity.icon }}</span>
                             <span>{{ amenity.label }}</span>
@@ -348,14 +348,14 @@ const toggleDescription = (bookingId) => {
                     <div class="mt-auto pt-5">
                         <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <p class="text-xs uppercase tracking-[0.25em] text-slate-400">
+                            <p class="text-xs uppercase tracking-[0.25em] text-ledger-muted">
                                 {{ getRateLabel(booking) }}
                             </p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-lg font-black text-orange-300">
                                     {{ formatCurrency(getDiscountedPrice(booking)) }}
                                 </span>
-                                <span v-if="getDiscountPercentage(booking) > 0" class="text-xs text-slate-400 line-through">
+                                <span v-if="getDiscountPercentage(booking) > 0" class="text-xs text-ledger-muted line-through">
                                     {{ formatCurrency(booking.price) }}
                                 </span>
                                 <span v-if="getDiscountPercentage(booking) > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
@@ -365,10 +365,10 @@ const toggleDescription = (bookingId) => {
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                            <div class="flex items-center gap-2 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1">
                                 <button
                                     type="button"
-                                    class="h-7 w-7 rounded-full border border-white/10 text-sm font-semibold text-white transition hover:bg-white/10"
+                                    class="h-7 w-7 rounded-full border border-ledger-border text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
                                     @click="
                                         bookingQuantity[booking.id] =
                                             Math.max(
@@ -379,12 +379,12 @@ const toggleDescription = (bookingId) => {
                                 >
                                     -
                                 </button>
-                                <span class="text-sm text-white">
+                                <span class="text-sm text-ledger-text">
                                     {{ bookingQuantity[booking.id] || 1 }}
                                 </span>
                                 <button
                                     type="button"
-                                    class="h-7 w-7 rounded-full border border-white/10 text-sm font-semibold text-white transition hover:bg-white/10"
+                                    class="h-7 w-7 rounded-full border border-ledger-border text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
                                     @click="
                                         bookingQuantity[booking.id] =
                                             (bookingQuantity[booking.id] || 1) + 1
@@ -392,7 +392,7 @@ const toggleDescription = (bookingId) => {
                                 >
                                     +
                                 </button>
-                                <span class="text-xs text-slate-300">
+                                <span class="text-xs text-ledger-muted">
                                     {{ getQuantityLabel(booking) }}
                                 </span>
                             </div>
@@ -400,9 +400,9 @@ const toggleDescription = (bookingId) => {
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-sm text-slate-300">
+                        <p class="text-sm text-ledger-muted">
                             Total:
-                            <span class="font-semibold text-white">
+                            <span class="font-semibold text-ledger-text">
                                 {{
                                     formatCurrency(
                                         getDiscountedPrice(booking) *
@@ -422,7 +422,7 @@ const toggleDescription = (bookingId) => {
                             </button>
                             <Link
                                 :href="route('bookings.show', booking.id)"
-                                class="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                                class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
                             >
                                 View Details
                             </Link>
@@ -434,7 +434,7 @@ const toggleDescription = (bookingId) => {
 
             <p
                 v-else
-                class="rounded-xl border border-dashed border-white/20 bg-slate-900/40 p-4 text-sm text-slate-300"
+                class="rounded-xl border border-dashed border-ledger-border bg-ledger-surface/40 p-4 text-sm text-ledger-muted"
             >
                 No bookings match your filters.
             </p>
@@ -448,11 +448,11 @@ const toggleDescription = (bookingId) => {
                 :href="link.url"
                 preserve-scroll
                 preserve-state
-                class="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold transition"
+                class="rounded-lg border border-ledger-border px-3 py-1.5 text-xs font-semibold transition"
                 :class="[
                     link.active
                         ? 'bg-cyan-500 text-slate-950 border-cyan-400'
-                        : 'text-slate-200 hover:bg-white/10',
+                        : 'text-ledger-text hover:bg-ledger-elevated',
                     !link.url && 'cursor-not-allowed opacity-40',
                 ]"
                 v-html="link.label"

@@ -34,10 +34,10 @@ const requestMerchantAccess = () => {
 <template>
     <DashboardLayout title="User Settings">
         <section
-            class="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur"
+            class="mb-5 rounded-xl border border-ledger-border bg-ledger-surface p-4 backdrop-blur"
         >
             <h1 class="text-xl font-bold md:text-2xl">User Settings</h1>
-            <p class="mt-1 text-sm text-slate-300">
+            <p class="mt-1 text-sm text-ledger-muted">
                 Update your profile details, change your password, or sign out.
             </p>
         </section>
@@ -45,31 +45,31 @@ const requestMerchantAccess = () => {
         <div class="space-y-6">
             <section
                 id="profile-info"
-                class="rounded-2xl border border-white/10 bg-white/5 p-6"
+                class="rounded-2xl border border-ledger-border bg-ledger-surface p-6"
             >
                 <UpdateProfileInformationForm :user="$page.props.auth.user" />
             </section>
 
             <section
                 id="change-password"
-                class="rounded-2xl border border-white/10 bg-white/5 p-6"
+                class="rounded-2xl border border-ledger-border bg-ledger-surface p-6"
             >
                 <UpdatePasswordForm />
             </section>
 
-            <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <h2 class="text-lg font-semibold text-white">Be a Merchant</h2>
-                <p class="mt-2 text-sm text-slate-300">
+            <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
+                <h2 class="text-lg font-semibold text-ledger-text">Be a Merchant</h2>
+                <p class="mt-2 text-sm text-ledger-muted">
                     Have a place to rent? We’ll create backend credentials for you and send them to your email.
                 </p>
                 <div class="mt-4">
-                    <label class="text-sm font-medium text-slate-200">
+                    <label class="text-sm font-medium text-ledger-text">
                         Tell us about your place
                     </label>
                     <textarea
                         v-model="merchantForm.message"
                         rows="4"
-                        class="mt-2 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface p-3 text-sm text-ledger-text placeholder:text-ledger-muted focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
                         placeholder="Share a short description, location, and capacity."
                     ></textarea>
                     <p v-if="merchantForm.errors.message" class="mt-2 text-sm text-rose-300">
@@ -91,7 +91,7 @@ const requestMerchantAccess = () => {
                     </ActionMessage>
                     <button
                         type="button"
-                        class="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated disabled:cursor-not-allowed disabled:opacity-50"
                         :disabled="merchantForm.processing"
                         @click="requestMerchantAccess"
                     >
@@ -100,14 +100,14 @@ const requestMerchantAccess = () => {
                 </div>
             </section>
 
-            <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <h2 class="text-lg font-semibold text-white">Log Out</h2>
-                <p class="mt-2 text-sm text-slate-300">
+            <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
+                <h2 class="text-lg font-semibold text-ledger-text">Log Out</h2>
+                <p class="mt-2 text-sm text-ledger-muted">
                     Use this button to end your current session.
                 </p>
                 <button
                     type="button"
-                    class="mt-4 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                    class="mt-4 rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
                     @click="logout"
                 >
                     Log Out

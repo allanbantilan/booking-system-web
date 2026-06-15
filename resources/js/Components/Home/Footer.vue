@@ -10,7 +10,7 @@ const routeUrl = (name: string) => route(name);
     <footer class="border-t border-ledger-border bg-ledger-surface/60 px-4 py-10 sm:px-6 lg:px-8">
         <div class="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
-                <span class="grid size-9 place-items-center rounded-lg bg-cyan-500 text-slate-950"><i class="pi pi-bolt" /></span>
+                <span class="grid size-9 place-items-center rounded-lg bg-cyan-500 text-slate-950"><i class="pi pi-book" /></span>
                 <div>
                     <p class="font-display font-bold text-ledger-text">{{ appName }}</p>
                     <p class="text-xs text-ledger-muted">Booking, clearly accounted for.</p>

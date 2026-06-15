@@ -43,14 +43,18 @@ const logout = () => router.post(route("logout"));
         class="flex h-full flex-col border-r border-ledger-border bg-ledger-surface/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200"
         :class="collapsed && !mobile ? 'w-20' : 'w-72'"
     >
-        <div class="flex items-center gap-3 px-2">
+        <div
+            class="flex gap-3 px-2"
+            :class="collapsed && !mobile ? 'flex-col items-center' : 'items-center'"
+        >
             <Link
                 :href="routeUrl('dashboard')"
-                class="flex min-w-0 flex-1 items-center gap-3"
+                class="flex min-w-0 items-center gap-3"
+                :class="collapsed && !mobile ? 'justify-center' : 'flex-1'"
                 @click="emit('navigate')"
             >
                 <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20">
-                    <i class="pi pi-bolt text-lg" />
+                    <i class="pi pi-book text-lg" />
                 </span>
                 <span v-if="!collapsed || mobile" class="min-w-0">
                     <strong class="block truncate font-display text-lg text-ledger-text">{{ appName }}</strong>
@@ -64,6 +68,7 @@ const logout = () => router.post(route("logout"));
                 rounded
                 severity="secondary"
                 :icon="collapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'"
+                :class="collapsed ? '!size-9' : ''"
                 aria-label="Toggle sidebar"
                 @click="emit('toggle')"
             />

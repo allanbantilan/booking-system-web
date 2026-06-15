@@ -30,7 +30,7 @@ const scrollTo = (id: string) => {
     <nav class="fixed inset-x-0 top-0 z-50 border-b border-ledger-border bg-ledger-bg/82 backdrop-blur-xl">
         <div class="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
             <Link href="/" class="flex min-w-0 items-center gap-3">
-                <span class="grid size-10 place-items-center rounded-xl bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20"><i class="pi pi-bolt" /></span>
+                <span class="grid size-10 place-items-center rounded-xl bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20"><i class="pi pi-book" /></span>
                 <span class="font-display text-lg font-bold text-ledger-text">{{ appName }}</span>
             </Link>
 

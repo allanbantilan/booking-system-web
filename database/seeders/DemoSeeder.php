@@ -17,9 +17,10 @@ use Illuminate\Support\Str;
  * Prod-safe demo dataset.
  *
  * Produces a realistic, demo-ready dataset that exercises every screen:
- * backend (CMS) users for each role, the full catalogue of bookable
- * listings, frontend customers, and reservations spread across statuses —
- * each confirmed reservation carrying a full Payment -> Receipt money trail.
+ * backend (CMS) users for each role, three merchants, the full catalogue of
+ * merchant-owned bookable listings, frontend customers, and reservations
+ * spread across statuses — each confirmed reservation carrying a full
+ * Payment -> Receipt money trail.
  *
  * Run explicitly (it never fires from the default `db:seed`):
  *
@@ -37,10 +38,12 @@ class DemoSeeder extends Seeder
         ['Olivia Bennett', 'superadmin@example.com', '09170000001', ['super_admin', 'admin']],
         ['Liam Carter', 'admin@example.com', '09170000002', ['admin']],
         ['Emma Walker', 'merchant@example.com', '09170000003', ['merchant']],
-        ['Noah Parker', 'content@example.com', '09170000004', ['content_manager']],
-        ['Ava Mitchell', 'events@example.com', '09170000005', ['event_manager']],
-        ['William Brooks', 'usermanager@example.com', '09170000006', ['user_manager']],
-        ['Sophia Reed', 'support@example.com', '09170000007', ['support_staff']],
+        ['Mason Rivera', 'merchant2@example.com', '09170000004', ['merchant']],
+        ['Isabella Santos', 'merchant3@example.com', '09170000005', ['merchant']],
+        ['Noah Parker', 'content@example.com', '09170000006', ['content_manager']],
+        ['Ava Mitchell', 'events@example.com', '09170000007', ['event_manager']],
+        ['William Brooks', 'usermanager@example.com', '09170000008', ['user_manager']],
+        ['Sophia Reed', 'support@example.com', '09170000009', ['support_staff']],
     ];
 
     private const CUSTOMERS = [

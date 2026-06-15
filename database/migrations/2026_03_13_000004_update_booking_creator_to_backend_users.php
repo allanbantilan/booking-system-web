@@ -48,6 +48,14 @@ return new class extends Migration
 
     private function dropForeignIfExists(string $table, string $column): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table($table, function (Blueprint $table) use ($column): void {
+                $table->dropForeign([$column]);
+            });
+
+            return;
+        }
+
         if (DB::getDriverName() !== 'mysql') {
             return;
         }

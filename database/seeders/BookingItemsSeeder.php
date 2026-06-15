@@ -12,9 +12,14 @@ class BookingItemsSeeder extends Seeder
 {
     public function run(): void
     {
-        $backendUsers = BackendUser::query()->orderBy('id')->get();
+        $merchants = BackendUser::query()
+            ->whereHas('roles', fn ($query) => $query
+                ->where('name', 'merchant')
+                ->where('guard_name', 'backend'))
+            ->orderBy('id')
+            ->get();
 
-        if ($backendUsers->isEmpty()) {
+        if ($merchants->isEmpty()) {
             return;
         }
 
@@ -222,7 +227,7 @@ class BookingItemsSeeder extends Seeder
         Category::query()
             ->orderBy('id')
             ->get()
-            ->each(function (Category $category, int $index) use ($backendUsers, $now, $templates, $shouldSeedImages): void {
+            ->each(function (Category $category, int $index) use ($merchants, $now, $templates, $shouldSeedImages): void {
                 $template = $templates[$category->name] ?? [
                     'title' => "{$category->name} Booking",
                     'description' => "Sample booking item for {$category->name}.",
@@ -236,6 +241,8 @@ class BookingItemsSeeder extends Seeder
                     'amenities' => ['availability', 'support', 'secure'],
                     'queries' => [Str::slug($category->name)],
                 ];
+
+                $merchant = $merchants[$index % $merchants->count()];
 
                 $booking = Booking::firstOrCreate(
                     [
@@ -253,9 +260,13 @@ class BookingItemsSeeder extends Seeder
                         'amenities' => $template['amenities'],
                         'price' => $template['price'],
                         'discount_percentage' => $template['discount_percentage'] ?? 0,
-                        'created_by' => $backendUsers[$index % $backendUsers->count()]->id,
+                        'created_by' => $merchant->id,
                     ]
                 );
+
+                if ((int) $booking->created_by !== $merchant->id) {
+                    $booking->update(['created_by' => $merchant->id]);
+                }
 
                 if ($booking->getMedia('images')->isEmpty()) {
                     // Build keywords from the template so the photo matches the item

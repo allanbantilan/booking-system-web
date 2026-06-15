@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BackendUser;
+use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\Reservation;
@@ -18,7 +19,13 @@ class DemoSeederTest extends TestCase
     protected function tearDown(): void
     {
         putenv('SEED_DEMO');
-        unset($_ENV['SEED_DEMO'], $_SERVER['SEED_DEMO']);
+        putenv('SEED_EXTERNAL_IMAGES');
+        unset(
+            $_ENV['SEED_DEMO'],
+            $_SERVER['SEED_DEMO'],
+            $_ENV['SEED_EXTERNAL_IMAGES'],
+            $_SERVER['SEED_EXTERNAL_IMAGES'],
+        );
 
         parent::tearDown();
     }
@@ -26,17 +33,28 @@ class DemoSeederTest extends TestCase
     private function enableDemoFlag(): void
     {
         putenv('SEED_DEMO=true');
+        putenv('SEED_EXTERNAL_IMAGES=false');
         $_ENV['SEED_DEMO'] = 'true';
         $_SERVER['SEED_DEMO'] = 'true';
+        $_ENV['SEED_EXTERNAL_IMAGES'] = 'false';
+        $_SERVER['SEED_EXTERNAL_IMAGES'] = 'false';
     }
 
     public function test_it_no_ops_without_the_flag(): void
     {
+        putenv('SEED_DEMO=false');
+        $_ENV['SEED_DEMO'] = 'false';
+        $_SERVER['SEED_DEMO'] = 'false';
+
+        $backendUsers = BackendUser::count();
+        $users = User::count();
+        $reservations = Reservation::count();
+
         $this->seed(DemoSeeder::class);
 
-        $this->assertSame(0, BackendUser::count());
-        $this->assertSame(0, User::count());
-        $this->assertSame(0, Reservation::count());
+        $this->assertSame($backendUsers, BackendUser::count());
+        $this->assertSame($users, User::count());
+        $this->assertSame($reservations, Reservation::count());
     }
 
     public function test_it_seeds_a_full_demo_dataset(): void
@@ -45,11 +63,25 @@ class DemoSeederTest extends TestCase
 
         $this->seed(DemoSeeder::class);
 
-        // One backend user per role, including the merchant.
-        $this->assertSame(7, BackendUser::count());
-        $this->assertTrue(
-            BackendUser::where('email', 'merchant@example.com')->first()?->hasRole('merchant') ?? false
+        // One backend user per non-merchant role plus three merchants.
+        $this->assertGreaterThanOrEqual(9, BackendUser::count());
+
+        $merchants = BackendUser::role('merchant', 'backend')->orderBy('id')->get();
+        $this->assertCount(3, $merchants);
+        $this->assertSame(
+            ['merchant@example.com', 'merchant2@example.com', 'merchant3@example.com'],
+            $merchants->pluck('email')->all()
         );
+
+        // Every listing belongs to a merchant, distributed across all three.
+        $this->assertGreaterThan(0, Booking::count());
+        $this->assertSame(
+            Booking::count(),
+            Booking::whereIn('created_by', $merchants->pluck('id'))->count()
+        );
+        foreach ($merchants as $merchant) {
+            $this->assertTrue(Booking::where('created_by', $merchant->id)->exists());
+        }
 
         // Eight customers, each holding the customer role.
         $this->assertSame(8, User::count());
@@ -93,10 +125,19 @@ class DemoSeederTest extends TestCase
         $reservations = Reservation::count();
         $payments = Payment::count();
         $receipts = Receipt::count();
+        $backendUsers = BackendUser::count();
+
+        Booking::query()->first()->update([
+            'created_by' => BackendUser::where('email', 'admin@example.com')->value('id'),
+        ]);
 
         $this->seed(DemoSeeder::class);
 
-        $this->assertSame(7, BackendUser::count());
+        $merchantIds = BackendUser::role('merchant', 'backend')->pluck('id');
+
+        $this->assertSame($backendUsers, BackendUser::count());
+        $this->assertCount(3, $merchantIds);
+        $this->assertSame(Booking::count(), Booking::whereIn('created_by', $merchantIds)->count());
         $this->assertSame(8, User::count());
         $this->assertSame($reservations, Reservation::count());
         $this->assertSame($payments, Payment::count());

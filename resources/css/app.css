@@ -93,6 +93,64 @@
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
+
+    :root:not(.app-dark) :is(
+        .text-cyan-100,
+        .text-cyan-200,
+        .text-cyan-300,
+        .text-cyan-400
+    ) {
+        color: #0e7490;
+    }
+
+    :root:not(.app-dark) :is(
+        .text-emerald-50,
+        .text-emerald-200,
+        .text-emerald-300,
+        .text-emerald-400,
+        .text-green-500,
+        .text-green-600
+    ) {
+        color: #047857;
+    }
+
+    :root:not(.app-dark) :is(
+        .hover\:text-cyan-100:hover,
+        .hover\:text-cyan-200:hover,
+        .hover\:text-cyan-300:hover
+    ) {
+        color: #155e75;
+    }
+
+    :root:not(.app-dark) :is(
+        .bg-cyan-500,
+        .bg-cyan-400,
+        .border-cyan-400
+    ) {
+        background-color: #0891b2;
+        border-color: #0891b2;
+    }
+
+    :root:not(.app-dark) :is(
+        .hover\:bg-cyan-400:hover,
+        .hover\:bg-cyan-500:hover
+    ) {
+        background-color: #0e7490;
+    }
+
+    :root:not(.app-dark) :is(
+        .text-orange-300,
+        .text-orange-400
+    ) {
+        color: #c2410c;
+    }
+
+    :root:not(.app-dark) :is(
+        .bg-orange-500,
+        .bg-orange-400
+    ) {
+        background-color: #ea580c;
+    }
 }
 
 [x-cloak] {

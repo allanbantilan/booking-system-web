@@ -29,7 +29,7 @@ class ConfirmedBookingsTable
                 TextColumn::make('user.roles.name')
                     ->label('Role')
                     ->badge()
-                    ->separator(',')
+                    ->separator(','),
                 TextColumn::make('quantity')
                     ->numeric()
                     ->sortable(),

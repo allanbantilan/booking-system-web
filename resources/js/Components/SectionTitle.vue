@@ -12,14 +12,14 @@ defineProps({
         <div class="px-4 sm:px-0">
             <h3
                 class="text-lg font-medium"
-                :class="variant === 'dashboard' ? 'text-white' : 'text-gray-900'"
+                :class="variant === 'dashboard' ? 'text-ledger-text' : 'text-ledger-text'"
             >
                 <slot name="title" />
             </h3>
 
             <p
                 class="mt-1 text-sm"
-                :class="variant === 'dashboard' ? 'text-slate-300' : 'text-gray-600'"
+                :class="variant === 'dashboard' ? 'text-ledger-muted' : 'text-ledger-muted'"
             >
                 <slot name="description" />
             </p>

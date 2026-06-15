@@ -26,7 +26,7 @@ const submit = () => {
 <template>
     <Head :title="`Create Account | ${appName}`" />
 
-    <div class="relative min-h-screen overflow-hidden bg-slate-950">
+    <div class="relative min-h-screen overflow-hidden bg-ledger-bg">
         <Navigation
             :can-login="false"
             :can-register="false"
@@ -41,9 +41,9 @@ const submit = () => {
         <div
             class="relative mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 pb-10 pt-24 sm:px-6 lg:grid-cols-2 lg:px-8"
         >
-            <section class="hidden text-white lg:block">
+            <section class="hidden text-ledger-text lg:block">
                 <p
-                    class="mb-5 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-1 text-sm uppercase tracking-[0.2em]"
+                    class="mb-5 inline-flex items-center rounded-full border border-ledger-border bg-ledger-elevated px-4 py-1 text-sm uppercase tracking-[0.2em]"
                 >
                     {{ appName }}
                 </p>
@@ -51,18 +51,18 @@ const submit = () => {
                     Launch your
                     <span class="text-cyan-300">booking workspace</span>
                 </h1>
-                <p class="mt-5 max-w-md text-base text-slate-200/85">
+                <p class="mt-5 max-w-md text-base text-ledger-text/85">
                     Create your account to manage services, schedules, and client bookings.
                 </p>
             </section>
 
             <section
-                class="rounded-3xl border border-white/20 bg-transparent p-6 shadow-2xl shadow-cyan-900/25 backdrop-blur sm:p-8"
+                class="rounded-3xl border border-ledger-border bg-transparent p-6 shadow-2xl shadow-cyan-900/25 backdrop-blur sm:p-8"
             >
-                <h2 class="text-3xl font-black tracking-tight text-white">
+                <h2 class="text-3xl font-black tracking-tight text-ledger-text">
                     Create account
                 </h2>
-                <p class="mt-2 text-sm text-slate-300">
+                <p class="mt-2 text-sm text-ledger-muted">
                     Set up access to your booking dashboard.
                 </p>
 
@@ -70,7 +70,7 @@ const submit = () => {
                     <div>
                         <label
                             for="name"
-                            class="mb-1 block text-sm font-semibold text-slate-200"
+                            class="mb-1 block text-sm font-semibold text-ledger-text"
                         >
                             Full name
                         </label>
@@ -81,7 +81,7 @@ const submit = () => {
                             required
                             autofocus
                             autocomplete="name"
-                            class="block w-full rounded-xl border border-white/25 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                            class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
                             placeholder="Your name"
                         />
                         <p
@@ -95,7 +95,7 @@ const submit = () => {
                     <div>
                         <label
                             for="email"
-                            class="mb-1 block text-sm font-semibold text-slate-200"
+                            class="mb-1 block text-sm font-semibold text-ledger-text"
                         >
                             Email
                         </label>
@@ -105,7 +105,7 @@ const submit = () => {
                             type="email"
                             required
                             autocomplete="username"
-                            class="block w-full rounded-xl border border-white/25 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                            class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
                             placeholder="you@company.com"
                         />
                         <p
@@ -119,7 +119,7 @@ const submit = () => {
                     <div class="relative">
                         <label
                             for="password"
-                            class="mb-1 block text-sm font-semibold text-slate-200"
+                            class="mb-1 block text-sm font-semibold text-ledger-text"
                         >
                             Password
                         </label>
@@ -130,13 +130,13 @@ const submit = () => {
                                 :type="showPassword ? 'text' : 'password'"
                                 required
                                 autocomplete="new-password"
-                                class="block w-full rounded-xl border border-white/25 bg-white/5 px-4 py-3 pr-12 text-white placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-12 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
                                 placeholder="At least 8 characters"
                             />
                             <button
                                 type="button"
                                 @click="showPassword = !showPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-ledger-muted hover:text-ledger-text"
                                 :aria-label="
                                     showPassword
                                         ? 'Hide password'
@@ -192,7 +192,7 @@ const submit = () => {
                     <div class="relative">
                         <label
                             for="password_confirmation"
-                            class="mb-1 block text-sm font-semibold text-slate-200"
+                            class="mb-1 block text-sm font-semibold text-ledger-text"
                         >
                             Confirm password
                         </label>
@@ -207,7 +207,7 @@ const submit = () => {
                                 "
                                 required
                                 autocomplete="new-password"
-                                class="block w-full rounded-xl border border-white/25 bg-white/5 px-4 py-3 pr-12 text-white placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-12 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
                                 placeholder="Repeat password"
                             />
                             <button
@@ -216,7 +216,7 @@ const submit = () => {
                                     showPasswordConfirmation =
                                         !showPasswordConfirmation
                                 "
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-ledger-muted hover:text-ledger-text"
                                 :aria-label="
                                     showPasswordConfirmation
                                         ? 'Hide password confirmation'
@@ -271,10 +271,10 @@ const submit = () => {
 
                     <div
                         v-if="$page.props.jetstream.hasTermsAndPrivacyPolicyFeature"
-                        class="rounded-xl border border-white/20 bg-white/5 p-3"
+                        class="rounded-xl border border-ledger-border bg-ledger-surface p-3"
                     >
                         <label
-                            class="inline-flex cursor-pointer items-start gap-2 text-sm text-slate-200"
+                            class="inline-flex cursor-pointer items-start gap-2 text-sm text-ledger-text"
                         >
                             <input
                                 id="terms"
@@ -314,14 +314,14 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                        class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-ledger-text transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {{
                             form.processing ? "Creating account..." : "Create booking account"
                         }}
                     </button>
 
-                    <p class="text-center text-sm text-slate-300">
+                    <p class="text-center text-sm text-ledger-muted">
                         Already registered?
                         <Link
                             :href="route('login')"

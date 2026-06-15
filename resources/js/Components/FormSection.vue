@@ -15,15 +15,15 @@ const hasActions = computed(() => !! useSlots().actions);
 
 const panelClasses = computed(() => {
     if (props.variant === 'dashboard') {
-        return 'bg-slate-900/60 border border-white/10 text-slate-100';
+        return 'bg-slate-900/60 border border-ledger-border text-slate-100';
     }
 
-    return 'bg-white';
+    return 'bg-ledger-surface';
 });
 
 const actionsClasses = computed(() => {
     if (props.variant === 'dashboard') {
-        return 'bg-slate-900/70 border border-white/10 text-slate-200';
+        return 'bg-slate-900/70 border border-ledger-border text-ledger-text';
     }
 
     return 'bg-gray-50';

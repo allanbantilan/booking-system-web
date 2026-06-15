@@ -55,9 +55,9 @@ const requestMerchantAccess = () => {
             </section>
 
             <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
-                <h2 class="text-lg font-semibold text-ledger-text">Be a Merchant</h2>
+                <h2 class="text-lg font-semibold text-ledger-text">List Your Services</h2>
                 <p class="mt-2 text-sm text-ledger-muted">
-                    Have a place to rent? We’ll create backend credentials for you and send them to your email.
+                    Offer experiences, spaces, rentals, or services through BookFlow. Submit a request and we’ll email your merchant dashboard access after approval.
                 </p>
                 <div class="mt-4">
                     <label class="text-sm font-medium text-ledger-text">

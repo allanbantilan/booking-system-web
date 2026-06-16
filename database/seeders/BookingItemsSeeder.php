@@ -28,7 +28,7 @@ class BookingItemsSeeder extends Seeder
 
         $templates = [
             'Flights' => [
-                'title' => 'Manila to Cebu Roundtrip Seat',
+                'title' => 'Roundtrip Flight',
                 'description' => 'Secure an economy seat with free carry-on and flexible rebooking. Ideal for weekend getaways and business trips.',
                 'location' => 'NAIA Terminal 3, Pasay',
                 'capacity' => 180,
@@ -41,7 +41,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['airplane', 'airport'],
             ],
             'Hotels / Accommodations' => [
-                'title' => 'Boracay Beachfront King Room',
+                'title' => 'Hotel Room',
                 'description' => 'One-night stay with breakfast and ocean view. Check-in after 2 PM, late checkout available.',
                 'location' => 'White Beach, Boracay',
                 'capacity' => 2,
@@ -54,7 +54,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['hotel room', 'resort'],
             ],
             'Car Rentals' => [
-                'title' => 'Compact Car Rental (24 Hours)',
+                'title' => 'Compact Car Rental',
                 'description' => 'Fuel-efficient compact car with automatic transmission. Includes basic insurance and unlimited mileage.',
                 'location' => 'Makati CBD',
                 'capacity' => 5,
@@ -67,7 +67,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['car rental', 'compact car'],
             ],
             'Restaurant Tables' => [
-                'title' => 'Chef\'s Tasting Table for Two',
+                'title' => 'Dinner for Two',
                 'description' => 'Reserve a prime dinner slot with a curated six-course tasting menu.',
                 'location' => 'Poblacion, Makati',
                 'capacity' => 2,
@@ -80,7 +80,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['restaurant', 'fine dining'],
             ],
             'Private Dining Rooms' => [
-                'title' => 'Private Dining Room (10 Guests)',
+                'title' => 'Private Dining Room',
                 'description' => 'Exclusive room with dedicated server and customizable menu packages.',
                 'location' => 'BGC, Taguig',
                 'capacity' => 10,
@@ -93,7 +93,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['private dining', 'banquet room'],
             ],
             'Catering Services' => [
-                'title' => 'Corporate Catering Package',
+                'title' => 'Catering Package',
                 'description' => 'Buffet setup with appetizers, mains, and desserts for small corporate events.',
                 'location' => 'Ortigas Center, Pasig',
                 'capacity' => 30,
@@ -106,7 +106,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['catering', 'buffet'],
             ],
             'Concert Tickets' => [
-                'title' => 'Arena Concert Lower Box',
+                'title' => 'Concert Ticket',
                 'description' => 'Lower box seat for a live concert with clear stage visibility.',
                 'location' => 'Smart Araneta Coliseum, QC',
                 'capacity' => 1,
@@ -119,7 +119,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['concert', 'arena'],
             ],
             'Movies (Cinemas)' => [
-                'title' => 'Cinema Luxe Recliner Seats',
+                'title' => 'Cinema Seats',
                 'description' => 'Reserve two recliner seats with in-seat dining service.',
                 'location' => 'Uptown Mall, BGC',
                 'capacity' => 2,
@@ -132,7 +132,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['cinema', 'movie theater'],
             ],
             'Sports Games' => [
-                'title' => 'Courtside Sports Pass',
+                'title' => 'Sports Game Ticket',
                 'description' => 'Courtside ticket for a pro league game with VIP entry.',
                 'location' => 'MOA Arena, Pasay',
                 'capacity' => 1,
@@ -145,7 +145,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['stadium', 'basketball game'],
             ],
             'Doctor or Dentist Appointments' => [
-                'title' => 'Dental Cleaning Appointment',
+                'title' => 'Dental Checkup',
                 'description' => 'Professional cleaning and oral assessment with a licensed dentist.',
                 'location' => 'Greenbelt, Makati',
                 'capacity' => 1,
@@ -158,7 +158,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['dental clinic', 'dentist'],
             ],
             'Haircuts / Barbershop Visits' => [
-                'title' => 'Premium Barber Cut',
+                'title' => 'Haircut Appointment',
                 'description' => 'Includes wash, precision cut, and styling.',
                 'location' => 'Kapitolyo, Pasig',
                 'capacity' => 1,
@@ -171,7 +171,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['barbershop', 'haircut'],
             ],
             'Spa or Massage Sessions' => [
-                'title' => '90-Minute Signature Massage',
+                'title' => 'Massage Session',
                 'description' => 'Full-body deep tissue massage with aromatherapy.',
                 'location' => 'Alabang Town Center',
                 'capacity' => 1,
@@ -184,7 +184,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['spa', 'massage'],
             ],
             'Sports Courts (Tennis, Badminton, Basketball)' => [
-                'title' => 'Indoor Sports Court Rental',
+                'title' => 'Sports Court Rental',
                 'description' => 'Book a private indoor court with lighting included.',
                 'location' => 'Marikina Sports Center',
                 'capacity' => 12,
@@ -197,7 +197,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['sports court', 'indoor court'],
             ],
             'Meeting or Conference Rooms' => [
-                'title' => 'Boardroom for 12',
+                'title' => 'Meeting Room',
                 'description' => 'Fully equipped room with projector, Wi-Fi, and refreshments.',
                 'location' => 'Bonifacio High Street, BGC',
                 'capacity' => 12,
@@ -210,7 +210,7 @@ class BookingItemsSeeder extends Seeder
                 'queries' => ['meeting room', 'conference room'],
             ],
             'Photography Studios' => [
-                'title' => 'Daylight Photo Studio',
+                'title' => 'Photo Studio',
                 'description' => 'Natural light studio with seamless backdrops and basic lighting.',
                 'location' => 'Quezon City',
                 'capacity' => 6,

@@ -1,5 +1,6 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
+import ImageViewer from "@/Components/Bookings/ImageViewer.vue";
 import { router, usePage } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 
@@ -28,6 +29,7 @@ const nights = ref(
 const checkInDate = ref("");
 const checkOutDate = ref("");
 const isProcessing = ref(false);
+const activeGallery = ref(null);
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat("en-PH", {
@@ -162,6 +164,14 @@ const getExtraRateLabel = () => {
 
 const primaryImage = computed(() => props.booking.image_urls?.[0]);
 
+const openGallery = (index = 0) => {
+    activeGallery.value = { index };
+};
+
+const closeGallery = () => {
+    activeGallery.value = null;
+};
+
 const contactItems = computed(() => {
     const creator = props.booking.creator || {};
 
@@ -170,11 +180,13 @@ const contactItems = computed(() => {
             key: "email",
             label: "Email",
             value: creator.email,
+            url: creator.email ? `mailto:${creator.email}` : null,
         },
         {
             key: "mobile",
             label: "Mobile",
             value: creator.mobile_number,
+            url: creator.mobile_number ? `tel:${creator.mobile_number}` : null,
         },
         {
             key: "facebook",
@@ -236,25 +248,35 @@ const startPayMayaCheckout = () => {
 
         <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
             <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
-                <div
+                <button
                     v-if="primaryImage"
-                    class="mb-4 overflow-hidden rounded-2xl border border-ledger-border"
+                    type="button"
+                    class="group relative mb-4 block w-full overflow-hidden rounded-2xl border border-ledger-border bg-ledger-elevated text-left"
+                    @click="openGallery(0)"
                 >
                     <img
                         :src="primaryImage"
                         :alt="booking.title"
-                        class="h-72 w-full object-cover"
+                        class="h-72 w-full object-contain transition duration-300 group-hover:scale-[1.02]"
                     />
-                </div>
+                    <span
+                        class="absolute left-3 top-3 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 text-xs font-semibold text-ledger-text"
+                    >
+                        {{ booking.image_urls?.length || 1 }}
+                        photo{{ (booking.image_urls?.length || 1) === 1 ? "" : "s" }}
+                    </span>
+                </button>
 
                 <div
                     v-if="booking.image_urls?.length > 1"
                     class="grid grid-cols-3 gap-3"
                 >
-                    <div
+                    <button
                         v-for="(image, index) in booking.image_urls"
                         :key="`${booking.id}-image-${index}`"
-                        class="overflow-hidden rounded-xl border border-ledger-border"
+                        type="button"
+                        class="overflow-hidden rounded-xl border border-ledger-border bg-ledger-elevated transition hover:border-cyan-400"
+                        @click="openGallery(index)"
                     >
                         <img
                             :src="image"
@@ -262,7 +284,7 @@ const startPayMayaCheckout = () => {
                             class="h-24 w-full object-cover"
                             loading="lazy"
                         />
-                    </div>
+                    </button>
                 </div>
 
                 <div class="mt-6 space-y-4 text-sm text-ledger-text">
@@ -295,7 +317,7 @@ const startPayMayaCheckout = () => {
                 <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">
                     Booking Summary
                 </p>
-                <div class="mt-4 grid gap-4">
+                <div class="mt-4 grid gap-4 xl:grid-cols-2">
                     <div class="rounded-xl border border-ledger-border bg-ledger-elevated p-4">
                         <div class="flex items-start justify-between gap-4">
                             <span class="text-sm text-ledger-muted">{{ getRateLabel() }}</span>
@@ -345,24 +367,29 @@ const startPayMayaCheckout = () => {
                             </div>
                         </div>
 
-                        <div class="mt-4 flex items-center justify-between border-t border-ledger-border pt-4">
-                            <span class="text-sm text-ledger-muted">Created By</span>
-                            <span class="text-sm text-ledger-text">
-                                {{ booking.creator?.name || "Admin" }}
-                            </span>
+                        <div class="mt-4 border-t border-ledger-border pt-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-ledger-muted">
+                                Merchant
+                            </p>
+                            <div class="mt-3 rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2">
+                                <span class="text-xs text-ledger-muted">Created by</span>
+                                <p class="mt-1 truncate text-sm font-semibold text-ledger-text">
+                                    {{ booking.creator?.name || "Admin" }}
+                                </p>
+                            </div>
                         </div>
-                        <div class="mt-4 space-y-3">
+                        <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                             <div
                                 v-for="item in contactItems"
                                 :key="item.key"
-                                class="flex items-center justify-between gap-3 text-sm"
+                                class="rounded-lg border border-ledger-border bg-ledger-surface p-3 text-sm"
                             >
                                 <span
-                                    class="inline-flex items-center gap-2 text-ledger-muted"
+                                    class="inline-flex items-center gap-2 text-xs text-ledger-muted"
                                 >
                                     <span
                                         v-if="item.key === 'email'"
-                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-surface text-ledger-text"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-elevated text-ledger-text"
                                     >
                                         <svg
                                             viewBox="0 0 24 24"
@@ -377,7 +404,7 @@ const startPayMayaCheckout = () => {
                                     </span>
                                     <span
                                         v-else-if="item.key === 'mobile'"
-                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-surface text-ledger-text"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-elevated text-ledger-text"
                                     >
                                         <svg
                                             viewBox="0 0 24 24"
@@ -392,7 +419,7 @@ const startPayMayaCheckout = () => {
                                     </span>
                                     <span
                                         v-else-if="item.key === 'facebook'"
-                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-surface text-ledger-text"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-elevated text-ledger-text"
                                     >
                                         <svg
                                             viewBox="0 0 24 24"
@@ -406,7 +433,7 @@ const startPayMayaCheckout = () => {
                                     </span>
                                     <span
                                         v-else-if="item.key === 'instagram'"
-                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-surface text-ledger-text"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-ledger-border bg-ledger-elevated text-ledger-text"
                                     >
                                         <svg
                                             viewBox="0 0 24 24"
@@ -434,80 +461,17 @@ const startPayMayaCheckout = () => {
                                     </span>
                                     <span>{{ item.label }}</span>
                                 </span>
-                                <span class="text-right text-ledger-text">
-                                    <!-- Facebook & Instagram: icon button, no URL text -->
-                                    <a
-                                        v-if="
-                                            item.url &&
-                                            (item.key === 'facebook' ||
-                                                item.key === 'instagram')
-                                        "
-                                        :href="item.url"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="inline-flex items-center gap-1.5 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 text-xs font-medium text-cyan-200 transition hover:bg-ledger-elevated hover:text-cyan-100"
-                                    >
-                                        <svg
-                                            v-if="item.key === 'facebook'"
-                                            viewBox="0 0 24 24"
-                                            class="h-3.5 w-3.5"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                d="M13.5 9H16V6h-2.5C11.6 6 11 7.5 11 9v2H9v3h2v6h3v-6h2.2L17 11h-3V9c0-.6.2-1 1.5-1z"
-                                            />
-                                        </svg>
-                                        <svg
-                                            v-else
-                                            viewBox="0 0 24 24"
-                                            class="h-3.5 w-3.5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.5"
-                                        >
-                                            <rect
-                                                x="4"
-                                                y="4"
-                                                width="16"
-                                                height="16"
-                                                rx="5"
-                                            />
-                                            <circle cx="12" cy="12" r="3.5" />
-                                            <circle
-                                                cx="17"
-                                                cy="7"
-                                                r="1"
-                                                fill="currentColor"
-                                                stroke="none"
-                                            />
-                                        </svg>
-                                        Visit {{ item.label }}
-                                    </a>
-                                    <span
-                                        v-else-if="
-                                            item.url &&
-                                            (item.key === 'facebook' ||
-                                                item.key === 'instagram')
-                                        "
-                                        class="text-xs text-slate-500 italic"
-                                    >
-                                        Not set
-                                    </span>
-                                    <!-- Email & Mobile: show value as plain text or link -->
-                                    <a
-                                        v-else-if="item.url"
-                                        :href="item.url"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="text-cyan-200 hover:text-cyan-100"
-                                    >
-                                        {{ item.value }}
-                                    </a>
-                                    <span v-else>
-                                        {{
-                                            item.value || "Not set"
-                                        }}
-                                    </span>
+                                <a
+                                    v-if="item.url"
+                                    :href="item.url"
+                                    :target="item.key === 'facebook' || item.key === 'instagram' ? '_blank' : undefined"
+                                    :rel="item.key === 'facebook' || item.key === 'instagram' ? 'noopener' : undefined"
+                                    class="mt-2 block truncate font-semibold text-cyan-200 transition hover:text-cyan-100"
+                                >
+                                    {{ item.key === "facebook" || item.key === "instagram" ? "Open profile" : item.value }}
+                                </a>
+                                <span v-else class="mt-2 block truncate font-semibold text-ledger-text">
+                                    {{ item.value || "Not set" }}
                                 </span>
                             </div>
                         </div>
@@ -524,7 +488,7 @@ const startPayMayaCheckout = () => {
                                 min="1"
                                 class="w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
                             />
-                            <div v-if="requiresDateRange" class="space-y-3">
+                            <div v-if="requiresDateRange" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                                 <div>
                                     <label class="text-sm text-ledger-muted">Check-in</label>
                                     <input
@@ -541,7 +505,7 @@ const startPayMayaCheckout = () => {
                                         class="w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
                                     />
                                 </div>
-                                <div class="rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm">
+                                <div class="rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm sm:col-span-2 xl:col-span-1 2xl:col-span-2">
                                     <span class="text-ledger-muted">Duration</span>
                                     <span class="ml-2 font-semibold text-ledger-text">
                                         {{ isDateRangeInvalid ? "Select valid dates" : stayLengthLabel }}
@@ -595,5 +559,13 @@ const startPayMayaCheckout = () => {
                 </div>
             </aside>
         </div>
+
+        <ImageViewer
+            :open="!!activeGallery"
+            :images="booking.image_urls || []"
+            :title="booking.title"
+            :initial-index="activeGallery?.index || 0"
+            @close="closeGallery"
+        />
     </DashboardLayout>
 </template>

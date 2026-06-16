@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
+import { computed } from "vue";
 
 withDefaults(defineProps<{ appName?: string }>(), { appName: "BookFlow" });
+const page = usePage();
 const currentYear = new Date().getFullYear();
 const routeUrl = (name: string) => route(name);
+const hasTermsAndPrivacyPolicyFeature = computed(() =>
+    Boolean((page.props.jetstream as { hasTermsAndPrivacyPolicyFeature?: boolean } | undefined)?.hasTermsAndPrivacyPolicyFeature),
+);
 </script>
 
 <template>
@@ -19,8 +24,10 @@ const routeUrl = (name: string) => route(name);
             <div class="flex flex-wrap gap-5 text-sm font-semibold text-ledger-muted">
                 <Link :href="routeUrl('login')" class="hover:text-ledger-text">Sign in</Link>
                 <Link :href="routeUrl('register')" class="hover:text-ledger-text">Create account</Link>
-                <Link :href="routeUrl('policy.show')" class="hover:text-ledger-text">Privacy</Link>
-                <Link :href="routeUrl('terms.show')" class="hover:text-ledger-text">Terms</Link>
+                <template v-if="hasTermsAndPrivacyPolicyFeature">
+                    <Link :href="routeUrl('policy.show')" class="hover:text-ledger-text">Privacy</Link>
+                    <Link :href="routeUrl('terms.show')" class="hover:text-ledger-text">Terms</Link>
+                </template>
             </div>
             <p class="text-xs text-ledger-muted">&copy; {{ currentYear }} {{ appName }}</p>
         </div>

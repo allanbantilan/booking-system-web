@@ -116,14 +116,13 @@ class DeploymentReadinessTest extends TestCase
                 ]);
         });
 
-        $this->postJson(route('api.payments.paymaya.checkout'), [
+        $this->post(route('payments.paymaya.checkout'), [
             'booking_id' => $booking->id,
             'quantity' => 2,
-        ])
-            ->assertCreated()
-            ->assertJsonPath('data.checkout_id', 'CHK-SMOKE-1');
+        ])->assertRedirect('https://example.test/checkout');
 
         $payment = Payment::query()->firstOrFail();
+        $this->assertSame('CHK-SMOKE-1', $payment->checkout_id);
         $this->assertSame('pending', $payment->status);
         $this->assertSame(1, $booking->fresh()->capacity);
 

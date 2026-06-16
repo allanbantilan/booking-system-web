@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Payments\CreatePayMayaCheckoutRequest;
 use App\Services\Payments\PayMayaCheckoutFlow;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
 
@@ -23,6 +24,8 @@ class PayMayaCheckoutController extends Controller
 
         try {
             $result = $flow->create($user, $bookingId, $quantity, $nights, $checkInDate, $checkOutDate);
+        } catch (ValidationException $exception) {
+            throw $exception; // let Inertia surface field-level errors (e.g. date range)
         } catch (\Throwable $exception) {
             return back()->with('error', $exception->getMessage());
         }

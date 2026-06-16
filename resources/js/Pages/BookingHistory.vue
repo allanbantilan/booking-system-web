@@ -136,6 +136,40 @@ const getCancellationTitle = (reservation) => {
     return "Cancellation is unavailable.";
 };
 
+const getReservationStatusLabel = (reservation) => {
+    if (reservation.status === "cancelled") {
+        if (reservation.cancellation_request?.refund_status === "processed") {
+            return "refunded";
+        }
+
+        if (reservation.cancellation_request?.refund_status === "pending") {
+            return "refund pending";
+        }
+    }
+
+    return reservation.status;
+};
+
+const getReservationStatusClass = (reservation) => {
+    if (getReservationStatusLabel(reservation) === "refunded") {
+        return "bg-emerald-400/20 text-emerald-300";
+    }
+
+    if (getReservationStatusLabel(reservation) === "refund pending") {
+        return "bg-amber-400/20 text-amber-300";
+    }
+
+    if (reservation.status === "confirmed") {
+        return "bg-emerald-400/20 text-emerald-300";
+    }
+
+    if (reservation.status === "cancelled") {
+        return "bg-rose-400/20 text-rose-300";
+    }
+
+    return "bg-amber-400/20 text-amber-300";
+};
+
 const submitCancellation = () => {
     if (!activeCancellation.value) return;
 
@@ -203,15 +237,9 @@ const submitCancellation = () => {
                             <td class="px-3 py-3">
                                 <span
                                     class="rounded-full px-2.5 py-1 text-xs font-semibold"
-                                    :class="
-                                        reservation.status === 'confirmed'
-                                            ? 'bg-emerald-400/20 text-emerald-300'
-                                            : reservation.status === 'cancelled'
-                                                ? 'bg-rose-400/20 text-rose-300'
-                                                : 'bg-amber-400/20 text-amber-300'
-                                    "
+                                    :class="getReservationStatusClass(reservation)"
                                 >
-                                    {{ reservation.status }}
+                                    {{ getReservationStatusLabel(reservation) }}
                                 </span>
                             </td>
                             <td class="px-3 py-3">
@@ -243,12 +271,6 @@ const submitCancellation = () => {
                                 >
                                     {{ getCancellationLabel(reservation) }}
                                 </span>
-                                <p
-                                    v-if="reservation.cancellation_request?.status === 'approved' && reservation.cancellation_request?.refund_required"
-                                    class="mt-1 text-xs text-ledger-muted"
-                                >
-                                    Refund {{ reservation.cancellation_request.refund_status }}
-                                </p>
                             </td>
                         </tr>
                     </tbody>

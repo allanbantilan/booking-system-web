@@ -33,5 +33,7 @@ CLAUDE.md
 .agents/
 .claude/
 .codex-plugins/
+.impeccable/
 .mimocode/
+PRODUCT.md
 skills-lock.json

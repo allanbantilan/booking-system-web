@@ -15,7 +15,7 @@ const hasActions = computed(() => !! useSlots().actions);
 
 const panelClasses = computed(() => {
     if (props.variant === 'dashboard') {
-        return 'bg-slate-900/60 border border-ledger-border text-slate-100';
+        return 'border border-ledger-border bg-ledger-surface text-ledger-text';
     }
 
     return 'bg-ledger-surface';
@@ -23,7 +23,7 @@ const panelClasses = computed(() => {
 
 const actionsClasses = computed(() => {
     if (props.variant === 'dashboard') {
-        return 'bg-slate-900/70 border border-ledger-border text-ledger-text';
+        return 'border-x border-b border-ledger-border bg-ledger-elevated text-ledger-text';
     }
 
     return 'bg-gray-50';

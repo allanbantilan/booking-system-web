@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Receipt;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Types\StatusType;
@@ -106,6 +107,32 @@ class ReservationControllerTest extends TestCase
         ]);
     }
 
+    public function test_cancel_prevents_cancellation_when_receipt_was_issued(): void
+    {
+        $user = User::factory()->create();
+        $reservation = $this->makeConfirmedReservation($user, capacity: 10, quantity: 2);
+        $payment = $this->makePayment($reservation, 'paid');
+
+        Receipt::create([
+            'payment_id' => $payment->id,
+            'reservation_id' => $reservation->id,
+            'receipt_number' => 'RCT-ISSUED-1',
+            'amount' => $reservation->total_price,
+            'currency' => 'PHP',
+            'issued_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('reservations.cancel', $reservation->id))
+            ->assertSessionHasErrors(['error' => 'Receipt issued.']);
+
+        $this->assertDatabaseHas('reservations', [
+            'id' => $reservation->id,
+            'status' => StatusType::Confirmed->value,
+        ]);
+        $this->assertSame(8, $reservation->booking->fresh()->capacity);
+    }
+
     public function test_cancel_restores_capacity_for_pending_reservation(): void
     {
         $user = User::factory()->create();
@@ -159,6 +186,47 @@ class ReservationControllerTest extends TestCase
         $this->assertSame($mine->id, $reservations[0]['id']);
     }
 
+    public function test_history_returns_cancellation_contract_for_blocked_reservations(): void
+    {
+        $user = User::factory()->create();
+        $cancelled = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
+        $cancelled->update([
+            'status' => StatusType::Cancelled,
+            'cancelled_at' => now(),
+        ]);
+
+        $receiptBlocked = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
+        $payment = $this->makePayment($receiptBlocked, 'paid');
+        Receipt::create([
+            'payment_id' => $payment->id,
+            'reservation_id' => $receiptBlocked->id,
+            'receipt_number' => 'RCT-HISTORY-1',
+            'amount' => $receiptBlocked->total_price,
+            'currency' => 'PHP',
+            'issued_at' => now(),
+        ]);
+
+        $outsideWindow = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
+        \Illuminate\Support\Facades\DB::table('reservations')
+            ->where('id', $outsideWindow->id)
+            ->update(['created_at' => now()->subDays(4)]);
+
+        $response = $this->actingAs($user)
+            ->get(route('bookings.history'));
+
+        $response->assertOk();
+        $reservations = collect($response->viewData('page')['props']['reservations'])
+            ->keyBy('id');
+
+        $this->assertSame('already_cancelled', $reservations[$cancelled->id]['cancel_block_reason']);
+        $this->assertSame('Already cancelled', $reservations[$cancelled->id]['cancel_block_label']);
+        $this->assertSame('receipt_issued', $reservations[$receiptBlocked->id]['cancel_block_reason']);
+        $this->assertSame('Receipt issued', $reservations[$receiptBlocked->id]['cancel_block_label']);
+        $this->assertSame('outside_window', $reservations[$outsideWindow->id]['cancel_block_reason']);
+        $this->assertSame('Cancellation window ended', $reservations[$outsideWindow->id]['cancel_block_label']);
+        $this->assertSame('Cancellable within 3 days before receipt is issued.', $reservations[$outsideWindow->id]['cancel_policy_label']);
+    }
+
     // ─── helpers ────────────────────────────────────────────────────────────
 
     private function makeBooking(int $capacity = 10): Booking
@@ -186,6 +254,19 @@ class ReservationControllerTest extends TestCase
             'quantity' => $quantity,
             'total_price' => $quantity * 100,
             'status' => StatusType::Confirmed,
+        ]);
+    }
+
+    private function makePayment(Reservation $reservation, string $status): Payment
+    {
+        return Payment::create([
+            'reservation_id' => $reservation->id,
+            'user_id' => $reservation->user_id,
+            'provider' => 'paymaya',
+            'status' => $status,
+            'amount' => $reservation->total_price,
+            'currency' => 'PHP',
+            'reference' => 'PMY-TEST-' . $reservation->id,
         ]);
     }
 }

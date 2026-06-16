@@ -68,4 +68,9 @@ class Reservation extends Model
             ->where('status', ReservationCancellationRequest::STATUS_REQUESTED)
             ->latestOfMany();
     }
+
+    public function latestCancellationRequest(): HasOne
+    {
+        return $this->hasOne(ReservationCancellationRequest::class)->latestOfMany();
+    }
 }

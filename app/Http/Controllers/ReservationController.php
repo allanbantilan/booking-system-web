@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Reservation;
+use App\Models\ReservationCancellationRequest;
 use App\Services\Reservations\ReservationCancellationService;
 use App\Types\StatusType;
 use Illuminate\Http\RedirectResponse;
@@ -34,13 +35,15 @@ class ReservationController extends Controller
         return back()->with('success', 'Cancellation request submitted for merchant review.');
     }
 
-    public function history(Request $request): Response
+    public function history(Request $request, ReservationCancellationService $cancellations): Response
     {
         $reservations = Reservation::query()
             ->with([
                 'booking:id,title,description,location,event_date,capacity,price,discount_percentage,availability_label,quantity_label,meta_line,amenities,category_id',
                 'booking.category:id,name,color,badge_label',
                 'booking.media',
+                'activeCancellationRequest',
+                'latestCancellationRequest',
                 'payment',
                 'receipt',
             ])
@@ -49,8 +52,8 @@ class ReservationController extends Controller
             ->get();
 
         return Inertia::render('BookingHistory', [
-            'reservations' => $reservations->map(function (Reservation $reservation): array {
-                $eligibility = $this->cancellationEligibility($reservation);
+            'reservations' => $reservations->map(function (Reservation $reservation) use ($cancellations): array {
+                $eligibility = $cancellations->eligibility($reservation);
 
                 return [
                     'id' => $reservation->id,
@@ -59,10 +62,14 @@ class ReservationController extends Controller
                     'status' => $reservation->status,
                     'cancelled_at' => $reservation->cancelled_at?->toIso8601String(),
                     'created_at' => $reservation->created_at?->toIso8601String(),
-                    'can_cancel' => $eligibility['can_cancel'],
-                    'cancel_block_reason' => $eligibility['cancel_block_reason'],
-                    'cancel_block_label' => $eligibility['cancel_block_label'],
-                    'cancel_policy_label' => $eligibility['cancel_policy_label'],
+                    'can_cancel' => $eligibility['can_request'],
+                    'cancel_block_reason' => $eligibility['block_reason'],
+                    'cancel_block_label' => $eligibility['block_label'],
+                    'cancel_policy_label' => $eligibility['policy_label'],
+                    'cancellation_eligibility' => $eligibility,
+                    'cancellation_request' => $reservation->latestCancellationRequest
+                        ? $this->serializeCancellationRequest($reservation->latestCancellationRequest)
+                        : null,
                     'nights' => $reservation->nights,
                     'payment' => $reservation->payment
                         ? [
@@ -176,6 +183,21 @@ class ReservationController extends Controller
                     'badge_label' => $booking->category->badge_label,
                 ]
                 : null,
+        ];
+    }
+
+    private function serializeCancellationRequest(ReservationCancellationRequest $request): array
+    {
+        return [
+            'id' => $request->id,
+            'status' => $request->status,
+            'reason' => $request->reason,
+            'merchant_note' => $request->merchant_note,
+            'requested_at' => $request->requested_at?->toIso8601String(),
+            'reviewed_at' => $request->reviewed_at?->toIso8601String(),
+            'expires_at' => $request->expires_at?->toIso8601String(),
+            'refund_required' => $request->refund_required,
+            'refund_status' => $request->refund_status,
         ];
     }
 }

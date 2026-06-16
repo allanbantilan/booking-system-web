@@ -9,6 +9,7 @@ use App\Models\ReservationCancellationRequest;
 use App\Models\User;
 use App\Types\StatusType;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -86,12 +87,61 @@ class ReservationCancellationService
 
     public function approve(ReservationCancellationRequest $request, BackendUser $merchant): ReservationCancellationRequest
     {
-        throw new \BadMethodCallException('Merchant approval is implemented in the review task.');
+        return DB::transaction(function () use ($request, $merchant): ReservationCancellationRequest {
+            $request = ReservationCancellationRequest::query()
+                ->with(['booking', 'reservation'])
+                ->lockForUpdate()
+                ->findOrFail($request->id);
+
+            $this->authorizeMerchant($request, $merchant);
+            $this->ensureReviewable($request);
+
+            $reservation = Reservation::query()
+                ->lockForUpdate()
+                ->findOrFail($request->reservation_id);
+
+            if (in_array($reservation->status, [StatusType::Pending, StatusType::Confirmed], true)) {
+                Booking::query()
+                    ->lockForUpdate()
+                    ->whereKey($reservation->booking_id)
+                    ->increment('capacity', $reservation->quantity);
+            }
+
+            $reservation->update([
+                'status' => StatusType::Cancelled,
+                'cancelled_at' => now(),
+            ]);
+
+            $request->update([
+                'status' => ReservationCancellationRequest::STATUS_APPROVED,
+                'reviewed_at' => now(),
+                'refund_required' => true,
+                'refund_status' => ReservationCancellationRequest::REFUND_PENDING,
+            ]);
+
+            return $request->fresh(['booking', 'reservation']);
+        });
     }
 
     public function reject(ReservationCancellationRequest $request, BackendUser $merchant, string $note): ReservationCancellationRequest
     {
-        throw new \BadMethodCallException('Merchant rejection is implemented in the review task.');
+        return DB::transaction(function () use ($request, $merchant, $note): ReservationCancellationRequest {
+            $request = ReservationCancellationRequest::query()
+                ->with(['booking', 'reservation'])
+                ->lockForUpdate()
+                ->findOrFail($request->id);
+
+            $this->authorizeMerchant($request, $merchant);
+            $this->ensureReviewable($request);
+
+            $request->update([
+                'status' => ReservationCancellationRequest::STATUS_REJECTED,
+                'merchant_note' => $note,
+                'reviewed_at' => now(),
+            ]);
+
+            return $request->fresh(['booking', 'reservation']);
+        });
     }
 
     public function expireOverdueRequests(): int
@@ -121,5 +171,33 @@ class ReservationCancellationService
             'start_date' => null,
             'expires_at' => null,
         ];
+    }
+
+    private function authorizeMerchant(ReservationCancellationRequest $request, BackendUser $merchant): void
+    {
+        if ($merchant->hasAnyRole(['admin', 'super_admin'])) {
+            return;
+        }
+
+        if ((int) $request->booking?->created_by === (int) $merchant->id) {
+            return;
+        }
+
+        throw new AuthorizationException('You cannot review this cancellation request.');
+    }
+
+    private function ensureReviewable(ReservationCancellationRequest $request): void
+    {
+        if ($request->status !== ReservationCancellationRequest::STATUS_REQUESTED) {
+            throw ValidationException::withMessages([
+                'status' => ['Cancellation request has already been reviewed.'],
+            ]);
+        }
+
+        if (!now()->lt($request->expires_at)) {
+            throw ValidationException::withMessages([
+                'status' => ['Cancellation request has expired.'],
+            ]);
+        }
     }
 }

@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\BackendUser;
 use App\Models\Reservation;
 use App\Models\ReservationCancellationRequest;
 use App\Models\User;
 use App\Services\Reservations\ReservationCancellationService;
 use App\Types\StatusType;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class ReservationCancellationRequestTest extends TestCase
@@ -213,6 +216,101 @@ class ReservationCancellationRequestTest extends TestCase
         $this->assertSame('active_request_exists', $reservations[$requested->id]['cancellation_eligibility']['block_reason']);
         $this->assertSame('requested', $reservations[$requested->id]['cancellation_request']['status']);
         $this->assertSame('No longer needed', $reservations[$requested->id]['cancellation_request']['reason']);
+    }
+
+    public function test_merchant_approval_cancels_reservation_restores_capacity_and_marks_refund_pending(): void
+    {
+        $user = User::factory()->create();
+        $merchant = BackendUser::create([
+            'name' => 'Merchant',
+            'email' => 'merchant-review@example.com',
+            'password' => 'password',
+        ]);
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+            'capacity' => 9,
+            'created_by' => $merchant->id,
+        ]);
+
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, 'Need refund');
+
+        $approved = app(ReservationCancellationService::class)->approve($request, $merchant);
+
+        $this->assertSame(ReservationCancellationRequest::STATUS_APPROVED, $approved->status);
+        $this->assertTrue($approved->refund_required);
+        $this->assertSame(ReservationCancellationRequest::REFUND_PENDING, $approved->refund_status);
+        $this->assertSame(StatusType::Cancelled, $reservation->fresh()->status);
+        $this->assertSame(10, $reservation->booking->fresh()->capacity);
+    }
+
+    public function test_merchant_rejection_keeps_reservation_active_and_stores_note(): void
+    {
+        $user = User::factory()->create();
+        $merchant = BackendUser::create([
+            'name' => 'Merchant',
+            'email' => 'merchant-reject@example.com',
+            'password' => 'password',
+        ]);
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+            'created_by' => $merchant->id,
+        ]);
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, 'Need refund');
+
+        $rejected = app(ReservationCancellationService::class)
+            ->reject($request, $merchant, 'Policy does not allow this change.');
+
+        $this->assertSame(ReservationCancellationRequest::STATUS_REJECTED, $rejected->status);
+        $this->assertSame('Policy does not allow this change.', $rejected->merchant_note);
+        $this->assertSame(StatusType::Confirmed, $reservation->fresh()->status);
+    }
+
+    public function test_merchant_cannot_review_another_merchants_request(): void
+    {
+        $user = User::factory()->create();
+        $owner = BackendUser::create([
+            'name' => 'Owner',
+            'email' => 'merchant-owner@example.com',
+            'password' => 'password',
+        ]);
+        $other = BackendUser::create([
+            'name' => 'Other Merchant',
+            'email' => 'merchant-other@example.com',
+            'password' => 'password',
+        ]);
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+            'created_by' => $owner->id,
+        ]);
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, null);
+
+        $this->expectException(AuthorizationException::class);
+
+        app(ReservationCancellationService::class)->approve($request, $other);
+    }
+
+    public function test_expired_request_cannot_be_reviewed(): void
+    {
+        $user = User::factory()->create();
+        $merchant = BackendUser::create([
+            'name' => 'Merchant',
+            'email' => 'merchant-expired@example.com',
+            'password' => 'password',
+        ]);
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+            'created_by' => $merchant->id,
+        ]);
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, null);
+        $request->update(['status' => ReservationCancellationRequest::STATUS_EXPIRED]);
+
+        $this->expectException(ValidationException::class);
+
+        app(ReservationCancellationService::class)->reject($request, $merchant, 'Too late');
     }
 
     private function makeReservation(User $user, array $bookingOverrides = [], array $reservationOverrides = []): Reservation

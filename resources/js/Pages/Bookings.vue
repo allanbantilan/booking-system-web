@@ -25,7 +25,6 @@ const props = defineProps({
     },
 });
 
-const bookingQuantity = reactive({});
 const expandedDescriptions = reactive({});
 const filters = reactive({ ...props.filters });
 const activeGallery = ref(null);
@@ -100,14 +99,8 @@ const formatDate = (value) => {
     });
 };
 
-const openBookingScaffold = (bookingId) => {
-    const quantity = Number(bookingQuantity[bookingId] || 1);
-
-    router.get(
-        route("bookings.show", bookingId),
-        { quantity },
-        { preserveState: false },
-    );
+const goToBookingDetails = (bookingId) => {
+    router.get(route("bookings.show", bookingId), {}, { preserveState: false });
 };
 
 const openGallery = (booking, index = 0) => {
@@ -162,9 +155,7 @@ const getAvailabilityValue = (booking) => {
     return booking.capacity;
 };
 
-const getQuantityLabel = (booking) =>
-    booking.quantity_label || getTypeDefaults(booking).quantityLabel;
-const getCtaLabel = () => "View & Pay";
+const getCtaLabel = () => "View Details";
 const getBadgeLabel = (booking) =>
     getCategory(booking).badge_label || "Booking";
 const getMetaLine = (booking) => {
@@ -282,14 +273,19 @@ const toggleDescription = (bookingId) => {
                 <article
                     v-for="booking in bookings"
                     :key="booking.id"
-                    class="group flex flex-col rounded-2xl border border-ledger-border bg-ledger-surface/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-ledger-border"
+                    role="link"
+                    tabindex="0"
+                    class="group flex cursor-pointer flex-col rounded-2xl border border-ledger-border bg-ledger-surface/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-ledger-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
                     :class="getAccent(booking).glow"
+                    @click="goToBookingDetails(booking.id)"
+                    @keydown.enter.prevent="goToBookingDetails(booking.id)"
+                    @keydown.space.prevent="goToBookingDetails(booking.id)"
                 >
                     <button
                         v-if="booking.image_urls?.length"
                         type="button"
                         class="relative mb-4 block overflow-hidden rounded-xl border border-ledger-border bg-ledger-elevated text-left"
-                        @click="openGallery(booking, 0)"
+                        @click.stop="openGallery(booking, 0)"
                     >
                         <img
                             :src="booking.image_urls[0]"
@@ -368,7 +364,7 @@ const toggleDescription = (bookingId) => {
                             v-if="isLongDescription(booking.description)"
                             type="button"
                             class="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300 transition hover:text-cyan-200"
-                            @click="toggleDescription(booking.id)"
+                            @click.stop="toggleDescription(booking.id)"
                         >
                             {{ expandedDescriptions[booking.id] ? "Read Less" : "Read More" }}
                         </button>
@@ -386,87 +382,31 @@ const toggleDescription = (bookingId) => {
                     </div>
 
                     <div class="mt-auto pt-5">
-                        <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.25em] text-ledger-muted">
-                                {{ getRateLabel(booking) }}
-                            </p>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-lg font-black text-orange-300">
-                                    {{ formatCurrency(getDiscountedPrice(booking)) }}
-                                </span>
-                                <span v-if="getDiscountPercentage(booking) > 0" class="text-xs text-ledger-muted line-through">
-                                    {{ formatCurrency(booking.price) }}
-                                </span>
-                                <span v-if="getDiscountPercentage(booking) > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
-                                    -{{ getDiscountPercentage(booking) }}%
-                                </span>
+                        <div class="flex flex-wrap items-end justify-between gap-4 border-t border-ledger-border pt-4">
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.25em] text-ledger-muted">
+                                    {{ getRateLabel(booking) }}
+                                </p>
+                                <div class="mt-1 flex flex-wrap items-baseline gap-2">
+                                    <span class="text-lg font-black text-orange-300">
+                                        {{ formatCurrency(getDiscountedPrice(booking)) }}
+                                    </span>
+                                    <span v-if="getDiscountPercentage(booking) > 0" class="text-xs text-ledger-muted line-through">
+                                        {{ formatCurrency(booking.price) }}
+                                    </span>
+                                    <span v-if="getDiscountPercentage(booking) > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
+                                        -{{ getDiscountPercentage(booking) }}%
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1">
-                                <button
-                                    type="button"
-                                    class="h-7 w-7 rounded-full border border-ledger-border text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
-                                    @click="
-                                        bookingQuantity[booking.id] =
-                                            Math.max(
-                                                1,
-                                                (bookingQuantity[booking.id] || 1) - 1,
-                                            )
-                                    "
-                                >
-                                    -
-                                </button>
-                                <span class="text-sm text-ledger-text">
-                                    {{ bookingQuantity[booking.id] || 1 }}
-                                </span>
-                                <button
-                                    type="button"
-                                    class="h-7 w-7 rounded-full border border-ledger-border text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
-                                    @click="
-                                        bookingQuantity[booking.id] =
-                                            (bookingQuantity[booking.id] || 1) + 1
-                                    "
-                                >
-                                    +
-                                </button>
-                                <span class="text-xs text-ledger-muted">
-                                    {{ getQuantityLabel(booking) }}
-                                </span>
-                            </div>
-                        </div>
-                        </div>
-
-                        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-sm text-ledger-muted">
-                            Total:
-                            <span class="font-semibold text-ledger-text">
-                                {{
-                                    formatCurrency(
-                                        getDiscountedPrice(booking) *
-                                            Number(bookingQuantity[booking.id] || 1),
-                                    )
-                                }}
-                            </span>
-                        </p>
-                        <div class="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                @click="openBookingScaffold(booking.id)"
                                 class="rounded-lg px-4 py-2 text-sm font-semibold transition shadow-sm"
                                 :class="getAccent(booking).button"
+                                @click.stop="goToBookingDetails(booking.id)"
                             >
                                 {{ getCtaLabel(booking) }}
                             </button>
-                            <Link
-                                :href="route('bookings.show', booking.id)"
-                                class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
-                            >
-                                View Details
-                            </Link>
-                        </div>
                         </div>
                     </div>
                 </article>

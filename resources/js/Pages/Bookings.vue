@@ -17,6 +17,7 @@ const props = defineProps({
     filters: {
         type: Object,
         default: () => ({
+            search: "",
             categoryId: "all",
             minPrice: "",
             maxPrice: "",
@@ -41,6 +42,7 @@ const categoryOptions = computed(() => {
 
 const applyFilters = () => {
     const payload = {
+        search: filters.search || undefined,
         categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
         minPrice: filters.minPrice || undefined,
         maxPrice: filters.maxPrice || undefined,
@@ -74,6 +76,7 @@ watch(
 );
 
 const clearFilters = () => {
+    filters.search = "";
     filters.categoryId = "all";
     filters.minPrice = "";
     filters.maxPrice = "";
@@ -209,6 +212,18 @@ const toggleDescription = (bookingId) => {
 
         <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
             <div class="mb-5 flex flex-wrap items-end gap-3">
+                <div class="min-w-[260px] flex-1">
+                    <label class="text-xs font-semibold text-ledger-muted">
+                        Search
+                    </label>
+                    <input
+                        v-model="filters.search"
+                        type="search"
+                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text placeholder:text-ledger-muted outline-none focus:border-cyan-400"
+                        placeholder="Search title, location, or description"
+                    />
+                </div>
+
                 <div class="min-w-[200px]">
                     <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
                         Category

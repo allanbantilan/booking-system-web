@@ -127,13 +127,13 @@ const submit = () => {
                                 :type="showPassword ? 'text' : 'password'"
                                 required
                                 autocomplete="current-password"
-                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-12 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-14 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
                                 placeholder="Your password"
                             />
                             <button
                                 type="button"
                                 @click="showPassword = !showPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-ledger-muted hover:text-ledger-text"
+                                class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-ledger-muted transition hover:bg-ledger-elevated hover:text-ledger-text focus-visible:ring-2 focus-visible:ring-cyan-400"
                                 :aria-label="
                                     showPassword
                                         ? 'Hide password'

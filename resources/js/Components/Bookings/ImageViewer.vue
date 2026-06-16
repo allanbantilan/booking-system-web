@@ -126,10 +126,23 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
             >
                 <button
                     type="button"
-                    class="absolute left-3 top-1/2 z-10 rounded-full border border-ledger-border bg-ledger-surface px-3 py-2 text-ledger-text transition hover:bg-ledger-bg"
+                    class="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-ledger-border bg-ledger-surface p-2.5 text-ledger-text transition hover:bg-ledger-bg"
+                    aria-label="Previous image"
                     @click="previous"
                 >
-                    Prev
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15.75 19.5 8.25 12l7.5-7.5"
+                        />
+                    </svg>
                 </button>
                 <img
                     v-if="currentImage"
@@ -140,10 +153,23 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
                 />
                 <button
                     type="button"
-                    class="absolute right-3 top-1/2 z-10 rounded-full border border-ledger-border bg-ledger-surface px-3 py-2 text-ledger-text transition hover:bg-ledger-bg"
+                    class="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-ledger-border bg-ledger-surface p-2.5 text-ledger-text transition hover:bg-ledger-bg"
+                    aria-label="Next image"
                     @click="next"
                 >
-                    Next
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                        />
+                    </svg>
                 </button>
             </div>
 

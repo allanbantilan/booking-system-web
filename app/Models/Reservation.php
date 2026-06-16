@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Types\StatusType;
 
@@ -54,5 +55,17 @@ class Reservation extends Model
     public function receipt(): HasOne
     {
         return $this->hasOne(Receipt::class);
+    }
+
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(ReservationCancellationRequest::class);
+    }
+
+    public function activeCancellationRequest(): HasOne
+    {
+        return $this->hasOne(ReservationCancellationRequest::class)
+            ->where('status', ReservationCancellationRequest::STATUS_REQUESTED)
+            ->latestOfMany();
     }
 }

@@ -134,6 +134,58 @@ class ReservationCancellationRequestTest extends TestCase
         $this->assertSame('active_request_exists', $eligibility['block_reason']);
     }
 
+    public function test_customer_can_create_cancellation_request_from_route(): void
+    {
+        $user = User::factory()->create();
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('reservations.cancellation-requests.store', $reservation), [
+                'reason' => 'Schedule changed',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Cancellation request submitted for merchant review.');
+
+        $this->assertDatabaseHas('reservation_cancellation_requests', [
+            'reservation_id' => $reservation->id,
+            'user_id' => $user->id,
+            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+            'reason' => 'Schedule changed',
+        ]);
+    }
+
+    public function test_customer_route_blocks_ineligible_cancellation_request(): void
+    {
+        $user = User::factory()->create();
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(2),
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('reservations.cancellation-requests.store', $reservation))
+            ->assertRedirect()
+            ->assertSessionHasErrors(['error' => 'Cancellation is closed within 3 days of booking start.']);
+
+        $this->assertDatabaseMissing('reservation_cancellation_requests', [
+            'reservation_id' => $reservation->id,
+        ]);
+    }
+
+    public function test_customer_cannot_request_cancellation_for_another_users_reservation(): void
+    {
+        $owner = User::factory()->create();
+        $attacker = User::factory()->create();
+        $reservation = $this->makeReservation($owner, [
+            'event_date' => now()->addDays(10),
+        ]);
+
+        $this->actingAs($attacker)
+            ->post(route('reservations.cancellation-requests.store', $reservation))
+            ->assertNotFound();
+    }
+
     private function makeReservation(User $user, array $bookingOverrides = [], array $reservationOverrides = []): Reservation
     {
         $booking = Booking::create(array_merge([

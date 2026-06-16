@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\Reservation;
+use App\Models\ReservationCancellationRequest;
 use App\Models\User;
 use App\Types\StatusType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,7 +42,7 @@ class ReservationControllerTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_cancel_marks_reservation_as_cancelled_and_restores_capacity(): void
+    public function test_cancel_route_creates_cancellation_request_without_cancelling(): void
     {
         $user = User::factory()->create();
         $reservation = $this->makeConfirmedReservation($user, capacity: 10, quantity: 3);
@@ -49,22 +50,24 @@ class ReservationControllerTest extends TestCase
 
         $this->actingAs($user)
             ->patch(route('reservations.cancel', $reservation->id))
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Cancellation request submitted for merchant review.');
 
-        // Reservation must exist with cancelled status (not deleted)
         $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
-            'status' => 'cancelled',
+            'status' => StatusType::Confirmed->value,
         ]);
-
-        // Capacity must be restored
-        $this->assertSame(10, $booking->fresh()->capacity);
+        $this->assertDatabaseHas('reservation_cancellation_requests', [
+            'reservation_id' => $reservation->id,
+            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+        ]);
+        $this->assertSame(7, $booking->fresh()->capacity);
     }
 
-    public function test_cancel_prevents_cancellation_after_three_day_window(): void
+    public function test_cancel_prevents_cancellation_within_three_days_of_booking_start(): void
     {
         $user = User::factory()->create();
-        $booking = $this->makeBooking(capacity: 10);
+        $booking = $this->makeBooking(capacity: 10, eventDate: now()->addDays(2));
 
         $reservation = Reservation::create([
             'user_id' => $user->id,
@@ -74,15 +77,9 @@ class ReservationControllerTest extends TestCase
             'status' => StatusType::Confirmed,
         ]);
 
-        // Force created_at to 4 days ago — Eloquent ignores it in create() for timestamps.
-        \Illuminate\Support\Facades\DB::table('reservations')
-            ->where('id', $reservation->id)
-            ->update(['created_at' => now()->subDays(4)]);
-        $reservation->refresh();
-
         $this->actingAs($user)
             ->patch(route('reservations.cancel', $reservation->id))
-            ->assertSessionHasErrors();
+            ->assertSessionHasErrors(['error' => 'Cancellation is closed within 3 days of booking start.']);
 
         $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
@@ -107,7 +104,7 @@ class ReservationControllerTest extends TestCase
         ]);
     }
 
-    public function test_cancel_prevents_cancellation_when_receipt_was_issued(): void
+    public function test_cancel_route_allows_request_when_receipt_was_issued(): void
     {
         $user = User::factory()->create();
         $reservation = $this->makeConfirmedReservation($user, capacity: 10, quantity: 2);
@@ -124,20 +121,25 @@ class ReservationControllerTest extends TestCase
 
         $this->actingAs($user)
             ->patch(route('reservations.cancel', $reservation->id))
-            ->assertSessionHasErrors(['error' => 'Receipt issued.']);
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Cancellation request submitted for merchant review.');
 
         $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
             'status' => StatusType::Confirmed->value,
         ]);
+        $this->assertDatabaseHas('reservation_cancellation_requests', [
+            'reservation_id' => $reservation->id,
+            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+        ]);
         $this->assertSame(8, $reservation->booking->fresh()->capacity);
     }
 
-    public function test_cancel_restores_capacity_for_pending_reservation(): void
+    public function test_cancel_route_requests_review_for_pending_reservation_without_restoring_capacity(): void
     {
         $user = User::factory()->create();
         // Capacity is 7: 10 original minus 3 held at checkout (A5).
-        $booking = $this->makeBooking(capacity: 7);
+        $booking = $this->makeBooking(capacity: 7, eventDate: now()->addDays(10));
 
         $reservation = Reservation::create([
             'user_id' => $user->id,
@@ -151,12 +153,15 @@ class ReservationControllerTest extends TestCase
             ->patch(route('reservations.cancel', $reservation->id))
             ->assertRedirect();
 
-        // Capacity restored for pending since A5 holds capacity at checkout.
-        $this->assertSame(10, $booking->fresh()->capacity);
+        $this->assertSame(7, $booking->fresh()->capacity);
 
         $this->assertDatabaseHas('reservations', [
             'id' => $reservation->id,
-            'status' => 'cancelled',
+            'status' => StatusType::Pending->value,
+        ]);
+        $this->assertDatabaseHas('reservation_cancellation_requests', [
+            'reservation_id' => $reservation->id,
+            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
         ]);
     }
 
@@ -229,13 +234,13 @@ class ReservationControllerTest extends TestCase
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
-    private function makeBooking(int $capacity = 10): Booking
+    private function makeBooking(int $capacity = 10, mixed $eventDate = null): Booking
     {
         return Booking::create([
             'title' => 'Test Booking',
             'description' => 'Test booking description.',
             'location' => 'Test Location',
-            'event_date' => now()->addDay(),
+            'event_date' => $eventDate ?? now()->addDays(10),
             'capacity' => $capacity,
             'price' => 100,
             'created_by' => null,

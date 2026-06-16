@@ -4,66 +4,34 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Reservation;
+use App\Services\Reservations\ReservationCancellationService;
 use App\Types\StatusType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ReservationController extends Controller
 {
-    public function cancel(Request $request, int $reservationId): RedirectResponse
+    public function cancel(
+        Request $request,
+        int $reservationId,
+        ReservationCancellationService $cancellations
+    ): RedirectResponse
     {
         $reservation = Reservation::query()
-            ->with(['receipt', 'payment'])
             ->whereKey($reservationId)
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        $eligibility = $this->cancellationEligibility($reservation);
-        if (!$eligibility['can_cancel']) {
-            return back()->withErrors(['error' => $eligibility['cancel_block_label'] . '.']);
+        try {
+            $cancellations->requestCancellation($reservation, $request->user(), null);
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
         }
 
-        $blocked = DB::transaction(function () use ($reservationId): ?array {
-            // Re-read with a lock to get the authoritative quantity (9.5).
-            $reservation = Reservation::query()
-                ->with(['receipt', 'payment'])
-                ->lockForUpdate()
-                ->findOrFail($reservationId);
-
-            $eligibility = $this->cancellationEligibility($reservation);
-            if (!$eligibility['can_cancel']) {
-                return $eligibility;
-            }
-
-            // Restore capacity for pending and confirmed reservations —
-            // both statuses hold capacity since checkout creation (A5).
-            $holdingCapacity = in_array($reservation->status->value, ['pending', 'confirmed'], true);
-            if ($holdingCapacity) {
-                $booking = Booking::query()
-                    ->lockForUpdate()
-                    ->find($reservation->booking_id);
-
-                if ($booking) {
-                    $booking->increment('capacity', $reservation->quantity);
-                }
-            }
-
-            $reservation->update([
-                'status' => StatusType::Cancelled,
-                'cancelled_at' => now(),
-            ]);
-
-            return null;
-        });
-
-        if ($blocked) {
-            return back()->withErrors(['error' => $blocked['cancel_block_label'] . '.']);
-        }
-
-        return back()->with('success', 'Reservation cancelled.');
+        return back()->with('success', 'Cancellation request submitted for merchant review.');
     }
 
     public function history(Request $request): Response

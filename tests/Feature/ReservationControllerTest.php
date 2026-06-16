@@ -200,21 +200,19 @@ class ReservationControllerTest extends TestCase
             'cancelled_at' => now(),
         ]);
 
-        $receiptBlocked = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
-        $payment = $this->makePayment($receiptBlocked, 'paid');
+        $receiptIssued = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
+        $payment = $this->makePayment($receiptIssued, 'paid');
         Receipt::create([
             'payment_id' => $payment->id,
-            'reservation_id' => $receiptBlocked->id,
+            'reservation_id' => $receiptIssued->id,
             'receipt_number' => 'RCT-HISTORY-1',
-            'amount' => $receiptBlocked->total_price,
+            'amount' => $receiptIssued->total_price,
             'currency' => 'PHP',
             'issued_at' => now(),
         ]);
 
-        $outsideWindow = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
-        \Illuminate\Support\Facades\DB::table('reservations')
-            ->where('id', $outsideWindow->id)
-            ->update(['created_at' => now()->subDays(4)]);
+        $withinCutoff = $this->makeConfirmedReservation($user, capacity: 10, quantity: 1);
+        $withinCutoff->booking->update(['event_date' => now()->addDays(2)]);
 
         $response = $this->actingAs($user)
             ->get(route('bookings.history'));
@@ -224,12 +222,12 @@ class ReservationControllerTest extends TestCase
             ->keyBy('id');
 
         $this->assertSame('already_cancelled', $reservations[$cancelled->id]['cancel_block_reason']);
-        $this->assertSame('Already cancelled', $reservations[$cancelled->id]['cancel_block_label']);
-        $this->assertSame('receipt_issued', $reservations[$receiptBlocked->id]['cancel_block_reason']);
-        $this->assertSame('Receipt issued', $reservations[$receiptBlocked->id]['cancel_block_label']);
-        $this->assertSame('outside_window', $reservations[$outsideWindow->id]['cancel_block_reason']);
-        $this->assertSame('Cancellation window ended', $reservations[$outsideWindow->id]['cancel_block_label']);
-        $this->assertSame('Cancellable within 3 days before receipt is issued.', $reservations[$outsideWindow->id]['cancel_policy_label']);
+        $this->assertSame('Reservation already cancelled.', $reservations[$cancelled->id]['cancel_block_label']);
+        $this->assertTrue($reservations[$receiptIssued->id]['cancellation_eligibility']['can_request']);
+        $this->assertNull($reservations[$receiptIssued->id]['cancel_block_reason']);
+        $this->assertSame('within_cutoff', $reservations[$withinCutoff->id]['cancel_block_reason']);
+        $this->assertSame('Cancellation is closed within 3 days of booking start.', $reservations[$withinCutoff->id]['cancel_block_label']);
+        $this->assertSame('Cancellation requests close 3 days before booking start. Refund is pending merchant approval.', $reservations[$withinCutoff->id]['cancel_policy_label']);
     }
 
     // ─── helpers ────────────────────────────────────────────────────────────

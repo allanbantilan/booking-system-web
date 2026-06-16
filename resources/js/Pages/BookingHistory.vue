@@ -1,6 +1,6 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
-import { router } from "@inertiajs/vue3";
+import { useForm } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 
 const props = defineProps({
@@ -11,6 +11,10 @@ const props = defineProps({
 });
 
 const activeReceipt = ref(null);
+const activeCancellation = ref(null);
+const cancellationForm = useForm({
+    reason: "",
+});
 
 const closeReceipt = () => {
     activeReceipt.value = null;
@@ -18,6 +22,18 @@ const closeReceipt = () => {
 
 const openReceipt = (reservation) => {
     activeReceipt.value = reservation;
+};
+
+const openCancellation = (reservation) => {
+    activeCancellation.value = reservation;
+    cancellationForm.reset();
+    cancellationForm.clearErrors();
+};
+
+const closeCancellation = () => {
+    activeCancellation.value = null;
+    cancellationForm.reset();
+    cancellationForm.clearErrors();
 };
 
 const receiptStatus = computed(() => activeReceipt.value?.payment?.status || "pending");
@@ -73,17 +89,41 @@ const isNightsRequired = (reservation) => getTypeDefaults(reservation).nightsReq
 const getDurationLabel = (reservation) => getTypeDefaults(reservation).durationLabel || "Duration";
 
 const getCancellationLabel = (reservation) => {
-    if (reservation.can_cancel) return "Cancel Reservation";
-    if (reservation.cancel_block_label) return reservation.cancel_block_label;
+    if (reservation.cancellation_request?.status === "requested") return "Cancellation requested";
+    if (reservation.cancellation_request?.status === "approved") return "Cancellation approved";
+    if (reservation.cancellation_request?.status === "rejected") return "Cancellation rejected";
+    if (reservation.cancellation_request?.status === "expired") return "Request expired";
+    if (reservation.can_cancel) return "Request Cancellation";
+    if (reservation.cancellation_eligibility?.block_label) return reservation.cancellation_eligibility.block_label;
     if (reservation.status === "cancelled") return "Cancelled";
-    if (reservation.receipt) return "Receipt issued";
-    if (reservation.payment?.status === "pending") return "Payment pending";
 
-    return "Cancellation window ended";
+    return "Cancellation unavailable";
 };
 
 const getCancellationTitle = (reservation) => {
-    if (reservation.cancel_policy_label) return reservation.cancel_policy_label;
+    if (reservation.cancellation_request?.status === "requested") {
+        return reservation.cancellation_request.expires_at
+            ? `Merchant review pending until ${formatDateTime(reservation.cancellation_request.expires_at)}`
+            : "Merchant review pending";
+    }
+
+    if (reservation.cancellation_request?.status === "approved") {
+        return reservation.cancellation_request.refund_status === "pending"
+            ? "Refund pending merchant/payment processing."
+            : "Cancellation approved.";
+    }
+
+    if (reservation.cancellation_request?.status === "rejected") {
+        return reservation.cancellation_request.merchant_note || "Merchant rejected this cancellation request.";
+    }
+
+    if (reservation.cancellation_request?.status === "expired") {
+        return "Merchant did not review before the cancellation cutoff.";
+    }
+
+    if (reservation.cancellation_eligibility?.policy_label) {
+        return reservation.cancellation_eligibility.policy_label;
+    }
 
     if (reservation.status === "cancelled") {
         return reservation.cancelled_at
@@ -91,15 +131,24 @@ const getCancellationTitle = (reservation) => {
             : "Reservation already cancelled";
     }
 
-    if (reservation.can_cancel) return "Cancel this reservation";
-    if (reservation.receipt) return "Reservations with issued receipts cannot be cancelled here.";
-    if (reservation.payment?.status === "pending") return "Payment is still pending.";
+    if (reservation.can_cancel) return "Request cancellation for merchant review.";
 
-    return "Reservations can only be cancelled within the allowed cancellation window.";
+    return "Cancellation is unavailable.";
 };
 
-const cancelBookingScaffold = (reservationId) => {
-    router.patch(route("reservations.cancel", reservationId));
+const submitCancellation = () => {
+    if (!activeCancellation.value) return;
+
+    cancellationForm.post(
+        route(
+            "reservations.cancellation-requests.store",
+            activeCancellation.value.id,
+        ),
+        {
+            preserveScroll: true,
+            onSuccess: () => closeCancellation(),
+        },
+    );
 };
 </script>
 
@@ -182,10 +231,10 @@ const cancelBookingScaffold = (reservationId) => {
                                 <button
                                     v-if="reservation.can_cancel"
                                     type="button"
-                                    @click="cancelBookingScaffold(reservation.id)"
+                                    @click="openCancellation(reservation)"
                                     class="rounded-lg border border-ledger-border px-3 py-1.5 text-xs font-semibold transition hover:bg-ledger-elevated"
                                 >
-                                    Cancel Reservation
+                                    Request Cancellation
                                 </button>
                                 <span
                                     v-else
@@ -194,6 +243,12 @@ const cancelBookingScaffold = (reservationId) => {
                                 >
                                     {{ getCancellationLabel(reservation) }}
                                 </span>
+                                <p
+                                    v-if="reservation.cancellation_request?.status === 'approved' && reservation.cancellation_request?.refund_required"
+                                    class="mt-1 text-xs text-ledger-muted"
+                                >
+                                    Refund {{ reservation.cancellation_request.refund_status }}
+                                </p>
                             </td>
                         </tr>
                     </tbody>
@@ -208,6 +263,77 @@ const cancelBookingScaffold = (reservationId) => {
             </p>
         </section>
     </DashboardLayout>
+
+    <div
+        v-if="activeCancellation"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6"
+        @click.self="closeCancellation"
+    >
+        <form
+            class="w-full max-w-lg rounded-2xl border border-ledger-border bg-ledger-surface p-6 shadow-xl"
+            @submit.prevent="submitCancellation"
+        >
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">
+                        Cancellation request
+                    </p>
+                    <h2 class="mt-2 text-xl font-semibold text-ledger-text">
+                        {{ activeCancellation.booking?.title || "Booking" }}
+                    </h2>
+                    <p class="mt-1 text-sm text-ledger-muted">
+                        Merchant approval is required before cancellation and refund.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    class="rounded-full border border-ledger-border p-2 text-ledger-text transition hover:bg-ledger-elevated"
+                    @click="closeCancellation"
+                >
+                    ✕
+                </button>
+            </div>
+
+            <label class="mt-5 block text-sm font-medium text-ledger-text">
+                Reason
+                <textarea
+                    v-model="cancellationForm.reason"
+                    rows="4"
+                    class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface p-3 text-sm text-ledger-text placeholder:text-ledger-muted focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                    placeholder="Optional note for the merchant"
+                ></textarea>
+            </label>
+            <p
+                v-if="cancellationForm.errors.reason"
+                class="mt-2 text-sm text-rose-300"
+            >
+                {{ cancellationForm.errors.reason }}
+            </p>
+            <p
+                v-if="cancellationForm.errors.error"
+                class="mt-2 text-sm text-rose-300"
+            >
+                {{ cancellationForm.errors.error }}
+            </p>
+
+            <div class="mt-5 flex justify-end gap-2">
+                <button
+                    type="button"
+                    class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
+                    @click="closeCancellation"
+                >
+                    Close
+                </button>
+                <button
+                    type="submit"
+                    :disabled="cancellationForm.processing"
+                    class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                    {{ cancellationForm.processing ? "Submitting..." : "Submit Request" }}
+                </button>
+            </div>
+        </form>
+    </div>
 
     <div
         v-if="activeReceipt"

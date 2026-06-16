@@ -186,6 +186,35 @@ class ReservationCancellationRequestTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_history_returns_cancellation_request_and_eligibility_payload(): void
+    {
+        $user = User::factory()->create();
+        $eligible = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+        ]);
+        $requested = $this->makeReservation($user, [
+            'event_date' => now()->addDays(12),
+        ]);
+
+        app(ReservationCancellationService::class)
+            ->requestCancellation($requested, $user, 'No longer needed');
+
+        $response = $this->actingAs($user)
+            ->get(route('bookings.history'));
+
+        $response->assertOk();
+        $reservations = collect($response->viewData('page')['props']['reservations'])
+            ->keyBy('id');
+
+        $this->assertTrue($reservations[$eligible->id]['cancellation_eligibility']['can_request']);
+        $this->assertNull($reservations[$eligible->id]['cancellation_request']);
+
+        $this->assertFalse($reservations[$requested->id]['cancellation_eligibility']['can_request']);
+        $this->assertSame('active_request_exists', $reservations[$requested->id]['cancellation_eligibility']['block_reason']);
+        $this->assertSame('requested', $reservations[$requested->id]['cancellation_request']['status']);
+        $this->assertSame('No longer needed', $reservations[$requested->id]['cancellation_request']['reason']);
+    }
+
     private function makeReservation(User $user, array $bookingOverrides = [], array $reservationOverrides = []): Reservation
     {
         $booking = Booking::create(array_merge([

@@ -40,19 +40,9 @@ const requestMerchantAccess = () => {
         </section>
 
         <div class="space-y-6">
-            <section
-                id="profile-info"
-                class="rounded-2xl border border-ledger-border bg-ledger-surface p-6"
-            >
-                <UpdateProfileInformationForm :user="$page.props.auth.user" />
-            </section>
+            <UpdateProfileInformationForm :user="$page.props.auth.user" />
 
-            <section
-                id="change-password"
-                class="rounded-2xl border border-ledger-border bg-ledger-surface p-6"
-            >
-                <UpdatePasswordForm />
-            </section>
+            <UpdatePasswordForm />
 
             <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
                 <h2 class="text-lg font-semibold text-ledger-text">List Your Services</h2>

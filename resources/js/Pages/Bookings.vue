@@ -1,8 +1,9 @@
 <script setup>
 import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 import { Link, router } from "@inertiajs/vue3";
-import { computed, reactive, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { amenityConfig, getAccentClasses } from "@/Config/bookingCategoryConfig.js";
+import ImageViewer from "@/Components/Bookings/ImageViewer.vue";
 
 const props = defineProps({
     bookings: {
@@ -26,6 +27,7 @@ const props = defineProps({
 const bookingQuantity = reactive({});
 const expandedDescriptions = reactive({});
 const filters = reactive({ ...props.filters });
+const activeGallery = ref(null);
 
 const bookings = computed(() => props.bookings?.data || []);
 const paginationLinks = computed(() => props.bookings?.links || []);
@@ -103,6 +105,14 @@ const openBookingScaffold = (bookingId) => {
         { quantity },
         { preserveState: false },
     );
+};
+
+const openGallery = (booking, index = 0) => {
+    activeGallery.value = { booking, index };
+};
+
+const closeGallery = () => {
+    activeGallery.value = null;
 };
 
 const fallbackCategory = {
@@ -260,14 +270,16 @@ const toggleDescription = (bookingId) => {
                     class="group flex flex-col rounded-2xl border border-ledger-border bg-ledger-surface/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-ledger-border"
                     :class="getAccent(booking).glow"
                 >
-                    <div
+                    <button
                         v-if="booking.image_urls?.length"
-                        class="relative mb-4 overflow-hidden rounded-xl border border-ledger-border"
+                        type="button"
+                        class="relative mb-4 block overflow-hidden rounded-xl border border-ledger-border bg-ledger-elevated text-left"
+                        @click="openGallery(booking, 0)"
                     >
                         <img
                             :src="booking.image_urls[0]"
                             :alt="booking.title"
-                            class="h-44 w-full object-cover transition duration-300 group-hover:scale-105"
+                            class="h-44 w-full object-contain transition duration-300 group-hover:scale-[1.02]"
                             loading="lazy"
                         />
                         <span
@@ -277,6 +289,19 @@ const toggleDescription = (bookingId) => {
                         >
                             <span>{{ getBadgeLabel(booking) }}</span>
                         </span>
+                        <span
+                            class="absolute left-3 top-3 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 text-xs font-semibold text-ledger-text"
+                        >
+                            {{ booking.image_urls.length }}
+                            photo{{ booking.image_urls.length === 1 ? "" : "s" }}
+                        </span>
+                    </button>
+
+                    <div
+                        v-else
+                        class="mb-4 flex h-44 items-center justify-center rounded-xl border border-dashed border-ledger-border bg-ledger-elevated text-sm text-ledger-muted"
+                    >
+                        No image available
                     </div>
 
                     <div
@@ -458,7 +483,13 @@ const toggleDescription = (bookingId) => {
                 v-html="link.label"
             />
         </section>
+
+        <ImageViewer
+            :open="!!activeGallery"
+            :images="activeGallery?.booking?.image_urls || []"
+            :title="activeGallery?.booking?.title || 'Booking image'"
+            :initial-index="activeGallery?.index || 0"
+            @close="closeGallery"
+        />
     </DashboardLayout>
 </template>
-
-

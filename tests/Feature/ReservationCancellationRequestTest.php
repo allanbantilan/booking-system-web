@@ -313,6 +313,42 @@ class ReservationCancellationRequestTest extends TestCase
         app(ReservationCancellationService::class)->reject($request, $merchant, 'Too late');
     }
 
+    public function test_service_expires_overdue_requests_without_changing_reservation_or_refund(): void
+    {
+        $user = User::factory()->create();
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+        ]);
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, null);
+        $request->update(['expires_at' => now()->subMinute()]);
+
+        $count = app(ReservationCancellationService::class)->expireOverdueRequests();
+
+        $this->assertSame(1, $count);
+        $this->assertSame(ReservationCancellationRequest::STATUS_EXPIRED, $request->fresh()->status);
+        $this->assertSame(StatusType::Confirmed, $reservation->fresh()->status);
+        $this->assertFalse($request->fresh()->refund_required);
+        $this->assertSame(ReservationCancellationRequest::REFUND_NOT_REQUIRED, $request->fresh()->refund_status);
+    }
+
+    public function test_expiry_command_expires_overdue_requests(): void
+    {
+        $user = User::factory()->create();
+        $reservation = $this->makeReservation($user, [
+            'event_date' => now()->addDays(10),
+        ]);
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, null);
+        $request->update(['expires_at' => now()->subMinute()]);
+
+        $this->artisan('reservations:expire-cancellation-requests')
+            ->expectsOutput('Expired 1 cancellation request(s).')
+            ->assertExitCode(0);
+
+        $this->assertSame(ReservationCancellationRequest::STATUS_EXPIRED, $request->fresh()->status);
+    }
+
     private function makeReservation(User $user, array $bookingOverrides = [], array $reservationOverrides = []): Reservation
     {
         $booking = Booking::create(array_merge([

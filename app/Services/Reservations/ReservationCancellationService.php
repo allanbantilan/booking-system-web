@@ -146,7 +146,23 @@ class ReservationCancellationService
 
     public function expireOverdueRequests(): int
     {
-        throw new \BadMethodCallException('Expiry is implemented in the expiry task.');
+        return DB::transaction(function (): int {
+            $requests = ReservationCancellationRequest::query()
+                ->where('status', ReservationCancellationRequest::STATUS_REQUESTED)
+                ->where('expires_at', '<=', now())
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($requests as $request) {
+                $request->update([
+                    'status' => ReservationCancellationRequest::STATUS_EXPIRED,
+                    'refund_required' => false,
+                    'refund_status' => ReservationCancellationRequest::REFUND_NOT_REQUIRED,
+                ]);
+            }
+
+            return $requests->count();
+        });
     }
 
     private function resolveStartDate(Reservation $reservation): ?Carbon

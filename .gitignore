@@ -28,3 +28,10 @@ Thumbs.db
 /docs/superpowers/specs/
 docs/superpowers/
 CLAUDE.md
+
+# Local agent tooling
+.agents/
+.claude/
+.codex-plugins/
+.mimocode/
+skills-lock.json

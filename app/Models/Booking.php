@@ -129,4 +129,9 @@ class Booking extends Model implements HasMedia
     {
         return $this->hasMany(Reservation::class);
     }
+
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(ReservationCancellationRequest::class);
+    }
 }

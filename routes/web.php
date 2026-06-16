@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MerchantAccountController;
 use App\Http\Controllers\PayMayaCheckoutController;
 use App\Http\Controllers\PayMayaReturnController;
+use App\Http\Controllers\ReservationCancellationRequestController;
 use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,8 @@ Route::middleware([
     Route::get('/bookings/history', [ReservationController::class, 'history'])->name('bookings.history');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::patch('/reservations/{reservationId}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
+    Route::post('/reservations/{reservation}/cancellation-requests', [ReservationCancellationRequestController::class, 'store'])
+        ->name('reservations.cancellation-requests.store');
     Route::post('/payments/paymaya/checkout', PayMayaCheckoutController::class)->name('payments.paymaya.checkout');
     Route::get('/payments/paymaya/return', PayMayaReturnController::class)->name('payments.paymaya.return');
 

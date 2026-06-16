@@ -16,17 +16,27 @@ class ReservationController extends Controller
     public function cancel(Request $request, int $reservationId): RedirectResponse
     {
         $reservation = Reservation::query()
+            ->with(['receipt', 'payment'])
             ->whereKey($reservationId)
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        if (!$this->canCancelReservation($reservation)) {
-            return back()->withErrors(['error' => 'Reservations can only be cancelled within 3 days.']);
+        $eligibility = $this->cancellationEligibility($reservation);
+        if (!$eligibility['can_cancel']) {
+            return back()->withErrors(['error' => $eligibility['cancel_block_label'] . '.']);
         }
 
-        DB::transaction(function () use ($reservationId): void {
+        $blocked = DB::transaction(function () use ($reservationId): ?array {
             // Re-read with a lock to get the authoritative quantity (9.5).
-            $reservation = Reservation::lockForUpdate()->findOrFail($reservationId);
+            $reservation = Reservation::query()
+                ->with(['receipt', 'payment'])
+                ->lockForUpdate()
+                ->findOrFail($reservationId);
+
+            $eligibility = $this->cancellationEligibility($reservation);
+            if (!$eligibility['can_cancel']) {
+                return $eligibility;
+            }
 
             // Restore capacity for pending and confirmed reservations —
             // both statuses hold capacity since checkout creation (A5).
@@ -45,7 +55,13 @@ class ReservationController extends Controller
                 'status' => StatusType::Cancelled,
                 'cancelled_at' => now(),
             ]);
+
+            return null;
         });
+
+        if ($blocked) {
+            return back()->withErrors(['error' => $blocked['cancel_block_label'] . '.']);
+        }
 
         return back()->with('success', 'Reservation cancelled.');
     }
@@ -65,46 +81,105 @@ class ReservationController extends Controller
             ->get();
 
         return Inertia::render('BookingHistory', [
-            'reservations' => $reservations->map(fn (Reservation $reservation) => [
-                'id' => $reservation->id,
-                'quantity' => $reservation->quantity,
-                'total_price' => $reservation->total_price,
-                'status' => $reservation->status,
-                'cancelled_at' => $reservation->cancelled_at?->toIso8601String(),
-                'created_at' => $reservation->created_at?->toIso8601String(),
-                'can_cancel' => $this->canCancelReservation($reservation),
-                'nights' => $reservation->nights,
-                'payment' => $reservation->payment
-                    ? [
-                        'id' => $reservation->payment->id,
-                        'status' => $reservation->payment->status,
-                    ]
-                    : null,
-                'receipt' => $reservation->receipt
-                    ? [
-                        'id' => $reservation->receipt->id,
-                        'receipt_number' => $reservation->receipt->receipt_number,
-                        'issued_at' => $reservation->receipt->issued_at?->toIso8601String(),
-                    ]
-                    : null,
-                'booking' => $reservation->booking
-                    ? $this->serializeBooking($reservation->booking)
-                    : null,
-            ]),
+            'reservations' => $reservations->map(function (Reservation $reservation): array {
+                $eligibility = $this->cancellationEligibility($reservation);
+
+                return [
+                    'id' => $reservation->id,
+                    'quantity' => $reservation->quantity,
+                    'total_price' => $reservation->total_price,
+                    'status' => $reservation->status,
+                    'cancelled_at' => $reservation->cancelled_at?->toIso8601String(),
+                    'created_at' => $reservation->created_at?->toIso8601String(),
+                    'can_cancel' => $eligibility['can_cancel'],
+                    'cancel_block_reason' => $eligibility['cancel_block_reason'],
+                    'cancel_block_label' => $eligibility['cancel_block_label'],
+                    'cancel_policy_label' => $eligibility['cancel_policy_label'],
+                    'nights' => $reservation->nights,
+                    'payment' => $reservation->payment
+                        ? [
+                            'id' => $reservation->payment->id,
+                            'status' => $reservation->payment->status,
+                        ]
+                        : null,
+                    'receipt' => $reservation->receipt
+                        ? [
+                            'id' => $reservation->receipt->id,
+                            'receipt_number' => $reservation->receipt->receipt_number,
+                            'issued_at' => $reservation->receipt->issued_at?->toIso8601String(),
+                        ]
+                        : null,
+                    'booking' => $reservation->booking
+                        ? $this->serializeBooking($reservation->booking)
+                        : null,
+                ];
+            }),
         ]);
     }
 
     private function canCancelReservation(Reservation $reservation): bool
     {
+        return $this->cancellationEligibility($reservation)['can_cancel'];
+    }
+
+    /**
+     * @return array{can_cancel: bool, cancel_block_reason: ?string, cancel_block_label: ?string, cancel_policy_label: string}
+     */
+    private function cancellationEligibility(Reservation $reservation): array
+    {
+        $policy = 'Cancellable within 3 days before receipt is issued.';
+
         if (!$reservation->created_at) {
-            return false;
+            return [
+                'can_cancel' => false,
+                'cancel_block_reason' => 'status_not_cancellable',
+                'cancel_block_label' => 'Cancellation unavailable',
+                'cancel_policy_label' => $policy,
+            ];
         }
 
         if ($reservation->status === StatusType::Cancelled) {
-            return false;
+            return [
+                'can_cancel' => false,
+                'cancel_block_reason' => 'already_cancelled',
+                'cancel_block_label' => 'Already cancelled',
+                'cancel_policy_label' => $policy,
+            ];
         }
 
-        return now()->lt($reservation->created_at->addDays(3));
+        if (!in_array($reservation->status, [StatusType::Pending, StatusType::Confirmed], true)) {
+            return [
+                'can_cancel' => false,
+                'cancel_block_reason' => 'status_not_cancellable',
+                'cancel_block_label' => 'Status cannot be cancelled',
+                'cancel_policy_label' => $policy,
+            ];
+        }
+
+        if ($reservation->receipt || $reservation->receipt()->exists()) {
+            return [
+                'can_cancel' => false,
+                'cancel_block_reason' => 'receipt_issued',
+                'cancel_block_label' => 'Receipt issued',
+                'cancel_policy_label' => $policy,
+            ];
+        }
+
+        if (!now()->lt($reservation->created_at->copy()->addDays(3))) {
+            return [
+                'can_cancel' => false,
+                'cancel_block_reason' => 'outside_window',
+                'cancel_block_label' => 'Cancellation window ended',
+                'cancel_policy_label' => $policy,
+            ];
+        }
+
+        return [
+            'can_cancel' => true,
+            'cancel_block_reason' => null,
+            'cancel_block_label' => null,
+            'cancel_policy_label' => $policy,
+        ];
     }
 
     private function serializeBooking(Booking $booking): array

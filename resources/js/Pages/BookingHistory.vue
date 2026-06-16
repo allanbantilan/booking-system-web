@@ -73,8 +73,9 @@ const isNightsRequired = (reservation) => getTypeDefaults(reservation).nightsReq
 const getDurationLabel = (reservation) => getTypeDefaults(reservation).durationLabel || "Duration";
 
 const getCancellationLabel = (reservation) => {
-    if (reservation.status === "cancelled") return "Cancelled";
     if (reservation.can_cancel) return "Cancel Reservation";
+    if (reservation.cancel_block_label) return reservation.cancel_block_label;
+    if (reservation.status === "cancelled") return "Cancelled";
     if (reservation.receipt) return "Receipt issued";
     if (reservation.payment?.status === "pending") return "Payment pending";
 
@@ -82,6 +83,8 @@ const getCancellationLabel = (reservation) => {
 };
 
 const getCancellationTitle = (reservation) => {
+    if (reservation.cancel_policy_label) return reservation.cancel_policy_label;
+
     if (reservation.status === "cancelled") {
         return reservation.cancelled_at
             ? `Cancelled ${formatDateTime(reservation.cancelled_at)}`

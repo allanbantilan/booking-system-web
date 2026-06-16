@@ -20,6 +20,16 @@ class BookingController extends Controller
             $query->where('category_id', $request->string('categoryId')->value());
         }
 
+        if ($request->filled('search')) {
+            $search = trim($request->string('search')->value());
+
+            $query->where(function ($query) use ($search): void {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
         if ($request->filled('minPrice')) {
             $query->where('price', '>=', (float) $request->input('minPrice'));
         }
@@ -45,6 +55,7 @@ class BookingController extends Controller
             'bookings' => $bookings,
             'categories' => $categories,
             'filters' => [
+                'search' => $request->input('search', ''),
                 'categoryId' => $request->input('categoryId', 'all'),
                 'minPrice' => $request->input('minPrice', ''),
                 'maxPrice' => $request->input('maxPrice', ''),

@@ -72,6 +72,29 @@ const getQuantityLabel = (reservation) => {
 const isNightsRequired = (reservation) => getTypeDefaults(reservation).nightsRequired;
 const getDurationLabel = (reservation) => getTypeDefaults(reservation).durationLabel || "Duration";
 
+const getCancellationLabel = (reservation) => {
+    if (reservation.status === "cancelled") return "Cancelled";
+    if (reservation.can_cancel) return "Cancel Reservation";
+    if (reservation.receipt) return "Receipt issued";
+    if (reservation.payment?.status === "pending") return "Payment pending";
+
+    return "Cancellation window ended";
+};
+
+const getCancellationTitle = (reservation) => {
+    if (reservation.status === "cancelled") {
+        return reservation.cancelled_at
+            ? `Cancelled ${formatDateTime(reservation.cancelled_at)}`
+            : "Reservation already cancelled";
+    }
+
+    if (reservation.can_cancel) return "Cancel this reservation";
+    if (reservation.receipt) return "Reservations with issued receipts cannot be cancelled here.";
+    if (reservation.payment?.status === "pending") return "Payment is still pending.";
+
+    return "Reservations can only be cancelled within the allowed cancellation window.";
+};
+
 const cancelBookingScaffold = (reservationId) => {
     router.patch(route("reservations.cancel", reservationId));
 };
@@ -131,7 +154,9 @@ const cancelBookingScaffold = (reservationId) => {
                                     :class="
                                         reservation.status === 'confirmed'
                                             ? 'bg-emerald-400/20 text-emerald-300'
-                                            : 'bg-amber-400/20 text-amber-300'
+                                            : reservation.status === 'cancelled'
+                                                ? 'bg-rose-400/20 text-rose-300'
+                                                : 'bg-amber-400/20 text-amber-300'
                                     "
                                 >
                                     {{ reservation.status }}
@@ -161,10 +186,10 @@ const cancelBookingScaffold = (reservationId) => {
                                 </button>
                                 <span
                                     v-else
-                                    class="inline-flex items-center text-xs text-ledger-muted"
-                                    title="Cant be cancelled"
+                                    class="inline-flex items-center rounded-full border border-ledger-border bg-ledger-elevated px-3 py-1.5 text-xs font-semibold text-ledger-muted"
+                                    :title="getCancellationTitle(reservation)"
                                 >
-                                    Cant be cancelled
+                                    {{ getCancellationLabel(reservation) }}
                                 </span>
                             </td>
                         </tr>

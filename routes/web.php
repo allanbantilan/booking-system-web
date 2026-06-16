@@ -38,10 +38,16 @@ Route::middleware([
     Route::post('/reservations/{reservation}/cancellation-requests', [ReservationCancellationRequestController::class, 'store'])
         ->name('reservations.cancellation-requests.store');
     Route::post('/payments/paymaya/checkout', PayMayaCheckoutController::class)->name('payments.paymaya.checkout');
-    Route::get('/payments/paymaya/return', PayMayaReturnController::class)->name('payments.paymaya.return');
 
     Route::post('/profile/merchant-account', [MerchantAccountController::class, 'store'])
         ->name('merchant-account.store');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+
+// ponytail: web guard, not auth:sanctum. Sanctum only honors the session cookie
+// when the request Referer is a stateful domain; on the Maya return the Referer
+// is pg-sandbox.paymaya.com, so sanctum would ignore the cookie and bounce to login.
+Route::get('/payments/paymaya/return', PayMayaReturnController::class)
+    ->middleware(['auth:web', 'verified'])
+    ->name('payments.paymaya.return');

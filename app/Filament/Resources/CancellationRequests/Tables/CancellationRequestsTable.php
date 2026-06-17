@@ -5,6 +5,8 @@ namespace App\Filament\Resources\CancellationRequests\Tables;
 use App\Models\Booking;
 use App\Models\ReservationCancellationRequest;
 use App\Services\Reservations\ReservationCancellationService;
+use App\Types\CancellationRefundStatus;
+use App\Types\CancellationRequestStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -44,10 +46,11 @@ class CancellationRequestsTable
                 TextColumn::make('status')
                     ->label('Request Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        ReservationCancellationRequest::STATUS_APPROVED => 'success',
-                        ReservationCancellationRequest::STATUS_REJECTED => 'danger',
-                        ReservationCancellationRequest::STATUS_EXPIRED => 'gray',
+                    ->formatStateUsing(fn (CancellationRequestStatus $state): string => $state->label())
+                    ->color(fn (CancellationRequestStatus $state): string => match ($state) {
+                        CancellationRequestStatus::Approved => 'success',
+                        CancellationRequestStatus::Rejected => 'danger',
+                        CancellationRequestStatus::Expired => 'gray',
                         default => 'warning',
                     })
                     ->sortable(),
@@ -79,28 +82,20 @@ class CancellationRequestsTable
                 TextColumn::make('refund_status')
                     ->label('Refund')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        ReservationCancellationRequest::REFUND_PENDING => 'warning',
-                        ReservationCancellationRequest::REFUND_PROCESSED => 'success',
+                    ->formatStateUsing(fn (CancellationRefundStatus $state): string => $state->label())
+                    ->color(fn (CancellationRefundStatus $state): string => match ($state) {
+                        CancellationRefundStatus::Pending => 'warning',
+                        CancellationRefundStatus::Processed => 'success',
                         default => 'gray',
                     }),
             ])
             ->filters([
                 SelectFilter::make('status')
                     ->label('Request Status')
-                    ->options([
-                        ReservationCancellationRequest::STATUS_REQUESTED => 'Requested',
-                        ReservationCancellationRequest::STATUS_APPROVED => 'Approved',
-                        ReservationCancellationRequest::STATUS_REJECTED => 'Rejected',
-                        ReservationCancellationRequest::STATUS_EXPIRED => 'Expired',
-                    ]),
+                    ->options(CancellationRequestStatus::options()),
                 SelectFilter::make('refund_status')
                     ->label('Refund Status')
-                    ->options([
-                        ReservationCancellationRequest::REFUND_NOT_REQUIRED => 'Not Required',
-                        ReservationCancellationRequest::REFUND_PENDING => 'Pending',
-                        ReservationCancellationRequest::REFUND_PROCESSED => 'Processed',
-                    ]),
+                    ->options(CancellationRefundStatus::options()),
                 SelectFilter::make('payment_status')
                     ->label('Payment Status')
                     ->options([
@@ -109,7 +104,7 @@ class CancellationRequestsTable
                         'failed' => 'Failed',
                     ])
                     ->query(function ($query, array $data) {
-                        if (!($data['value'] ?? null)) {
+                        if (! ($data['value'] ?? null)) {
                             return;
                         }
 
@@ -128,7 +123,7 @@ class CancellationRequestsTable
                     ->color('primary')
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
-                    ->visible(fn (ReservationCancellationRequest $record): bool => $record->status === ReservationCancellationRequest::STATUS_REQUESTED)
+                    ->visible(fn (ReservationCancellationRequest $record): bool => $record->status === CancellationRequestStatus::Requested)
                     ->action(function (ReservationCancellationRequest $record): void {
                         self::runReview(fn (ReservationCancellationService $service, $merchant) => $service->approve($record, $merchant), 'Cancellation request approved.');
                     }),
@@ -137,7 +132,7 @@ class CancellationRequestsTable
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
-                    ->visible(fn (ReservationCancellationRequest $record): bool => $record->status === ReservationCancellationRequest::STATUS_REQUESTED)
+                    ->visible(fn (ReservationCancellationRequest $record): bool => $record->status === CancellationRequestStatus::Requested)
                     ->form([
                         Textarea::make('merchant_note')
                             ->label('Reason')
@@ -154,9 +149,8 @@ class CancellationRequestsTable
                     ->requiresConfirmation()
                     ->modalHeading('Mark refund as processed?')
                     ->modalDescription('Use this after the refund has been completed outside this system.')
-                    ->visible(fn (ReservationCancellationRequest $record): bool =>
-                        $record->status === ReservationCancellationRequest::STATUS_APPROVED
-                        && $record->refund_status === ReservationCancellationRequest::REFUND_PENDING
+                    ->visible(fn (ReservationCancellationRequest $record): bool => $record->status === CancellationRequestStatus::Approved
+                        && $record->refund_status === CancellationRefundStatus::Pending
                     )
                     ->action(function (ReservationCancellationRequest $record): void {
                         self::runReview(fn (ReservationCancellationService $service, $merchant) => $service->markRefundProcessed($record, $merchant), 'Refund marked as processed.');
@@ -168,9 +162,8 @@ class CancellationRequestsTable
                     ->requiresConfirmation()
                     ->modalHeading('Refund via Maya?')
                     ->modalDescription('This calls the Maya refund API. The local refund status updates only after Maya accepts it.')
-                    ->visible(fn (ReservationCancellationRequest $record): bool =>
-                        $record->status === ReservationCancellationRequest::STATUS_APPROVED
-                        && $record->refund_status === ReservationCancellationRequest::REFUND_PENDING
+                    ->visible(fn (ReservationCancellationRequest $record): bool => $record->status === CancellationRequestStatus::Approved
+                        && $record->refund_status === CancellationRefundStatus::Pending
                     )
                     ->action(function (ReservationCancellationRequest $record): void {
                         self::runReview(fn (ReservationCancellationService $service, $merchant) => $service->refundViaPayMaya($record, $merchant), 'Refund sent to Maya.');

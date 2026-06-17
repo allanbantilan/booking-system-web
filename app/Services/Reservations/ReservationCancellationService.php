@@ -8,11 +8,13 @@ use App\Models\Reservation;
 use App\Models\ReservationCancellationRequest;
 use App\Models\User;
 use App\Services\Payments\PayMayaService;
+use App\Types\CancellationRefundStatus;
+use App\Types\CancellationRequestStatus;
 use App\Types\StatusType;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -27,7 +29,7 @@ class ReservationCancellationService
             return $this->blocked('already_cancelled', 'Reservation already cancelled.', $policy);
         }
 
-        if (!in_array($reservation->status, [StatusType::Pending, StatusType::Confirmed], true)) {
+        if (! in_array($reservation->status, [StatusType::Pending, StatusType::Confirmed], true)) {
             return $this->blocked('status_not_cancellable', 'Status cannot be cancelled.', $policy);
         }
 
@@ -36,11 +38,11 @@ class ReservationCancellationService
         }
 
         $startDate = $this->resolveStartDate($reservation);
-        if (!$startDate) {
+        if (! $startDate) {
             return $this->blocked('missing_booking_date', 'Cancellation is unavailable because this booking has no start date.', $policy);
         }
 
-        if (!now()->lt($startDate->copy()->subDays(3))) {
+        if (! now()->lt($startDate->copy()->subDays(3))) {
             return $this->blocked('within_cutoff', 'Cancellation is closed within 3 days of booking start.', $policy);
         }
 
@@ -67,7 +69,7 @@ class ReservationCancellationService
             }
 
             $eligibility = $this->eligibility($reservation);
-            if (!$eligibility['can_request']) {
+            if (! $eligibility['can_request']) {
                 throw ValidationException::withMessages([
                     'error' => [$eligibility['block_label']],
                 ]);
@@ -78,12 +80,12 @@ class ReservationCancellationService
                 'user_id' => $user->id,
                 'booking_id' => $reservation->booking_id,
                 'merchant_id' => $reservation->booking?->created_by,
-                'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+                'status' => CancellationRequestStatus::Requested,
                 'reason' => $reason,
                 'requested_at' => now(),
                 'expires_at' => $eligibility['expires_at'],
                 'refund_required' => false,
-                'refund_status' => ReservationCancellationRequest::REFUND_NOT_REQUIRED,
+                'refund_status' => CancellationRefundStatus::NotRequired,
             ]);
         });
     }
@@ -116,10 +118,10 @@ class ReservationCancellationService
             ]);
 
             $request->update([
-                'status' => ReservationCancellationRequest::STATUS_APPROVED,
+                'status' => CancellationRequestStatus::Approved,
                 'reviewed_at' => now(),
                 'refund_required' => true,
-                'refund_status' => ReservationCancellationRequest::REFUND_PENDING,
+                'refund_status' => CancellationRefundStatus::Pending,
             ]);
 
             return $request->fresh(['booking', 'reservation']);
@@ -138,7 +140,7 @@ class ReservationCancellationService
             $this->ensureReviewable($request);
 
             $request->update([
-                'status' => ReservationCancellationRequest::STATUS_REJECTED,
+                'status' => CancellationRequestStatus::Rejected,
                 'merchant_note' => $note,
                 'reviewed_at' => now(),
             ]);
@@ -157,20 +159,20 @@ class ReservationCancellationService
 
             $this->authorizeMerchant($request, $merchant);
 
-            if ($request->status !== ReservationCancellationRequest::STATUS_APPROVED) {
+            if ($request->status !== CancellationRequestStatus::Approved) {
                 throw ValidationException::withMessages([
                     'refund_status' => ['Only approved cancellations can be marked as refunded.'],
                 ]);
             }
 
-            if ($request->refund_status !== ReservationCancellationRequest::REFUND_PENDING) {
+            if ($request->refund_status !== CancellationRefundStatus::Pending) {
                 throw ValidationException::withMessages([
                     'refund_status' => ['Refund is not pending.'],
                 ]);
             }
 
             $request->update([
-                'refund_status' => ReservationCancellationRequest::REFUND_PROCESSED,
+                'refund_status' => CancellationRefundStatus::Processed,
             ]);
 
             return $request->fresh(['booking', 'reservation']);
@@ -187,7 +189,7 @@ class ReservationCancellationService
         $this->ensureRefundPending($request);
 
         $payment = $request->reservation?->payment;
-        if (!$payment || $payment->provider !== 'paymaya') {
+        if (! $payment || $payment->provider !== 'paymaya') {
             throw ValidationException::withMessages([
                 'refund_status' => ['No PayMaya payment found for this reservation.'],
             ]);
@@ -195,7 +197,7 @@ class ReservationCancellationService
 
         $payMaya = app(PayMayaService::class);
         $transactionReferenceNo = $this->mayaTransactionReference($payment->raw_webhook ?? [], $payment->raw_response ?? []);
-        if (!$transactionReferenceNo && $payment->checkout_id) {
+        if (! $transactionReferenceNo && $payment->checkout_id) {
             try {
                 $payment->raw_response = $payMaya->fetchCheckout($payment->checkout_id);
                 $payment->save();
@@ -207,7 +209,7 @@ class ReservationCancellationService
             }
         }
 
-        if (!$transactionReferenceNo) {
+        if (! $transactionReferenceNo) {
             throw ValidationException::withMessages([
                 'refund_status' => ['Missing Maya transaction reference.'],
             ]);
@@ -217,8 +219,8 @@ class ReservationCancellationService
             $payMaya->refund(
                 $transactionReferenceNo,
                 (float) $payment->amount,
-                'Reservation cancellation refund #' . $request->id,
-                'refund-' . $request->id . '-' . $payment->id,
+                'Reservation cancellation refund #'.$request->id,
+                'refund-'.$request->id.'-'.$payment->id,
             );
         } catch (RuntimeException $exception) {
             throw ValidationException::withMessages([
@@ -233,16 +235,16 @@ class ReservationCancellationService
     {
         return DB::transaction(function (): int {
             $requests = ReservationCancellationRequest::query()
-                ->where('status', ReservationCancellationRequest::STATUS_REQUESTED)
+                ->where('status', CancellationRequestStatus::Requested)
                 ->where('expires_at', '<=', now())
                 ->lockForUpdate()
                 ->get();
 
             foreach ($requests as $request) {
                 $request->update([
-                    'status' => ReservationCancellationRequest::STATUS_EXPIRED,
+                    'status' => CancellationRequestStatus::Expired,
                     'refund_required' => false,
-                    'refund_status' => ReservationCancellationRequest::REFUND_NOT_REQUIRED,
+                    'refund_status' => CancellationRefundStatus::NotRequired,
                 ]);
             }
 
@@ -293,13 +295,13 @@ class ReservationCancellationService
 
     private function ensureReviewable(ReservationCancellationRequest $request): void
     {
-        if ($request->status !== ReservationCancellationRequest::STATUS_REQUESTED) {
+        if ($request->status !== CancellationRequestStatus::Requested) {
             throw ValidationException::withMessages([
                 'status' => ['Cancellation request has already been reviewed.'],
             ]);
         }
 
-        if (!now()->lt($request->expires_at)) {
+        if (! now()->lt($request->expires_at)) {
             throw ValidationException::withMessages([
                 'status' => ['Cancellation request has expired.'],
             ]);
@@ -308,13 +310,13 @@ class ReservationCancellationService
 
     private function ensureRefundPending(ReservationCancellationRequest $request): void
     {
-        if ($request->status !== ReservationCancellationRequest::STATUS_APPROVED) {
+        if ($request->status !== CancellationRequestStatus::Approved) {
             throw ValidationException::withMessages([
                 'refund_status' => ['Only approved cancellations can be refunded.'],
             ]);
         }
 
-        if ($request->refund_status !== ReservationCancellationRequest::REFUND_PENDING) {
+        if ($request->refund_status !== CancellationRefundStatus::Pending) {
             throw ValidationException::withMessages([
                 'refund_status' => ['Refund is not pending.'],
             ]);

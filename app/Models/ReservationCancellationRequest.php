@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Types\CancellationRefundStatus;
+use App\Types\CancellationRequestStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,15 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ReservationCancellationRequest extends Model
 {
     use HasFactory;
-
-    public const STATUS_REQUESTED = 'requested';
-    public const STATUS_APPROVED = 'approved';
-    public const STATUS_REJECTED = 'rejected';
-    public const STATUS_EXPIRED = 'expired';
-
-    public const REFUND_NOT_REQUIRED = 'not_required';
-    public const REFUND_PENDING = 'pending';
-    public const REFUND_PROCESSED = 'processed';
 
     protected $fillable = [
         'reservation_id',
@@ -37,10 +30,12 @@ class ReservationCancellationRequest extends Model
     protected function casts(): array
     {
         return [
+            'status' => CancellationRequestStatus::class,
             'requested_at' => 'datetime',
             'reviewed_at' => 'datetime',
             'expires_at' => 'datetime',
             'refund_required' => 'boolean',
+            'refund_status' => CancellationRefundStatus::class,
         ];
     }
 

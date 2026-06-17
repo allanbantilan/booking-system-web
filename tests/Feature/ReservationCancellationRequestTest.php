@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\Booking;
 use App\Models\BackendUser;
+use App\Models\Booking;
 use App\Models\Reservation;
 use App\Models\ReservationCancellationRequest;
 use App\Models\User;
 use App\Services\Reservations\ReservationCancellationService;
+use App\Types\CancellationRefundStatus;
+use App\Types\CancellationRequestStatus;
 use App\Types\StatusType;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,7 +69,7 @@ class ReservationCancellationRequestTest extends TestCase
         $request = app(ReservationCancellationService::class)
             ->requestCancellation($reservation, $user, 'Schedule changed');
 
-        $this->assertSame(ReservationCancellationRequest::STATUS_REQUESTED, $request->status);
+        $this->assertSame(CancellationRequestStatus::Requested, $request->status);
         $this->assertSame('Schedule changed', $request->reason);
         $this->assertSame(
             $reservation->booking->event_date->copy()->subDays(3)->toDateString(),
@@ -89,7 +91,7 @@ class ReservationCancellationRequestTest extends TestCase
         $request = app(ReservationCancellationService::class)
             ->requestCancellation($reservation, $user, null);
 
-        $this->assertSame(ReservationCancellationRequest::STATUS_REQUESTED, $request->status);
+        $this->assertSame(CancellationRequestStatus::Requested, $request->status);
         $this->assertSame(
             $reservation->check_in_date->copy()->subDays(3)->toDateString(),
             $request->expires_at->toDateString(),
@@ -154,7 +156,7 @@ class ReservationCancellationRequestTest extends TestCase
         $this->assertDatabaseHas('reservation_cancellation_requests', [
             'reservation_id' => $reservation->id,
             'user_id' => $user->id,
-            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+            'status' => CancellationRequestStatus::Requested->value,
             'reason' => 'Schedule changed',
         ]);
     }
@@ -237,9 +239,9 @@ class ReservationCancellationRequestTest extends TestCase
 
         $approved = app(ReservationCancellationService::class)->approve($request, $merchant);
 
-        $this->assertSame(ReservationCancellationRequest::STATUS_APPROVED, $approved->status);
+        $this->assertSame(CancellationRequestStatus::Approved, $approved->status);
         $this->assertTrue($approved->refund_required);
-        $this->assertSame(ReservationCancellationRequest::REFUND_PENDING, $approved->refund_status);
+        $this->assertSame(CancellationRefundStatus::Pending, $approved->refund_status);
         $this->assertSame(StatusType::Cancelled, $reservation->fresh()->status);
         $this->assertSame(10, $reservation->booking->fresh()->capacity);
     }
@@ -262,7 +264,7 @@ class ReservationCancellationRequestTest extends TestCase
         $rejected = app(ReservationCancellationService::class)
             ->reject($request, $merchant, 'Policy does not allow this change.');
 
-        $this->assertSame(ReservationCancellationRequest::STATUS_REJECTED, $rejected->status);
+        $this->assertSame(CancellationRequestStatus::Rejected, $rejected->status);
         $this->assertSame('Policy does not allow this change.', $rejected->merchant_note);
         $this->assertSame(StatusType::Confirmed, $reservation->fresh()->status);
     }
@@ -306,7 +308,7 @@ class ReservationCancellationRequestTest extends TestCase
         ]);
         $request = app(ReservationCancellationService::class)
             ->requestCancellation($reservation, $user, null);
-        $request->update(['status' => ReservationCancellationRequest::STATUS_EXPIRED]);
+        $request->update(['status' => CancellationRequestStatus::Expired]);
 
         $this->expectException(ValidationException::class);
 
@@ -326,10 +328,10 @@ class ReservationCancellationRequestTest extends TestCase
         $count = app(ReservationCancellationService::class)->expireOverdueRequests();
 
         $this->assertSame(1, $count);
-        $this->assertSame(ReservationCancellationRequest::STATUS_EXPIRED, $request->fresh()->status);
+        $this->assertSame(CancellationRequestStatus::Expired, $request->fresh()->status);
         $this->assertSame(StatusType::Confirmed, $reservation->fresh()->status);
         $this->assertFalse($request->fresh()->refund_required);
-        $this->assertSame(ReservationCancellationRequest::REFUND_NOT_REQUIRED, $request->fresh()->refund_status);
+        $this->assertSame(CancellationRefundStatus::NotRequired, $request->fresh()->refund_status);
     }
 
     public function test_expiry_command_expires_overdue_requests(): void
@@ -346,7 +348,7 @@ class ReservationCancellationRequestTest extends TestCase
             ->expectsOutput('Expired 1 cancellation request(s).')
             ->assertExitCode(0);
 
-        $this->assertSame(ReservationCancellationRequest::STATUS_EXPIRED, $request->fresh()->status);
+        $this->assertSame(CancellationRequestStatus::Expired, $request->fresh()->status);
     }
 
     private function makeReservation(User $user, array $bookingOverrides = [], array $reservationOverrides = []): Reservation

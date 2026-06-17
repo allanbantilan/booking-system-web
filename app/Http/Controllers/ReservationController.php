@@ -19,8 +19,7 @@ class ReservationController extends Controller
         Request $request,
         int $reservationId,
         ReservationCancellationService $cancellations
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $reservation = Reservation::query()
             ->whereKey($reservationId)
             ->where('user_id', $request->user()->id)
@@ -104,7 +103,7 @@ class ReservationController extends Controller
     {
         $policy = 'Cancellable within 3 days before receipt is issued.';
 
-        if (!$reservation->created_at) {
+        if (! $reservation->created_at) {
             return [
                 'can_cancel' => false,
                 'cancel_block_reason' => 'status_not_cancellable',
@@ -122,7 +121,7 @@ class ReservationController extends Controller
             ];
         }
 
-        if (!in_array($reservation->status, [StatusType::Pending, StatusType::Confirmed], true)) {
+        if (! in_array($reservation->status, [StatusType::Pending, StatusType::Confirmed], true)) {
             return [
                 'can_cancel' => false,
                 'cancel_block_reason' => 'status_not_cancellable',
@@ -140,7 +139,7 @@ class ReservationController extends Controller
             ];
         }
 
-        if (!now()->lt($reservation->created_at->copy()->addDays(3))) {
+        if (! now()->lt($reservation->created_at->copy()->addDays(3))) {
             return [
                 'can_cancel' => false,
                 'cancel_block_reason' => 'outside_window',
@@ -190,14 +189,14 @@ class ReservationController extends Controller
     {
         return [
             'id' => $request->id,
-            'status' => $request->status,
+            'status' => $request->status->value,
             'reason' => $request->reason,
             'merchant_note' => $request->merchant_note,
             'requested_at' => $request->requested_at?->toIso8601String(),
             'reviewed_at' => $request->reviewed_at?->toIso8601String(),
             'expires_at' => $request->expires_at?->toIso8601String(),
             'refund_required' => $request->refund_required,
-            'refund_status' => $request->refund_status,
+            'refund_status' => $request->refund_status->value,
         ];
     }
 }

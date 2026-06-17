@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CancellationRequests;
 use App\Filament\Resources\CancellationRequests\Pages\ListCancellationRequests;
 use App\Filament\Resources\CancellationRequests\Tables\CancellationRequestsTable;
 use App\Models\ReservationCancellationRequest;
+use App\Types\CancellationRequestStatus;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -17,7 +18,9 @@ class CancellationRequestResource extends Resource
     protected static ?string $model = ReservationCancellationRequest::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedXCircle;
+
     protected static string|UnitEnum|null $navigationGroup = 'Sales';
+
     protected static ?string $navigationLabel = 'Cancellation Requests';
 
     public static function table(Table $table): Table
@@ -42,7 +45,7 @@ class CancellationRequestResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $count = static::getEloquentQuery()
-            ->where('status', ReservationCancellationRequest::STATUS_REQUESTED)
+            ->where('status', CancellationRequestStatus::Requested)
             ->count();
 
         return $count > 0 ? (string) $count : null;
@@ -55,7 +58,7 @@ class CancellationRequestResource extends Resource
 
         $user = auth('backend')->user();
 
-        if ($user && $user->hasRole('merchant') && !$user->hasRole('super_admin')) {
+        if ($user && $user->hasRole('merchant') && ! $user->hasRole('super_admin')) {
             $query->where(function (Builder $requestQuery) use ($user): void {
                 $requestQuery
                     ->where('merchant_id', $user->id)

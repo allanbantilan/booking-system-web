@@ -3,14 +3,16 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\CancellationRequests\CancellationRequestResource;
-use App\Models\Booking;
+use App\Filament\Resources\CancellationRequests\Pages\ListCancellationRequests;
 use App\Models\BackendUser;
+use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\ReservationCancellationRequest;
 use App\Models\User;
-use App\Filament\Resources\CancellationRequests\Pages\ListCancellationRequests;
 use App\Services\Reservations\ReservationCancellationService;
+use App\Types\CancellationRefundStatus;
+use App\Types\CancellationRequestStatus;
 use App\Types\StatusType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -67,9 +69,9 @@ class FilamentCancellationRequestResourceTest extends TestCase
 
         $request->refresh();
 
-        $this->assertSame(ReservationCancellationRequest::STATUS_APPROVED, $request->status);
+        $this->assertSame(CancellationRequestStatus::Approved, $request->status);
         $this->assertSame(StatusType::Cancelled, $request->reservation->fresh()->status);
-        $this->assertSame(ReservationCancellationRequest::REFUND_PENDING, $request->refund_status);
+        $this->assertSame(CancellationRefundStatus::Pending, $request->refund_status);
     }
 
     public function test_customer_requested_cancellation_shows_for_booking_merchant(): void
@@ -109,9 +111,9 @@ class FilamentCancellationRequestResourceTest extends TestCase
         $merchant = $this->makeBackendUser('refund-merchant@test.local', 'merchant');
         $request = $this->makeRequestForMerchant($merchant);
         $request->update([
-            'status' => ReservationCancellationRequest::STATUS_APPROVED,
+            'status' => CancellationRequestStatus::Approved,
             'refund_required' => true,
-            'refund_status' => ReservationCancellationRequest::REFUND_PENDING,
+            'refund_status' => CancellationRefundStatus::Pending,
         ]);
 
         $this->actingAs($merchant, 'backend');
@@ -121,7 +123,7 @@ class FilamentCancellationRequestResourceTest extends TestCase
             ->callTableAction('markRefundProcessed', $request);
 
         $this->assertSame(
-            ReservationCancellationRequest::REFUND_PROCESSED,
+            CancellationRefundStatus::Processed,
             $request->fresh()->refund_status,
         );
     }
@@ -148,11 +150,10 @@ class FilamentCancellationRequestResourceTest extends TestCase
             ->callTableAction('refundViaPayMaya', $request);
 
         $this->assertSame(
-            ReservationCancellationRequest::REFUND_PROCESSED,
+            CancellationRefundStatus::Processed,
             $request->fresh()->refund_status,
         );
-        Http::assertSent(fn ($httpRequest) =>
-            $httpRequest->url() === 'https://pg-sandbox.paymaya.com/p3/refund'
+        Http::assertSent(fn ($httpRequest) => $httpRequest->url() === 'https://pg-sandbox.paymaya.com/p3/refund'
             && $httpRequest['transactionReferenceNo'] === 'TXN-REFUND-1'
             && $httpRequest['merchant']['name'] === config('app.name')
             && (float) $httpRequest['amount']['value'] === 1000.0
@@ -171,7 +172,7 @@ class FilamentCancellationRequestResourceTest extends TestCase
             ->callTableAction('refundViaPayMaya', $request);
 
         $this->assertSame(
-            ReservationCancellationRequest::REFUND_PENDING,
+            CancellationRefundStatus::Pending,
             $request->fresh()->refund_status,
         );
         Http::assertNothingSent();
@@ -201,7 +202,7 @@ class FilamentCancellationRequestResourceTest extends TestCase
             ->callTableAction('refundViaPayMaya', $request);
 
         $this->assertSame(
-            ReservationCancellationRequest::REFUND_PROCESSED,
+            CancellationRefundStatus::Processed,
             $request->fresh()->refund_status,
         );
         $this->assertSame(
@@ -251,10 +252,10 @@ class FilamentCancellationRequestResourceTest extends TestCase
             'user_id' => $user->id,
             'booking_id' => $booking->id,
             'merchant_id' => $merchant->id,
-            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+            'status' => CancellationRequestStatus::Requested,
             'requested_at' => now(),
             'expires_at' => now()->addDays(7),
-            'refund_status' => ReservationCancellationRequest::REFUND_NOT_REQUIRED,
+            'refund_status' => CancellationRefundStatus::NotRequired,
         ]);
     }
 
@@ -262,9 +263,9 @@ class FilamentCancellationRequestResourceTest extends TestCase
     {
         $request = $this->makeRequestForMerchant($merchant);
         $request->update([
-            'status' => ReservationCancellationRequest::STATUS_APPROVED,
+            'status' => CancellationRequestStatus::Approved,
             'refund_required' => true,
-            'refund_status' => ReservationCancellationRequest::REFUND_PENDING,
+            'refund_status' => CancellationRefundStatus::Pending,
         ]);
 
         Payment::create([
@@ -274,8 +275,8 @@ class FilamentCancellationRequestResourceTest extends TestCase
             'status' => 'succeeded',
             'amount' => 1000,
             'currency' => 'PHP',
-            'checkout_id' => 'CHK-REFUND-' . $request->id,
-            'reference' => 'PMY-REFUND-' . $request->id,
+            'checkout_id' => 'CHK-REFUND-'.$request->id,
+            'reference' => 'PMY-REFUND-'.$request->id,
             'raw_webhook' => $rawWebhook,
         ]);
 

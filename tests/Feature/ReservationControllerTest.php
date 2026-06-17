@@ -6,8 +6,8 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Receipt;
 use App\Models\Reservation;
-use App\Models\ReservationCancellationRequest;
 use App\Models\User;
+use App\Types\CancellationRequestStatus;
 use App\Types\StatusType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -59,7 +59,7 @@ class ReservationControllerTest extends TestCase
         ]);
         $this->assertDatabaseHas('reservation_cancellation_requests', [
             'reservation_id' => $reservation->id,
-            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+            'status' => CancellationRequestStatus::Requested->value,
         ]);
         $this->assertSame(7, $booking->fresh()->capacity);
     }
@@ -130,7 +130,7 @@ class ReservationControllerTest extends TestCase
         ]);
         $this->assertDatabaseHas('reservation_cancellation_requests', [
             'reservation_id' => $reservation->id,
-            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+            'status' => CancellationRequestStatus::Requested->value,
         ]);
         $this->assertSame(8, $reservation->booking->fresh()->capacity);
     }
@@ -161,7 +161,7 @@ class ReservationControllerTest extends TestCase
         ]);
         $this->assertDatabaseHas('reservation_cancellation_requests', [
             'reservation_id' => $reservation->id,
-            'status' => ReservationCancellationRequest::STATUS_REQUESTED,
+            'status' => CancellationRequestStatus::Requested->value,
         ]);
     }
 
@@ -269,7 +269,7 @@ class ReservationControllerTest extends TestCase
             'status' => $status,
             'amount' => $reservation->total_price,
             'currency' => 'PHP',
-            'reference' => 'PMY-TEST-' . $reservation->id,
+            'reference' => 'PMY-TEST-'.$reservation->id,
         ]);
     }
 }

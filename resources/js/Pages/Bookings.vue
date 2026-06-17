@@ -192,16 +192,14 @@ const toggleDescription = (bookingId) => {
 
 <template>
     <DashboardLayout title="Available Bookings">
-        <section
-            class="mb-5 rounded-xl border border-ledger-border bg-ledger-surface p-4 backdrop-blur"
-        >
+        <section class="mb-5 border-b border-ledger-border pb-5">
             <h1 class="text-xl font-bold md:text-2xl">Available Bookings</h1>
             <p class="mt-1 text-sm text-ledger-muted">
                 Browse available bookings and reserve with Maya payment.
             </p>
         </section>
 
-        <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-6">
+        <section class="ledger-panel p-5 sm:p-6">
             <div class="mb-5 flex flex-wrap items-end gap-3">
                 <div class="min-w-[260px] flex-1">
                     <label class="text-xs font-semibold text-ledger-muted">
@@ -210,18 +208,18 @@ const toggleDescription = (bookingId) => {
                     <input
                         v-model="filters.search"
                         type="search"
-                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text placeholder:text-ledger-muted outline-none focus:border-cyan-400"
+                        class="bf-field mt-2 w-full px-3 py-2 text-sm placeholder:text-ledger-muted outline-none"
                         placeholder="Search title, location, or description"
                     />
                 </div>
 
                 <div class="min-w-[200px]">
-                    <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
+                    <label class="text-xs font-semibold text-ledger-muted">
                         Category
                     </label>
                     <select
                         v-model="filters.categoryId"
-                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
+                        class="bf-field mt-2 w-full px-3 py-2 text-sm outline-none"
                     >
                         <option value="all">All categories</option>
                         <option
@@ -235,47 +233,47 @@ const toggleDescription = (bookingId) => {
                 </div>
 
                 <div class="min-w-[140px]">
-                    <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
+                    <label class="text-xs font-semibold text-ledger-muted">
                         Min Price
                     </label>
                     <input
                         v-model="filters.minPrice"
                         type="number"
                         min="0"
-                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
+                        class="bf-field mt-2 w-full px-3 py-2 text-sm outline-none"
                         placeholder="0"
                     />
                 </div>
 
                 <div class="min-w-[140px]">
-                    <label class="text-xs uppercase tracking-[0.2em] text-ledger-muted">
+                    <label class="text-xs font-semibold text-ledger-muted">
                         Max Price
                     </label>
                     <input
                         v-model="filters.maxPrice"
                         type="number"
                         min="0"
-                        class="mt-2 w-full rounded-lg border border-ledger-border bg-ledger-surface px-3 py-2 text-sm text-ledger-text outline-none focus:border-cyan-400"
+                        class="bf-field mt-2 w-full px-3 py-2 text-sm outline-none"
                         placeholder="Any"
                     />
                 </div>
 
                 <button
                     type="button"
-                    class="rounded-lg border border-ledger-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ledger-text transition hover:bg-ledger-elevated"
+                    class="bf-button bf-button-secondary"
                     @click="clearFilters"
                 >
                     Clear
                 </button>
             </div>
 
-            <div v-if="bookings.length" class="grid gap-5 md:grid-cols-2">
+            <div v-if="bookings.length" class="grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
                 <article
                     v-for="booking in bookings"
                     :key="booking.id"
                     role="link"
                     tabindex="0"
-                    class="group flex cursor-pointer flex-col rounded-2xl border border-ledger-border bg-ledger-surface/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-ledger-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+                    class="bf-market-card group flex cursor-pointer flex-col p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
                     :class="getAccent(booking).glow"
                     @click="goToBookingDetails(booking.id)"
                     @keydown.enter.prevent="goToBookingDetails(booking.id)"
@@ -284,47 +282,41 @@ const toggleDescription = (bookingId) => {
                     <button
                         v-if="booking.image_urls?.length"
                         type="button"
-                        class="relative mb-4 block overflow-hidden rounded-xl border border-ledger-border bg-ledger-elevated text-left"
+                        class="bf-market-photo relative mb-4 block w-full overflow-hidden text-left"
                         @click.stop="openGallery(booking, 0)"
                     >
                         <img
                             :src="booking.image_urls[0]"
                             :alt="booking.title"
-                            class="h-44 w-full object-contain transition duration-300 group-hover:scale-[1.02]"
+                            class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.015]"
                             loading="lazy"
                         />
                         <span
                             v-if="booking.category?.name"
-                            class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] leading-none"
+                            class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold leading-none"
                             :class="getAccent(booking).badge"
                         >
                             <span>{{ getBadgeLabel(booking) }}</span>
-                        </span>
-                        <span
-                            class="absolute left-3 top-3 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 text-xs font-semibold text-ledger-text"
-                        >
-                            {{ booking.image_urls.length }}
-                            photo{{ booking.image_urls.length === 1 ? "" : "s" }}
                         </span>
                     </button>
 
                     <div
                         v-else
-                        class="mb-4 flex h-44 items-center justify-center rounded-xl border border-dashed border-ledger-border bg-ledger-elevated text-sm text-ledger-muted"
+                        class="bf-market-photo mb-4 flex items-center justify-center border border-dashed border-ledger-border text-sm text-ledger-muted"
                     >
                         No image available
                     </div>
 
                     <div
-                        class="border-t-4 pt-4"
+                        class="px-1"
                         :class="getAccent(booking).border"
                     >
                         <div class="flex items-start justify-between gap-3">
-                            <h3 class="text-lg font-bold text-ledger-text">
+                            <h3 class="text-base font-bold text-ledger-text">
                                 {{ booking.title }}
                             </h3>
                             <span
-                                class="rounded-full border border-ledger-border px-3 py-1 text-xs text-ledger-text"
+                                class="shrink-0 rounded-full border border-ledger-border px-3 py-1 text-xs font-semibold text-ledger-text"
                             >
                                 <template v-if="getAvailabilityValue(booking) !== null">
                                     {{ getAvailabilityLabel(booking) }}:
@@ -341,7 +333,7 @@ const toggleDescription = (bookingId) => {
                         </p>
                     </div>
 
-                    <div class="mt-3 min-h-[4.5rem]">
+                    <div class="mt-3 min-h-[4.5rem] px-1">
                         <p
                             class="text-sm text-ledger-muted"
                             :style="
@@ -363,14 +355,14 @@ const toggleDescription = (bookingId) => {
                         <button
                             v-if="isLongDescription(booking.description)"
                             type="button"
-                            class="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300 transition hover:text-cyan-200"
+                            class="mt-2 text-xs font-semibold text-ledger-primary transition hover:text-ledger-text"
                             @click.stop="toggleDescription(booking.id)"
                         >
                             {{ expandedDescriptions[booking.id] ? "Read Less" : "Read More" }}
                         </button>
                     </div>
 
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                    <div class="mt-4 flex flex-wrap items-center gap-2 px-1">
                         <div
                             v-for="amenity in getAmenities(booking)"
                             :key="amenity.key"
@@ -381,27 +373,27 @@ const toggleDescription = (bookingId) => {
                         </div>
                     </div>
 
-                    <div class="mt-auto pt-5">
+                    <div class="mt-auto px-1 pt-5">
                         <div class="flex flex-wrap items-end justify-between gap-4 border-t border-ledger-border pt-4">
                             <div>
-                                <p class="text-xs uppercase tracking-[0.25em] text-ledger-muted">
+                                <p class="text-xs font-semibold text-ledger-muted">
                                     {{ getRateLabel(booking) }}
                                 </p>
                                 <div class="mt-1 flex flex-wrap items-baseline gap-2">
-                                    <span class="text-lg font-black text-orange-300">
+                                    <span class="bf-price">
                                         {{ formatCurrency(getDiscountedPrice(booking)) }}
                                     </span>
                                     <span v-if="getDiscountPercentage(booking) > 0" class="text-xs text-ledger-muted line-through">
                                         {{ formatCurrency(booking.price) }}
                                     </span>
-                                    <span v-if="getDiscountPercentage(booking) > 0" class="text-[10px] uppercase tracking-[0.2em] text-emerald-300">
+                                    <span v-if="getDiscountPercentage(booking) > 0" class="text-xs font-semibold text-emerald-300">
                                         -{{ getDiscountPercentage(booking) }}%
                                     </span>
                                 </div>
                             </div>
                             <button
                                 type="button"
-                                class="rounded-lg px-4 py-2 text-sm font-semibold transition shadow-sm"
+                                class="rounded-lg px-0 py-2 text-sm font-semibold transition"
                                 :class="getAccent(booking).button"
                                 @click.stop="goToBookingDetails(booking.id)"
                             >

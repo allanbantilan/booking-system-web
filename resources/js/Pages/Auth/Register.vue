@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import Navigation from "@/Components/Home/Navigation.vue";
 
 const page = usePage();
-const appName = computed(() => page.props.appName || "BookFlow");
+const appName = computed(() => page.props.appName || "BookBound");
 const showPassword = ref(false);
 const showPasswordConfirmation = ref(false);
 
@@ -26,7 +26,7 @@ const submit = () => {
 <template>
     <Head :title="`Create Account | ${appName}`" />
 
-    <div class="relative min-h-screen overflow-hidden bg-ledger-bg">
+    <div class="relative min-h-screen bg-ledger-bg">
         <Navigation
             :can-login="false"
             :can-register="false"
@@ -35,21 +35,12 @@ const submit = () => {
         />
 
         <div
-            class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(34,211,238,0.2),transparent_38%),radial-gradient(circle_at_85%_16%,rgba(249,115,22,0.24),transparent_36%),radial-gradient(circle_at_50%_95%,rgba(132,204,22,0.22),transparent_42%)]"
-        />
-
-        <div
             class="relative mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 pb-10 pt-24 sm:px-6 lg:grid-cols-2 lg:px-8"
         >
             <section class="hidden text-ledger-text lg:block">
-                <p
-                    class="mb-5 inline-flex items-center rounded-full border border-ledger-border bg-ledger-elevated px-4 py-1 text-sm uppercase tracking-[0.2em]"
-                >
-                    {{ appName }}
-                </p>
-                <h1 class="text-5xl font-black leading-tight">
-                    Launch your
-                    <span class="text-cyan-300">booking workspace</span>
+                <p class="bf-kicker mb-5">{{ appName }}</p>
+                <h1 class="font-display text-5xl font-bold leading-tight">
+                    Start booking with BookBound.
                 </h1>
                 <p class="mt-5 max-w-md text-base text-ledger-text/85">
                     Create your account to manage services, schedules, and client bookings.
@@ -57,13 +48,13 @@ const submit = () => {
             </section>
 
             <section
-                class="rounded-3xl border border-ledger-border bg-transparent p-6 shadow-2xl shadow-cyan-900/25 backdrop-blur sm:p-8"
+                class="ledger-panel p-6 sm:p-8"
             >
                 <h2 class="text-3xl font-black tracking-tight text-ledger-text">
                     Create account
                 </h2>
                 <p class="mt-2 text-sm text-ledger-muted">
-                    Set up access to your booking dashboard.
+                    Create an account to reserve and track bookings.
                 </p>
 
                 <form @submit.prevent="submit" class="mt-6 space-y-5">
@@ -81,7 +72,7 @@ const submit = () => {
                             required
                             autofocus
                             autocomplete="name"
-                            class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                            class="bf-field block w-full px-4 py-3 placeholder:text-ledger-muted outline-none"
                             placeholder="Your name"
                         />
                         <p
@@ -105,7 +96,7 @@ const submit = () => {
                             type="email"
                             required
                             autocomplete="username"
-                            class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                            class="bf-field block w-full px-4 py-3 placeholder:text-ledger-muted outline-none"
                             placeholder="you@company.com"
                         />
                         <p
@@ -130,7 +121,7 @@ const submit = () => {
                                 :type="showPassword ? 'text' : 'password'"
                                 required
                                 autocomplete="new-password"
-                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-12 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                                class="bf-field block w-full px-4 py-3 pr-12 placeholder:text-ledger-muted outline-none"
                                 placeholder="At least 8 characters"
                             />
                             <button
@@ -207,7 +198,7 @@ const submit = () => {
                                 "
                                 required
                                 autocomplete="new-password"
-                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-12 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                                class="bf-field block w-full px-4 py-3 pr-12 placeholder:text-ledger-muted outline-none"
                                 placeholder="Repeat password"
                             />
                             <button
@@ -289,7 +280,7 @@ const submit = () => {
                                 <a
                                     target="_blank"
                                     :href="route('terms.show')"
-                                    class="font-semibold text-cyan-300 hover:text-cyan-200"
+                                    class="font-semibold text-ledger-primary hover:text-ledger-text"
                                 >
                                     Terms of Service
                                 </a>
@@ -297,7 +288,7 @@ const submit = () => {
                                 <a
                                     target="_blank"
                                     :href="route('policy.show')"
-                                    class="font-semibold text-cyan-300 hover:text-cyan-200"
+                                    class="font-semibold text-ledger-primary hover:text-ledger-text"
                                 >
                                     Privacy Policy
                                 </a>
@@ -314,7 +305,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-ledger-text transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                        class="bf-button bf-button-primary w-full disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {{
                             form.processing ? "Creating account..." : "Create booking account"
@@ -325,7 +316,7 @@ const submit = () => {
                         Already registered?
                         <Link
                             :href="route('login')"
-                            class="font-semibold text-cyan-300 hover:text-cyan-200"
+                            class="font-semibold text-ledger-primary hover:text-ledger-text"
                         >
                             Sign in now
                         </Link>

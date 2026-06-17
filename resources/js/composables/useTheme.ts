@@ -10,7 +10,13 @@ const theme = ref<AppTheme>(
 
 const applyTheme = (value: AppTheme) => {
     theme.value = value;
-    document.documentElement.classList.toggle("app-dark", value === "dark");
+    const root = document.documentElement;
+    // Arm the transition BEFORE flipping colors, else the change jumps instantly.
+    root.classList.add("theme-changing");
+    window.requestAnimationFrame(() => {
+        root.classList.toggle("app-dark", value === "dark");
+        window.setTimeout(() => root.classList.remove("theme-changing"), 420);
+    });
     localStorage.setItem("bookflow-theme", value);
 };
 

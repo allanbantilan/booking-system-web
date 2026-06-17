@@ -12,7 +12,7 @@ const routeUrl = (name: string) => route(name);
         <Navigation :can-login="true" :can-register="true" hide-main-links />
         <main class="mx-auto max-w-4xl px-4 pb-20 pt-32 sm:px-6">
             <Link :href="routeUrl('home')" class="text-sm font-bold text-cyan-400"><i class="pi pi-arrow-left mr-2" />Back home</Link>
-            <article class="prose prose-slate mt-6 max-w-none rounded-3xl border border-ledger-border bg-ledger-surface p-6 text-ledger-muted shadow-ledger dark:prose-invert sm:p-10" v-html="terms" />
+            <article class="prose prose-slate mt-6 max-w-none rounded-lg border border-ledger-border bg-ledger-surface p-6 text-ledger-muted dark:prose-invert sm:p-10" v-html="terms" />
         </main>
     </div>
 </template>

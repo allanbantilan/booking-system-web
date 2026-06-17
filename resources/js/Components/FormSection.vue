@@ -23,7 +23,7 @@ const panelClasses = computed(() => {
 
 const actionsClasses = computed(() => {
     if (props.variant === 'dashboard') {
-        return 'border-x border-b border-ledger-border bg-ledger-elevated text-ledger-text';
+        return 'border-t border-ledger-border bg-ledger-elevated text-ledger-text';
     }
 
     return 'bg-gray-50';
@@ -31,7 +31,11 @@ const actionsClasses = computed(() => {
 </script>
 
 <template>
-    <div class="md:grid md:grid-cols-3 md:gap-6">
+    <section
+        :class="variant === 'dashboard'
+            ? 'rounded-xl border border-ledger-border bg-ledger-surface'
+            : 'md:grid md:grid-cols-3 md:gap-6'"
+    >
         <SectionTitle :variant="variant">
             <template #title>
                 <slot name="title" />
@@ -41,13 +45,13 @@ const actionsClasses = computed(() => {
             </template>
         </SectionTitle>
 
-        <div class="mt-5 md:mt-0 md:col-span-2">
+        <div :class="variant === 'dashboard' ? '' : 'mt-5 md:mt-0 md:col-span-2'">
             <form @submit.prevent="$emit('submitted')">
                 <div
-                    class="px-4 py-5 sm:p-6 shadow"
                     :class="[
+                        variant === 'dashboard' ? 'px-4 pb-5 sm:px-6 sm:pb-6' : 'px-4 py-5 shadow sm:p-6',
                         panelClasses,
-                        hasActions
+                        variant === 'dashboard' ? 'border-0' : hasActions
                             ? 'sm:rounded-tl-md sm:rounded-tr-md'
                             : 'sm:rounded-md',
                     ]"
@@ -59,12 +63,16 @@ const actionsClasses = computed(() => {
 
                 <div
                     v-if="hasActions"
-                    class="flex items-center justify-end px-4 py-3 text-end sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md"
-                    :class="actionsClasses"
+                    :class="[
+                        variant === 'dashboard'
+                            ? 'flex items-center justify-end rounded-b-xl px-4 py-4 text-end sm:px-6'
+                            : 'flex items-center justify-end px-4 py-3 text-end shadow sm:rounded-bl-md sm:rounded-br-md sm:px-6',
+                        actionsClasses,
+                    ]"
                 >
                     <slot name="actions" />
                 </div>
             </form>
         </div>
-    </div>
+    </section>
 </template>

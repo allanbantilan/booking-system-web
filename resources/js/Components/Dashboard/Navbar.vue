@@ -12,14 +12,14 @@ defineProps({
 });
 
 const page = usePage();
-const appName = computed(() => page.props.appName || "BookFlow");
+const appName = computed(() => page.props.appName || "BookBound");
 const userName = computed(() => page.props.auth?.user?.name || "User");
 const userEmail = computed(() => page.props.auth?.user?.email || "");
 
 </script>
 
 <template>
-    <nav class="w-full z-50 bg-transparent border-b border-white/10">
+    <nav class="w-full z-50 border-b border-ledger-border bg-ledger-bg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
             <div class="grid grid-cols-2 gap-4 lg:h-16 lg:grid-cols-3 lg:items-center">
                 <div class="order-1 col-span-1 flex w-full items-center gap-3">
@@ -28,10 +28,10 @@ const userEmail = computed(() => page.props.auth?.user?.email || "");
                         class="flex items-center space-x-2 group"
                     >
                         <div
-                            class="w-10 h-10 bg-cyan-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg border border-ledger-border bg-ledger-surface text-ledger-primary"
                         >
                             <svg
-                                class="w-6 h-6 text-white"
+                                class="h-6 w-6"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -45,10 +45,10 @@ const userEmail = computed(() => page.props.auth?.user?.email || "");
                             </svg>
                         </div>
                         <div>
-                            <span class="text-xl font-bold text-white">{{
+                            <span class="text-xl font-bold text-ledger-text">{{
                                 appName
                             }}</span>
-                            <p class="text-xs text-slate-300 leading-tight">
+                            <p class="text-xs leading-tight text-ledger-muted">
                                 {{ title }}
                             </p>
                         </div>

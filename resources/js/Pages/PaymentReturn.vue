@@ -41,10 +41,28 @@ const resolvedStatus = computed(() => {
 });
 
 const statusTone = computed(() => {
-    if (resolvedStatus.value === "succeeded") return "text-emerald-300";
+    if (resolvedStatus.value === "succeeded") return "text-ledger-text";
     if (resolvedStatus.value === "failed") return "text-rose-300";
-    if (resolvedStatus.value === "cancelled") return "text-amber-300";
+    if (resolvedStatus.value === "cancelled") return "text-orange-300";
     return "text-ledger-text";
+});
+
+const paymentPanelClass = computed(() => {
+    if (resolvedStatus.value === "succeeded") return "bf-payment-panel-success";
+    if (resolvedStatus.value === "failed") return "bf-payment-panel-failed";
+    if (resolvedStatus.value === "cancelled") return "bf-payment-panel-warning";
+    return "";
+});
+
+const paymentStatusClass = computed(() =>
+    resolvedStatus.value === "succeeded" ? "bf-payment-status-success" : "",
+);
+
+const paymentDotClass = computed(() => {
+    if (resolvedStatus.value === "succeeded") return "bg-ledger-text";
+    if (resolvedStatus.value === "failed") return "bg-rose-400";
+    if (resolvedStatus.value === "cancelled") return "bg-orange-400";
+    return "bg-ledger-muted animate-pulse";
 });
 
 const statusHeadline = computed(() => {
@@ -88,28 +106,19 @@ const formatDate = (value) => {
 
 <template>
     <DashboardLayout title="Payment Status">
-        <section class="rounded-2xl border border-ledger-border bg-ledger-surface p-8">
-            <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">
-                PayMaya Payment
-            </p>
+        <section class="bf-payment-panel p-6 sm:p-8" :class="paymentPanelClass">
+            <p class="text-xs font-semibold text-ledger-muted">PayMaya payment</p>
             <h1 class="mt-3 text-2xl font-bold" :class="statusTone">
                 {{ statusHeadline }}
             </h1>
             <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
                 <span
-                    class="inline-flex items-center gap-2 rounded-full border border-ledger-border bg-ledger-surface px-3 py-1 font-semibold text-ledger-text"
+                    class="bf-payment-status"
+                    :class="paymentStatusClass"
                 >
                     <span
                         class="h-2 w-2 rounded-full"
-                        :class="
-                            resolvedStatus === 'succeeded'
-                                ? 'bg-emerald-400'
-                                : resolvedStatus === 'failed'
-                                    ? 'bg-rose-400'
-                                    : resolvedStatus === 'cancelled'
-                                        ? 'bg-amber-300'
-                                        : 'bg-slate-300 animate-pulse'
-                        "
+                        :class="paymentDotClass"
                     ></span>
                     {{ resolvedStatus }}
                 </span>
@@ -121,7 +130,7 @@ const formatDate = (value) => {
                 {{ statusMessage }}
             </p>
 
-            <div class="mt-6 rounded-xl border border-ledger-border bg-ledger-elevated p-4 text-sm text-ledger-text">
+            <div class="mt-6 rounded-xl border border-ledger-border bg-ledger-surface p-4 text-sm text-ledger-text">
                 <div class="flex items-center justify-between">
                     <span>Status</span>
                     <span class="font-semibold text-ledger-text">{{ resolvedStatus }}</span>
@@ -132,41 +141,39 @@ const formatDate = (value) => {
                 </div>
             </div>
 
-            <div v-if="receipt" class="mt-6 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 p-5 text-sm text-emerald-50">
-                <p class="text-xs uppercase tracking-[0.3em] text-emerald-200">
-                    E-Receipt
-                </p>
+            <div v-if="receipt" class="mt-6 rounded-xl border border-ledger-border bg-ledger-surface p-5 text-sm text-ledger-text">
+                <p class="text-xs font-semibold text-ledger-muted">E-Receipt</p>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
                     <div>
-                        <p class="text-xs text-emerald-200">Receipt Number</p>
+                        <p class="text-xs text-ledger-muted">Receipt Number</p>
                         <p class="text-base font-semibold">{{ receipt.receipt_number }}</p>
                     </div>
                     <div v-if="payment?.reservation?.customer">
-                        <p class="text-xs text-emerald-200">Customer</p>
+                        <p class="text-xs text-ledger-muted">Customer</p>
                         <p class="text-base font-semibold">{{ payment.reservation.customer.name }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-emerald-200">Issued At</p>
+                        <p class="text-xs text-ledger-muted">Issued At</p>
                         <p class="text-base font-semibold">{{ formatDate(receipt.issued_at) }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-emerald-200">Total Paid</p>
+                        <p class="text-xs text-ledger-muted">Total Paid</p>
                         <p class="text-base font-semibold">{{ formatCurrency(receipt.amount) }}</p>
                     </div>
                     <div v-if="payment?.reservation?.booking">
-                        <p class="text-xs text-emerald-200">Booking</p>
+                        <p class="text-xs text-ledger-muted">Booking</p>
                         <p class="text-base font-semibold">
                             {{ payment.reservation.booking.title }}
                         </p>
                     </div>
                     <div v-if="payment?.reservation?.booking?.event_date">
-                        <p class="text-xs text-emerald-200">Booking Date</p>
+                        <p class="text-xs text-ledger-muted">Booking Date</p>
                         <p class="text-base font-semibold">
                             {{ formatDate(payment.reservation.booking.event_date) }}
                         </p>
                     </div>
                 </div>
-                <p class="mt-4 text-xs text-emerald-200">
+                <p class="mt-4 text-xs text-ledger-muted">
                     Show this e-receipt to the admin when needed.
                 </p>
             </div>
@@ -174,13 +181,13 @@ const formatDate = (value) => {
             <div class="mt-6 flex flex-wrap gap-3">
                 <Link
                     :href="route('bookings.history')"
-                    class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+                    class="bf-button bf-button-payment"
                 >
                     View booking history
                 </Link>
                 <Link
                     :href="route('bookings.index')"
-                    class="rounded-lg border border-ledger-border px-4 py-2 text-sm font-semibold text-ledger-text transition hover:bg-ledger-elevated"
+                    class="bf-button bf-button-secondary"
                 >
                     Back to bookings
                 </Link>

@@ -9,7 +9,7 @@ const props = defineProps({
 });
 
 const page = usePage();
-const appName = computed(() => page.props.appName || "BookFlow");
+const appName = computed(() => page.props.appName || "BookBound");
 const showPassword = ref(false);
 
 const form = useForm({
@@ -31,7 +31,7 @@ const submit = () => {
 <template>
     <Head :title="`Sign In | ${appName}`" />
 
-    <div class="relative min-h-screen overflow-hidden bg-ledger-bg">
+    <div class="relative min-h-screen bg-ledger-bg">
         <Navigation
             :can-login="false"
             :can-register="false"
@@ -40,21 +40,12 @@ const submit = () => {
         />
 
         <div
-            class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(6,182,212,0.22),transparent_42%),radial-gradient(circle_at_80%_10%,rgba(234,88,12,0.26),transparent_40%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.2),transparent_45%)]"
-        />
-
-        <div
             class="relative mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-4 pb-10 pt-24 sm:px-6 lg:grid-cols-2 lg:px-8"
         >
             <section class="hidden text-ledger-text lg:block">
-                <p
-                    class="mb-5 inline-flex items-center rounded-full border border-ledger-border bg-ledger-elevated px-4 py-1 text-sm uppercase tracking-[0.2em]"
-                >
-                    {{ appName }}
-                </p>
-                <h1 class="text-5xl font-black leading-tight">
-                    Welcome back to
-                    <span class="text-cyan-300">your bookings.</span>
+                <p class="bf-kicker mb-5">{{ appName }}</p>
+                <h1 class="font-display text-5xl font-bold leading-tight">
+                    Welcome back to your bookings.
                 </h1>
                 <p class="mt-5 max-w-md text-base text-ledger-text/85">
                     Sign in to view your calendar, reservations, and customer activity.
@@ -62,13 +53,13 @@ const submit = () => {
             </section>
 
             <section
-                class="rounded-3xl border border-ledger-border bg-transparent p-6 shadow-2xl shadow-cyan-900/25 backdrop-blur sm:p-8"
+                class="ledger-panel p-6 sm:p-8"
             >
                 <h2 class="text-3xl font-black tracking-tight text-ledger-text">
                     Sign in
                 </h2>
                 <p class="mt-2 text-sm text-ledger-muted">
-                    Access your booking dashboard.
+                    View bookings, payments, and receipts.
                 </p>
 
                 <div
@@ -93,7 +84,7 @@ const submit = () => {
                             required
                             autofocus
                             autocomplete="username"
-                            class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                            class="bf-field block w-full px-4 py-3 placeholder:text-ledger-muted outline-none"
                             placeholder="you@company.com"
                         />
                         <p
@@ -115,7 +106,7 @@ const submit = () => {
                             <Link
                                 v-if="canResetPassword"
                                 :href="route('password.request')"
-                                class="text-sm font-medium text-cyan-300 hover:text-cyan-200"
+                                class="text-sm font-medium text-ledger-primary hover:text-ledger-text"
                             >
                                 Forgot password?
                             </Link>
@@ -127,7 +118,7 @@ const submit = () => {
                                 :type="showPassword ? 'text' : 'password'"
                                 required
                                 autocomplete="current-password"
-                                class="block w-full rounded-xl border border-ledger-border bg-ledger-surface px-4 py-3 pr-14 text-ledger-text placeholder:text-slate-400 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30"
+                                class="bf-field block w-full px-4 py-3 pr-14 placeholder:text-ledger-muted outline-none"
                                 placeholder="Your password"
                             />
                             <button
@@ -193,7 +184,7 @@ const submit = () => {
                             v-model="form.remember"
                             type="checkbox"
                             name="remember"
-                            class="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                            class="h-4 w-4 rounded border-ledger-border text-cyan-600 focus:ring-cyan-500"
                         />
                         Remember me
                     </label>
@@ -201,7 +192,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-ledger-text transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                        class="bf-button bf-button-primary w-full disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {{ form.processing ? "Signing in..." : "Sign in" }}
                     </button>
@@ -210,7 +201,7 @@ const submit = () => {
                         New to {{ appName }}?
                         <Link
                             :href="route('register')"
-                            class="font-semibold text-cyan-300 hover:text-cyan-200"
+                            class="font-semibold text-ledger-primary hover:text-ledger-text"
                         >
                             Create account
                         </Link>

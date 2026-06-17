@@ -33,6 +33,7 @@ CLAUDE.md
 .agents/
 .claude/
 .codex-plugins/
+.hallmark/
 .impeccable/
 .mimocode/
 PRODUCT.md

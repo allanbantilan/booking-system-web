@@ -3,6 +3,7 @@ import { Link, usePage } from "@inertiajs/vue3";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import Button from "primevue/button";
 import LogoutButton from "@/Components/LogoutButton.vue";
+import BrandMark from "@/Components/BrandMark.vue";
 
 const props = defineProps<{
     collapsed?: boolean;
@@ -15,7 +16,7 @@ const emit = defineEmits<{
 }>();
 
 const page = usePage();
-const appName = computed(() => String(page.props.appName || "BookFlow"));
+const appName = computed(() => String(page.props.appName || "BookBound"));
 const user = computed(() => (page.props as any).auth?.user as { name?: string; email?: string } | undefined);
 const routeUrl = (name: string) => route(name);
 const showExpandedContent = ref(!props.collapsed || props.mobile);
@@ -59,7 +60,7 @@ onBeforeUnmount(() => window.clearTimeout(revealTimer));
 
 <template>
     <aside
-        class="flex h-full flex-col overflow-hidden border-r border-ledger-border bg-ledger-surface/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200"
+        class="flex h-full flex-col overflow-hidden border-r border-ledger-border bg-ledger-surface px-3 py-4 transition-[width] duration-200"
         :class="collapsed && !mobile ? 'w-20' : 'w-72'"
     >
         <div
@@ -71,12 +72,10 @@ onBeforeUnmount(() => window.clearTimeout(revealTimer));
                 :class="collapsed && !mobile ? 'w-full justify-center' : 'w-full pr-12'"
                 @click="emit('navigate')"
             >
-                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20">
-                    <i class="pi pi-book text-lg" />
-                </span>
+                <BrandMark class="size-10 shrink-0 text-ledger-text" />
                 <span v-if="showExpandedContent" class="min-w-0">
                     <strong class="block truncate font-display text-lg text-ledger-text">{{ appName }}</strong>
-                    <span class="block text-[10px] font-bold uppercase tracking-[0.22em] text-ledger-muted">Booking ledger</span>
+                    <span class="block text-xs font-semibold text-ledger-muted">Bookings and payments</span>
                 </span>
             </Link>
 
@@ -94,31 +93,31 @@ onBeforeUnmount(() => window.clearTimeout(revealTimer));
 
         <div class="mx-2 h-14 border-t border-ledger-border pt-4">
             <p
-                class="px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-ledger-muted transition-opacity duration-150"
+                class="px-3 text-xs font-semibold text-ledger-muted transition-opacity duration-150"
                 :class="showExpandedContent ? 'opacity-100' : 'opacity-0'"
             >
-                Workspace
+                Menu
             </p>
         </div>
 
-        <nav class="flex-1 space-y-1.5" aria-label="Customer workspace">
+        <nav class="flex-1 space-y-1.5" aria-label="Main menu">
             <Link
                 v-for="link in links"
                 :key="link.route"
                 :href="routeUrl(link.route)"
                 :title="collapsed && !mobile ? link.label : undefined"
-                class="group relative flex min-h-11 items-center rounded-xl text-sm font-semibold transition"
+                class="group relative flex min-h-11 items-center rounded-lg text-sm font-semibold transition"
                 :class="[
                     collapsed && !mobile ? 'mx-auto w-11 justify-center px-0' : 'w-full gap-3 px-3',
                     isActive(link.matches)
-                        ? 'bg-cyan-500/12 text-ledger-primary'
+                        ? 'bg-ledger-elevated text-ledger-text'
                         : 'text-ledger-muted hover:bg-ledger-elevated hover:text-ledger-text',
                 ]"
                 @click="emit('navigate')"
             >
                 <span
                     v-if="isActive(link.matches) && (!collapsed || mobile)"
-                    class="absolute inset-y-2 left-0 w-0.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+                    class="absolute inset-y-2 left-0 w-0.5 rounded-full bg-ledger-primary"
                 />
                 <i :class="[link.icon, 'w-5 shrink-0 text-center']" />
                 <span v-if="showExpandedContent">{{ link.label }}</span>
@@ -126,8 +125,8 @@ onBeforeUnmount(() => window.clearTimeout(revealTimer));
         </nav>
 
         <div class="border-t border-ledger-border pt-4">
-            <div class="flex items-center gap-3 rounded-xl bg-ledger-elevated p-2">
-                <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-orange-500/15 text-xs font-black text-orange-400">
+            <div class="flex items-center gap-3 rounded-lg border border-ledger-border bg-ledger-bg p-2">
+                <span class="grid size-10 shrink-0 place-items-center rounded-md bg-ledger-elevated text-xs font-black text-ledger-text">
                     {{ initials }}
                 </span>
                 <div v-if="showExpandedContent" class="min-w-0 flex-1">

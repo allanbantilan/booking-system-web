@@ -9,7 +9,7 @@ import { useTheme } from "@/composables/useTheme";
 
 const props = withDefaults(defineProps<{ title?: string }>(), { title: "" });
 const page = usePage();
-const appName = computed(() => String(page.props.appName || "BookFlow"));
+const appName = computed(() => String(page.props.appName || "BookBound"));
 const pageTitle = computed(() => props.title ? `${props.title} | ${appName.value}` : appName.value);
 const mobileOpen = ref(false);
 const collapsed = ref(localStorage.getItem("bookflow-sidebar-collapsed") === "true");
@@ -26,9 +26,6 @@ const toggleSidebar = () => {
     <Toast />
 
     <div class="min-h-screen bg-ledger-bg text-ledger-text">
-        <div class="pointer-events-none fixed inset-0 ledger-grid opacity-25" />
-        <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(6,182,212,0.16),transparent_32%),radial-gradient(circle_at_88%_12%,rgba(249,115,22,0.14),transparent_28%)]" />
-
         <div class="relative flex min-h-screen">
             <div class="fixed inset-y-0 left-0 z-30 hidden lg:block">
                 <Sidebar :collapsed="collapsed" @toggle="toggleSidebar" />
@@ -47,8 +44,8 @@ const toggleSidebar = () => {
                 class="flex min-w-0 flex-1 flex-col transition-[margin] duration-200"
                 :class="collapsed ? 'lg:ml-20' : 'lg:ml-72'"
             >
-                <header class="sticky top-0 z-20 border-b border-ledger-border bg-ledger-bg/82 backdrop-blur-xl">
-                    <div class="flex h-17 items-center gap-3 px-4 sm:px-6 lg:px-8">
+                <header class="sticky top-0 z-20 border-b border-ledger-border bg-ledger-bg/95">
+                    <div class="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
                         <Button
                             class="lg:!hidden"
                             text
@@ -59,7 +56,6 @@ const toggleSidebar = () => {
                             @click="mobileOpen = true"
                         />
                         <div class="min-w-0 flex-1">
-                            <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-ledger-muted">Customer workspace</p>
                             <h1 class="truncate font-display text-lg font-bold text-ledger-text">{{ title }}</h1>
                         </div>
                         <Button
@@ -73,8 +69,8 @@ const toggleSidebar = () => {
                     </div>
                 </header>
 
-                <main class="relative flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                    <div class="mx-auto max-w-[92rem]">
+                <main class="relative flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                    <div :key="page.url" class="bf-page-in mx-auto max-w-[88rem]">
                         <slot />
                     </div>
                 </main>

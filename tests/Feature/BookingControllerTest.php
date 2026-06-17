@@ -50,6 +50,25 @@ class BookingControllerTest extends TestCase
         $this->assertSame('sunset', $response->viewData('page')['props']['filters']['search']);
     }
 
+    public function test_index_shows_nine_bookings_per_page(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (range(1, 10) as $index) {
+            $this->makeBooking([
+                'title' => "Booking {$index}",
+                'event_date' => now()->addDays($index),
+            ]);
+        }
+
+        $response = $this->actingAs($user)
+            ->get(route('bookings.index'));
+
+        $response->assertOk();
+
+        $this->assertCount(9, $response->viewData('page')['props']['bookings']['data']);
+    }
+
     private function makeBooking(array $overrides = []): Booking
     {
         return Booking::create(array_merge([

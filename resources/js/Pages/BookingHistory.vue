@@ -298,12 +298,12 @@ const submitCancellation = () => {
         @click.self="closeCancellation"
     >
         <form
-            class="w-full max-w-lg rounded-2xl border border-ledger-border bg-ledger-surface p-6 shadow-xl"
+            class="w-full max-w-lg rounded-lg border border-ledger-border bg-ledger-surface p-6 shadow-xl"
             @submit.prevent="submitCancellation"
         >
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">
+                    <p class="text-xs font-semibold text-ledger-muted">
                         Cancellation request
                     </p>
                     <h2 class="mt-2 text-xl font-semibold text-ledger-text">
@@ -355,7 +355,7 @@ const submitCancellation = () => {
                 <button
                     type="submit"
                     :disabled="cancellationForm.processing"
-                    class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
+                    class="bf-button bf-button-primary disabled:cursor-not-allowed disabled:opacity-70"
                 >
                     {{ cancellationForm.processing ? "Submitting..." : "Submit Request" }}
                 </button>
@@ -368,10 +368,10 @@ const submitCancellation = () => {
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6"
         @click.self="closeReceipt"
     >
-        <div class="w-full max-w-xl rounded-2xl border border-ledger-border bg-ledger-surface p-6 shadow-xl">
+        <div class="w-full max-w-xl rounded-lg border border-ledger-border bg-ledger-surface p-6 shadow-xl">
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-ledger-muted">E-Receipt</p>
+                    <p class="text-xs font-semibold text-ledger-muted">E-Receipt</p>
                     <h2 class="mt-2 text-xl font-semibold text-ledger-text">
                         {{ activeReceipt.booking?.title || "Booking" }}
                     </h2>
@@ -389,8 +389,8 @@ const submitCancellation = () => {
             </div>
 
             <div class="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-                <div class="rounded-xl border border-ledger-border bg-ledger-surface p-4">
-                    <p class="text-xs uppercase tracking-[0.2em] text-ledger-muted">Receipt</p>
+                <div class="rounded-lg border border-ledger-border bg-ledger-surface p-4">
+                    <p class="text-xs font-semibold text-ledger-muted">Receipt</p>
                     <p class="mt-2 text-base font-semibold text-ledger-text">
                         {{ activeReceipt.receipt?.receipt_number || "-" }}
                     </p>
@@ -398,8 +398,8 @@ const submitCancellation = () => {
                         Issued {{ formatDateTime(activeReceipt.receipt?.issued_at) }}
                     </p>
                 </div>
-                <div class="rounded-xl border border-ledger-border bg-ledger-surface p-4">
-                    <p class="text-xs uppercase tracking-[0.2em] text-ledger-muted">Payment Status</p>
+                <div class="rounded-lg border border-ledger-border bg-ledger-surface p-4">
+                    <p class="text-xs font-semibold text-ledger-muted">Payment Status</p>
                     <p class="mt-2 text-base font-semibold text-ledger-text">
                         {{ receiptStatus }}
                     </p>

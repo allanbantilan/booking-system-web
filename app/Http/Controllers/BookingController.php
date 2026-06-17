@@ -39,7 +39,7 @@ class BookingController extends Controller
         }
 
         $bookings = $query
-            ->paginate(8)
+            ->paginate(9)
             ->withQueryString();
 
         $bookings->setCollection(

@@ -8,10 +8,13 @@ defineProps({
 </script>
 
 <template>
-    <div class="md:col-span-1 flex justify-between">
-        <div class="px-4 sm:px-0">
+    <div
+        class="flex justify-between"
+        :class="variant === 'dashboard' ? 'px-4 py-5 sm:px-6' : 'md:col-span-1'"
+    >
+        <div :class="variant === 'dashboard' ? '' : 'px-4 sm:px-0'">
             <h3
-                class="text-lg font-medium"
+                class="text-lg font-semibold"
                 :class="variant === 'dashboard' ? 'text-ledger-text' : 'text-ledger-text'"
             >
                 <slot name="title" />
@@ -25,7 +28,7 @@ defineProps({
             </p>
         </div>
 
-        <div class="px-4 sm:px-0">
+        <div :class="variant === 'dashboard' ? '' : 'px-4 sm:px-0'">
             <slot name="aside" />
         </div>
     </div>

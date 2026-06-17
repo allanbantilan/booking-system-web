@@ -54,7 +54,7 @@ const logout = () => {
             <div>
                 <p class="font-semibold text-ledger-text">Are you sure you want to log out?</p>
                 <p class="mt-1 text-sm leading-6 text-ledger-muted">
-                    You will need to sign in again to access your booking workspace.
+                    You will need to sign in again to view your bookings.
                 </p>
             </div>
         </div>

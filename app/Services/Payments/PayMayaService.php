@@ -57,6 +57,42 @@ class PayMayaService
         return $this->handleResponse($response);
     }
 
+    public function refund(string $transactionReferenceNo, float $amount, string $reason, string $requestReferenceNo): array
+    {
+        $secretKey = config('services.paymaya.secret_key');
+        $baseUrl = rtrim((string) config('services.paymaya.base_url'), '/');
+
+        if (!$secretKey) {
+            throw new RuntimeException('PayMaya secret key is not configured.');
+        }
+
+        $payload = [
+            'transactionReferenceNo' => $transactionReferenceNo,
+            'merchant' => [
+                'id' => config('services.paymaya.merchant_id') ?: config('app.name'),
+                'name' => config('services.paymaya.merchant_name') ?: config('app.name'),
+            ],
+            'amount' => [
+                'value' => $amount,
+                'currency' => 'PHP',
+            ],
+            'reason' => $reason,
+        ];
+
+        $response = Http::baseUrl($baseUrl)
+            ->withBasicAuth($secretKey, '')
+            ->withHeaders([
+                'Request-Reference-No' => $requestReferenceNo,
+                'X-Idempotency-Key' => $requestReferenceNo,
+            ])
+            ->connectTimeout(5)
+            ->timeout(15)
+            ->acceptJson()
+            ->post('/p3/refund', $payload);
+
+        return $this->handleResponse($response);
+    }
+
     private function handleResponse(Response $response): array
     {
         if ($response->successful()) {

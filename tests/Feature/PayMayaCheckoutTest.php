@@ -43,15 +43,13 @@ class PayMayaCheckoutTest extends TestCase
                 ]);
         });
 
-        $response = $this->postJson('/api/payments/paymaya/checkout', [
+        $response = $this->post(route('payments.paymaya.checkout'), [
             'booking_id' => $booking->id,
             'quantity' => 2,
         ]);
 
-        $response->assertStatus(201)
-            ->assertJsonPath('data.status', 'pending')
-            ->assertJsonPath('data.checkout_id', 'CHK-CREATE-1')
-            ->assertJsonPath('data.checkout_url', 'https://example.test/checkout');
+        // Web flow redirects the browser to PayMaya's hosted checkout.
+        $response->assertRedirect('https://example.test/checkout');
 
         $this->assertSame(1, Reservation::query()->count());
         $this->assertSame(1, Payment::query()->count());
@@ -78,12 +76,13 @@ class PayMayaCheckoutTest extends TestCase
                 ->andThrow(new \RuntimeException('PayMaya is down'));
         });
 
-        $response = $this->postJson('/api/payments/paymaya/checkout', [
+        $response = $this->post(route('payments.paymaya.checkout'), [
             'booking_id' => $booking->id,
             'quantity' => 2,
         ]);
 
-        $response->assertStatus(502);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
 
         // Hold released; reservation and its cascade-linked payment cleaned up.
         $this->assertSame(10, $booking->fresh()->capacity);
@@ -107,12 +106,13 @@ class PayMayaCheckoutTest extends TestCase
                 ]);
         });
 
-        $response = $this->postJson('/api/payments/paymaya/checkout', [
+        $response = $this->post(route('payments.paymaya.checkout'), [
             'booking_id' => $booking->id,
             'quantity' => 2,
         ]);
 
-        $response->assertStatus(502);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
 
         // Even though the API call succeeded, a missing URL must not leak the hold.
         $this->assertSame(10, $booking->fresh()->capacity);

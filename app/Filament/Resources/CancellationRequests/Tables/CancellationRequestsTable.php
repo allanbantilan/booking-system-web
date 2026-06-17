@@ -147,6 +147,34 @@ class CancellationRequestsTable
                     ->action(function (ReservationCancellationRequest $record, array $data): void {
                         self::runReview(fn (ReservationCancellationService $service, $merchant) => $service->reject($record, $merchant, $data['merchant_note']), 'Cancellation request rejected.');
                     }),
+                Action::make('markRefundProcessed')
+                    ->label('Mark refunded')
+                    ->color('success')
+                    ->icon('heroicon-o-banknotes')
+                    ->requiresConfirmation()
+                    ->modalHeading('Mark refund as processed?')
+                    ->modalDescription('Use this after the refund has been completed outside this system.')
+                    ->visible(fn (ReservationCancellationRequest $record): bool =>
+                        $record->status === ReservationCancellationRequest::STATUS_APPROVED
+                        && $record->refund_status === ReservationCancellationRequest::REFUND_PENDING
+                    )
+                    ->action(function (ReservationCancellationRequest $record): void {
+                        self::runReview(fn (ReservationCancellationService $service, $merchant) => $service->markRefundProcessed($record, $merchant), 'Refund marked as processed.');
+                    }),
+                Action::make('refundViaPayMaya')
+                    ->label('Refund via Maya')
+                    ->color('primary')
+                    ->icon('heroicon-o-arrow-path-rounded-square')
+                    ->requiresConfirmation()
+                    ->modalHeading('Refund via Maya?')
+                    ->modalDescription('This calls the Maya refund API. The local refund status updates only after Maya accepts it.')
+                    ->visible(fn (ReservationCancellationRequest $record): bool =>
+                        $record->status === ReservationCancellationRequest::STATUS_APPROVED
+                        && $record->refund_status === ReservationCancellationRequest::REFUND_PENDING
+                    )
+                    ->action(function (ReservationCancellationRequest $record): void {
+                        self::runReview(fn (ReservationCancellationService $service, $merchant) => $service->refundViaPayMaya($record, $merchant), 'Refund sent to Maya.');
+                    }),
             ])
             ->toolbarActions([]);
     }

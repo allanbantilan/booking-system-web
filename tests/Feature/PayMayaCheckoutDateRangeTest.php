@@ -35,13 +35,12 @@ class PayMayaCheckoutDateRangeTest extends TestCase
             $mock->shouldReceive('createCheckout')->never();
         });
 
-        $response = $this->postJson('/api/payments/paymaya/checkout', [
+        $response = $this->post(route('payments.paymaya.checkout'), [
             'booking_id' => $booking->id,
             'quantity' => 1,
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['check_in_date', 'check_out_date']);
+        $response->assertSessionHasErrors(['check_in_date', 'check_out_date']);
     }
 
     public function test_accommodation_dates_compute_stay_length_and_total_price(): void
@@ -74,16 +73,14 @@ class PayMayaCheckoutDateRangeTest extends TestCase
                 ]);
         });
 
-        $response = $this->postJson('/api/payments/paymaya/checkout', [
+        $response = $this->post(route('payments.paymaya.checkout'), [
             'booking_id' => $booking->id,
             'quantity' => 2,
             'check_in_date' => now()->toDateString(),
             'check_out_date' => now()->addDays(3)->toDateString(),
         ]);
 
-        $response->assertStatus(201)
-            ->assertJsonPath('data.status', 'pending')
-            ->assertJsonPath('data.checkout_id', 'CHK-DATE-1');
+        $response->assertRedirect('https://example.test/checkout');
 
         $reservation = Reservation::query()->firstOrFail();
 

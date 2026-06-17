@@ -5,12 +5,15 @@ namespace Tests\Feature;
 use App\Filament\Resources\CancellationRequests\CancellationRequestResource;
 use App\Models\Booking;
 use App\Models\BackendUser;
+use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\ReservationCancellationRequest;
 use App\Models\User;
 use App\Filament\Resources\CancellationRequests\Pages\ListCancellationRequests;
+use App\Services\Reservations\ReservationCancellationService;
 use App\Types\StatusType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -69,6 +72,144 @@ class FilamentCancellationRequestResourceTest extends TestCase
         $this->assertSame(ReservationCancellationRequest::REFUND_PENDING, $request->refund_status);
     }
 
+    public function test_customer_requested_cancellation_shows_for_booking_merchant(): void
+    {
+        $merchant = $this->makeBackendUser('requested-merchant@test.local', 'merchant');
+        $user = User::factory()->create();
+        $booking = Booking::create([
+            'title' => 'Beach Stay',
+            'description' => 'Room booking.',
+            'location' => 'Cebu',
+            'event_date' => now()->addDays(10),
+            'capacity' => 5,
+            'price' => 1000,
+            'created_by' => $merchant->id,
+        ]);
+        $reservation = Reservation::create([
+            'user_id' => $user->id,
+            'booking_id' => $booking->id,
+            'quantity' => 1,
+            'total_price' => 1000,
+            'status' => StatusType::Confirmed,
+        ]);
+
+        $request = app(ReservationCancellationService::class)
+            ->requestCancellation($reservation, $user, 'Schedule changed');
+
+        $this->actingAs($merchant, 'backend');
+
+        $ids = CancellationRequestResource::getEloquentQuery()->pluck('id')->all();
+
+        $this->assertSame($merchant->id, $request->merchant_id);
+        $this->assertContains($request->id, $ids);
+    }
+
+    public function test_merchant_can_mark_pending_refund_as_processed(): void
+    {
+        $merchant = $this->makeBackendUser('refund-merchant@test.local', 'merchant');
+        $request = $this->makeRequestForMerchant($merchant);
+        $request->update([
+            'status' => ReservationCancellationRequest::STATUS_APPROVED,
+            'refund_required' => true,
+            'refund_status' => ReservationCancellationRequest::REFUND_PENDING,
+        ]);
+
+        $this->actingAs($merchant, 'backend');
+
+        Livewire::test(ListCancellationRequests::class)
+            ->assertCanSeeTableRecords([$request])
+            ->callTableAction('markRefundProcessed', $request);
+
+        $this->assertSame(
+            ReservationCancellationRequest::REFUND_PROCESSED,
+            $request->fresh()->refund_status,
+        );
+    }
+
+    public function test_merchant_can_refund_pending_refund_via_paymaya(): void
+    {
+        config([
+            'services.paymaya.base_url' => 'https://pg-sandbox.paymaya.com',
+            'services.paymaya.secret_key' => 'sandbox-secret',
+        ]);
+        Http::fake([
+            'https://pg-sandbox.paymaya.com/p3/refund' => Http::response(['status' => 'REFUNDED'], 200),
+        ]);
+
+        $merchant = $this->makeBackendUser('paymaya-refund-merchant@test.local', 'merchant');
+        $request = $this->makeApprovedRefundRequest($merchant, [
+            'transactionReferenceNo' => 'TXN-REFUND-1',
+        ]);
+
+        $this->actingAs($merchant, 'backend');
+
+        Livewire::test(ListCancellationRequests::class)
+            ->assertCanSeeTableRecords([$request])
+            ->callTableAction('refundViaPayMaya', $request);
+
+        $this->assertSame(
+            ReservationCancellationRequest::REFUND_PROCESSED,
+            $request->fresh()->refund_status,
+        );
+        Http::assertSent(fn ($httpRequest) =>
+            $httpRequest->url() === 'https://pg-sandbox.paymaya.com/p3/refund'
+            && $httpRequest['transactionReferenceNo'] === 'TXN-REFUND-1'
+            && $httpRequest['merchant']['name'] === config('app.name')
+            && (float) $httpRequest['amount']['value'] === 1000.0
+        );
+    }
+
+    public function test_paymaya_refund_without_transaction_reference_stays_pending(): void
+    {
+        $merchant = $this->makeBackendUser('missing-refund-reference@test.local', 'merchant');
+        $request = $this->makeApprovedRefundRequest($merchant);
+
+        $this->actingAs($merchant, 'backend');
+
+        Livewire::test(ListCancellationRequests::class)
+            ->assertCanSeeTableRecords([$request])
+            ->callTableAction('refundViaPayMaya', $request);
+
+        $this->assertSame(
+            ReservationCancellationRequest::REFUND_PENDING,
+            $request->fresh()->refund_status,
+        );
+        Http::assertNothingSent();
+    }
+
+    public function test_paymaya_refund_fetches_checkout_when_transaction_reference_is_missing(): void
+    {
+        config([
+            'services.paymaya.base_url' => 'https://pg-sandbox.paymaya.com',
+            'services.paymaya.secret_key' => 'sandbox-secret',
+        ]);
+        Http::fake([
+            'https://pg-sandbox.paymaya.com/checkout/v1/checkouts/CHK-REFUND-*' => Http::response([
+                'status' => 'PAYMENT_SUCCESS',
+                'transactionReferenceNo' => 'TXN-FETCHED-1',
+            ], 200),
+            'https://pg-sandbox.paymaya.com/p3/refund' => Http::response(['status' => 'REFUNDED'], 200),
+        ]);
+
+        $merchant = $this->makeBackendUser('fetch-refund-reference@test.local', 'merchant');
+        $request = $this->makeApprovedRefundRequest($merchant);
+
+        $this->actingAs($merchant, 'backend');
+
+        Livewire::test(ListCancellationRequests::class)
+            ->assertCanSeeTableRecords([$request])
+            ->callTableAction('refundViaPayMaya', $request);
+
+        $this->assertSame(
+            ReservationCancellationRequest::REFUND_PROCESSED,
+            $request->fresh()->refund_status,
+        );
+        $this->assertSame(
+            'TXN-FETCHED-1',
+            $request->reservation->payment->fresh()->raw_response['transactionReferenceNo'],
+        );
+    }
+
     private function makeBackendUser(string $email, string $role): BackendUser
     {
         $user = BackendUser::create([
@@ -115,5 +256,29 @@ class FilamentCancellationRequestResourceTest extends TestCase
             'expires_at' => now()->addDays(7),
             'refund_status' => ReservationCancellationRequest::REFUND_NOT_REQUIRED,
         ]);
+    }
+
+    private function makeApprovedRefundRequest(BackendUser $merchant, array $rawWebhook = []): ReservationCancellationRequest
+    {
+        $request = $this->makeRequestForMerchant($merchant);
+        $request->update([
+            'status' => ReservationCancellationRequest::STATUS_APPROVED,
+            'refund_required' => true,
+            'refund_status' => ReservationCancellationRequest::REFUND_PENDING,
+        ]);
+
+        Payment::create([
+            'reservation_id' => $request->reservation_id,
+            'user_id' => $request->user_id,
+            'provider' => 'paymaya',
+            'status' => 'succeeded',
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'checkout_id' => 'CHK-REFUND-' . $request->id,
+            'reference' => 'PMY-REFUND-' . $request->id,
+            'raw_webhook' => $rawWebhook,
+        ]);
+
+        return $request->fresh(['reservation.payment']);
     }
 }

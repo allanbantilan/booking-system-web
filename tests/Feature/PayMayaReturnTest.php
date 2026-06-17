@@ -8,11 +8,22 @@ use App\Models\Reservation;
 use App\Models\User;
 use App\Types\StatusType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class PayMayaReturnTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_return_route_uses_web_guard_not_sanctum(): void
+    {
+        // Regression: sanctum ignores the session cookie when the Referer is the
+        // Maya domain, which logged returning users out. The web guard does not.
+        $middleware = Route::getRoutes()->getByName('payments.paymaya.return')->gatherMiddleware();
+
+        $this->assertContains('auth:web', $middleware);
+        $this->assertNotContains('auth:sanctum', $middleware);
+    }
 
     public function test_return_rejects_checkout_id_mismatch(): void
     {

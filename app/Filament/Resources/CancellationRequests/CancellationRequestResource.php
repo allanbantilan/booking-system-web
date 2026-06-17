@@ -56,7 +56,11 @@ class CancellationRequestResource extends Resource
         $user = auth('backend')->user();
 
         if ($user && $user->hasRole('merchant') && !$user->hasRole('super_admin')) {
-            $query->whereHas('booking', fn (Builder $bookingQuery) => $bookingQuery->where('created_by', $user->id));
+            $query->where(function (Builder $requestQuery) use ($user): void {
+                $requestQuery
+                    ->where('merchant_id', $user->id)
+                    ->orWhereHas('booking', fn (Builder $bookingQuery) => $bookingQuery->where('created_by', $user->id));
+            });
         }
 
         return $query;

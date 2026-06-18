@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust the reverse proxy (Caddy) so the app detects HTTPS correctly.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(prepend: [
             UseAdminSession::class,
         ]);

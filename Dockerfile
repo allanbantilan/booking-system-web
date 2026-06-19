@@ -1,3 +1,14 @@
+FROM composer:2 AS vendor
+
+WORKDIR /var/www
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    --ignore-platform-req=php \
+    --ignore-platform-req=ext-intl \
+    --ignore-platform-req=ext-gd \
+    --ignore-platform-req=ext-exif
+
 FROM node:20-alpine AS build
 
 WORKDIR /var/www
@@ -5,6 +16,7 @@ WORKDIR /var/www
 COPY package*.json ./
 RUN npm ci
 
+COPY --from=vendor /var/www/vendor vendor
 COPY . .
 RUN npm run build
 

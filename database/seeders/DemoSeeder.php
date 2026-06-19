@@ -126,7 +126,7 @@ class DemoSeeder extends Seeder
     /** @return Collection<int, User> */
     private function seedCustomers(): Collection
     {
-        return collect(self::CUSTOMERS)->map(function (string $name): User {
+        $customers = collect(self::CUSTOMERS)->map(function (string $name): User {
             $email = (string) Str::of($name)->lower()->replace(' ', '.')->append('@example.com');
 
             $user = User::updateOrCreate(
@@ -142,6 +142,21 @@ class DemoSeeder extends Seeder
 
             return $user;
         });
+
+        // Real owner account — gets demo reservations and receives transactional
+        // email (Resend sandbox only delivers to this address until a domain is verified).
+        $owner = User::updateOrCreate(
+            ['email' => 'allanbantilan11@gmail.com'],
+            [
+                'name' => 'Allan Bantilan',
+                'password' => Hash::make(self::PASSWORD),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $owner->syncRoles(['customer']);
+
+        return $customers->push($owner);
     }
 
     /** @param Collection<int, User> $customers */

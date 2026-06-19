@@ -133,7 +133,11 @@ class ReservationCancellationService
         if ($reservation) {
             $reservation->loadMissing(['user', 'booking']);
             if ($reservation->user) {
-                Mail::to($reservation->user->email)->send(new BookingCancelledMail($reservation));
+                try {
+                    Mail::to($reservation->user->email)->send(new BookingCancelledMail($reservation));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
         }
 

@@ -99,7 +99,11 @@ class PaymentFinalizer
         if ($justConfirmed) {
             $reservation = $payment->reservation()->with(['user', 'booking'])->first();
             if ($reservation?->user) {
-                Mail::to($reservation->user->email)->send(new BookingConfirmedMail($reservation));
+                try {
+                    Mail::to($reservation->user->email)->send(new BookingConfirmedMail($reservation));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
         }
 

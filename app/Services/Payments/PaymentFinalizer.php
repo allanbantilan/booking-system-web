@@ -2,15 +2,19 @@
 
 namespace App\Services\Payments;
 
+use App\Mail\BookingConfirmedMail;
 use App\Models\Payment;
 use App\Models\Receipt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentFinalizer
 {
     public function apply(Payment $payment, string $status, array $raw = [], array $webhook = []): Payment
     {
-        return DB::transaction(function () use ($payment, $status, $raw, $webhook): Payment {
+        $justConfirmed = false;
+
+        $payment = DB::transaction(function () use ($payment, $status, $raw, $webhook, &$justConfirmed): Payment {
             // Re-read with a lock so concurrent webhooks queue behind each other.
             $payment = Payment::lockForUpdate()->findOrFail($payment->id);
 
@@ -69,6 +73,7 @@ class PaymentFinalizer
                     'status' => 'confirmed',
                     'cancelled_at' => null,
                 ]);
+                $justConfirmed = true;
             }
 
             Receipt::firstOrCreate(
@@ -90,5 +95,14 @@ class PaymentFinalizer
 
             return $payment;
         });
+
+        if ($justConfirmed) {
+            $reservation = $payment->reservation()->with(['user', 'booking'])->first();
+            if ($reservation?->user) {
+                Mail::to($reservation->user->email)->send(new BookingConfirmedMail($reservation));
+            }
+        }
+
+        return $payment;
     }
 }

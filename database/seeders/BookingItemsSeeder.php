@@ -10,6 +10,25 @@ use Illuminate\Support\Str;
 
 class BookingItemsSeeder extends Seeder
 {
+    private const UNSPLASH_IMAGE_IDS = [
+        'airplane' => ['photo-1436491865332-7a61a109cc05', 'photo-1556388158-158ea5ccacbd', 'photo-1569154941061-e231b4725ef1'],
+        'hotel-room' => ['photo-1566073771259-6a8506099945', 'photo-1578683010236-d716f9a3f461', 'photo-1590490360182-c33d57733427'],
+        'car-rental' => ['photo-1503376780353-7e6692767b70', 'photo-1549924231-f129b911e442', 'photo-1492144534655-ae79c964c9d7'],
+        'restaurant' => ['photo-1414235077428-338989a2e8c0', 'photo-1555396273-367ea4eb4db5', 'photo-1517248135467-4c7edcad34c4'],
+        'private-dining' => ['photo-1551218808-94e220e084d2', 'photo-1559339352-11d035aa65de', 'photo-1528605248644-14dd04022da1'],
+        'catering' => ['photo-1555244162-803834f70033', 'photo-1543353071-10c8ba85a904', 'photo-1527529482837-4698179dc6ce'],
+        'concert' => ['photo-1501386761578-eac5c94b800a', 'photo-1493225457124-a3eb161ffa5f', 'photo-1516450360452-9312f5e86fc7'],
+        'cinema' => ['photo-1489599849927-2ee91cede3ba', 'photo-1440404653325-ab127d49abc1', 'photo-1524985069026-dd778a71c7b4'],
+        'stadium' => ['photo-1546519638-68e109498ffc', 'photo-1461896836934-ffe607ba8211', 'photo-1519861531473-9200262188bf'],
+        'dental-clinic' => ['photo-1629909613654-28e377c37b09', 'photo-1606811971618-4486d14f3f99', 'photo-1588776814546-1ffcf47267a5'],
+        'barbershop' => ['photo-1585747860715-2ba37e788b70', 'photo-1512690459411-b9245aed614b', 'photo-1621605815971-fbc98d665033'],
+        'spa' => ['photo-1540555700478-4be289fbecef', 'photo-1519823551278-64ac92734fb1', 'photo-1600334089648-b0d9d3028eb2'],
+        'sports-court' => ['photo-1546519638-68e109498ffc', 'photo-1526232761682-d26e03ac148e', 'photo-1626224583764-f87db24ac4ea'],
+        'meeting-room' => ['photo-1497366754035-f200968a6e72', 'photo-1517502884422-41eaead166d4', 'photo-1564069114553-7215e1ff1890'],
+        'photo-studio' => ['photo-1516035069371-29a1b244cc32', 'photo-1502982720700-bfff97f2ecac', 'photo-1492691527719-9d1e07e534b4'],
+        'booking' => ['photo-1497366811353-6870744d04b2', 'photo-1500530855697-b586d89ba3ee', 'photo-1522708323590-d24dbb6b0267'],
+    ];
+
     public function run(): void
     {
         $merchants = BackendUser::query()
@@ -269,23 +288,10 @@ class BookingItemsSeeder extends Seeder
                 }
 
                 if ($booking->getMedia('images')->isEmpty()) {
-                    // Build keywords from the template so the photo matches the item
-                    // (e.g. "hotel room,resort" for the Boracay room).
-                    $keywords = collect($template['queries'] ?? [Str::slug($category->name)])
-                        ->map(fn ($query) => Str::slug($query))
-                        ->filter()
-                        ->take(2)
-                        ->implode(',') ?: 'booking';
-
                     $downloaded = 0;
 
                     if ($shouldSeedImages) {
-                        for ($imageIndex = 1; $imageIndex <= 3; $imageIndex++) {
-                            // loremflickr returns a real photo tagged with these keywords,
-                            // so the image actually matches the booking item. `lock` pins
-                            // the same photo per booking across re-runs.
-                            $url = "https://loremflickr.com/1200/800/{$keywords}?lock={$booking->id}{$imageIndex}";
-
+                        foreach ($this->unsplashImageUrls($template) as $url) {
                             try {
                                 $booking
                                     ->addMediaFromUrl($url)
@@ -306,6 +312,18 @@ class BookingItemsSeeder extends Seeder
                     }
                 }
             });
+    }
+
+    /** @return array<int, string> */
+    private function unsplashImageUrls(array $template): array
+    {
+        $key = collect($template['queries'] ?? [])
+            ->map(fn ($query) => Str::slug($query))
+            ->first(fn ($query) => isset(self::UNSPLASH_IMAGE_IDS[$query])) ?? 'booking';
+
+        return collect(self::UNSPLASH_IMAGE_IDS[$key])
+            ->map(fn (string $id): string => "https://images.unsplash.com/{$id}?auto=format&fit=crop&w=1200&h=800&q=80")
+            ->all();
     }
 
     private function placeholderSvg(string $title, string $category, float $price): string

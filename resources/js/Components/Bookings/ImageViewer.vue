@@ -141,7 +141,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
             </div>
 
             <div
-                class="relative flex min-h-[18rem] flex-1 items-center justify-center overflow-hidden bg-ledger-elevated p-4"
+                class="relative flex h-[62vh] min-h-[18rem] items-center justify-center overflow-hidden bg-ledger-elevated p-4"
             >
                 <button
                     type="button"
@@ -172,7 +172,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
                             v-if="currentImage"
                             :src="currentImage"
                             :alt="`${title} image ${currentIndex + 1}`"
-                            class="max-h-[65vh] max-w-full object-contain transition-transform duration-150"
+                            class="max-h-full max-w-full object-contain transition-transform duration-150"
                             :style="{ transform: `scale(${zoom})` }"
                         />
                     </div>

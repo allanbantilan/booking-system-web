@@ -22,5 +22,18 @@ class FrontendUsersSeeder extends Seeder
 
             $user->syncRoles(['customer']);
         }
+
+        // Real owner account — receives transactional email (Resend sandbox only
+        // delivers to this address until a sending domain is verified).
+        $owner = User::updateOrCreate(
+            ['email' => 'allanbantilan11@gmail.com'],
+            [
+                'name' => 'Allan Bantilan',
+                'password' => Hash::make('Hello123!'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $owner->syncRoles(['customer']);
     }
 }

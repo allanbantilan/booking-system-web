@@ -90,14 +90,18 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
 </script>
 
 <template>
-    <div
-        v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="`${title} gallery`"
-        @click.self="close"
-    >
+    <!-- Teleport to body: a transformed ancestor (.bf-page-in animation) would
+         otherwise become the containing block for this fixed overlay, dropping it
+         to the bottom of the page instead of covering the viewport. -->
+    <Teleport to="body">
+        <div
+            v-if="open"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6"
+            role="dialog"
+            aria-modal="true"
+            :aria-label="`${title} gallery`"
+            @click.self="close"
+        >
         <div
             class="flex max-h-full w-full max-w-5xl flex-col rounded-2xl border border-ledger-border bg-ledger-surface shadow-xl"
         >
@@ -221,5 +225,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
                 </div>
             </div>
         </div>
-    </div>
+        </div>
+    </Teleport>
 </template>

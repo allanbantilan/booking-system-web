@@ -137,6 +137,8 @@ const getCancellationTitle = (reservation) => {
 };
 
 const getReservationStatusLabel = (reservation) => {
+    if (reservation.is_completed) return "Completed";
+
     if (reservation.status === "cancelled") {
         if (reservation.cancellation_request?.refund_status === "processed") {
             return "refunded";
@@ -151,6 +153,10 @@ const getReservationStatusLabel = (reservation) => {
 };
 
 const getReservationStatusClass = (reservation) => {
+    if (reservation.is_completed) {
+        return "bg-emerald-400/20 text-emerald-300";
+    }
+
     if (getReservationStatusLabel(reservation) === "refunded") {
         return "bg-emerald-400/20 text-emerald-300";
     }

@@ -6,9 +6,11 @@
         "build": "vite build",
         "dev": "vite",
         "test:frontend": "vitest run",
-        "typecheck": "vue-tsc --noEmit"
+        "typecheck": "vue-tsc --noEmit",
+        "e2e": "./vendor/bin/sail artisan db:seed --class=E2ESeeder --force && playwright test"
     },
     "devDependencies": {
+        "@playwright/test": "^1.61.0",
         "@tailwindcss/forms": "^0.5.7",
         "@tailwindcss/typography": "^0.5.10",
         "@vitejs/plugin-vue": "^6.0.7",

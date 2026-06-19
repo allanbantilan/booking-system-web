@@ -59,6 +59,7 @@ class ReservationController extends Controller
                     'quantity' => $reservation->quantity,
                     'total_price' => $reservation->total_price,
                     'status' => $reservation->status,
+                    'is_completed' => $reservation->isCompleted(),
                     'cancelled_at' => $reservation->cancelled_at?->toIso8601String(),
                     'created_at' => $reservation->created_at?->toIso8601String(),
                     'can_cancel' => $eligibility['can_request'],

@@ -74,4 +74,23 @@ class Reservation extends Model
     {
         return $this->hasOne(ReservationCancellationRequest::class)->latestOfMany();
     }
+
+    // ponytail: "Completed" is derived from the end date, not stored. Add a
+    // stored status + scheduled job only if a completion-triggered email or
+    // record lock is later needed.
+    public function isCompleted(): bool
+    {
+        if ($this->status !== StatusType::Confirmed) {
+            return false;
+        }
+
+        $end = $this->check_out_date ?? $this->booking?->event_date;
+
+        return $end !== null && $end->isPast();
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->isCompleted() ? 'Completed' : $this->status->label();
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Reservations;
 
+use App\Mail\BookingCancelledMail;
 use App\Models\BackendUser;
 use App\Models\Booking;
 use App\Models\Reservation;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -92,7 +94,7 @@ class ReservationCancellationService
 
     public function approve(ReservationCancellationRequest $request, BackendUser $merchant): ReservationCancellationRequest
     {
-        return DB::transaction(function () use ($request, $merchant): ReservationCancellationRequest {
+        $request = DB::transaction(function () use ($request, $merchant): ReservationCancellationRequest {
             $request = ReservationCancellationRequest::query()
                 ->with(['booking', 'reservation'])
                 ->lockForUpdate()
@@ -126,6 +128,20 @@ class ReservationCancellationService
 
             return $request->fresh(['booking', 'reservation']);
         });
+
+        $reservation = $request->reservation;
+        if ($reservation) {
+            $reservation->loadMissing(['user', 'booking']);
+            if ($reservation->user) {
+                try {
+                    Mail::to($reservation->user->email)->send(new BookingCancelledMail($reservation));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        }
+
+        return $request;
     }
 
     public function reject(ReservationCancellationRequest $request, BackendUser $merchant, string $note): ReservationCancellationRequest

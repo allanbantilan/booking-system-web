@@ -24,9 +24,13 @@ const emit = defineEmits(["close"]);
 
 const currentIndex = ref(0);
 const zoom = ref(1);
+const direction = ref(1); // 1 = advancing, -1 = going back; drives slide direction
 
 const imageCount = computed(() => props.images.length);
 const currentImage = computed(() => props.images[currentIndex.value]);
+const slideName = computed(() =>
+    direction.value === 1 ? "iv-slide-next" : "iv-slide-prev",
+);
 
 const clampIndex = (index) => {
     if (!imageCount.value) return 0;
@@ -38,21 +42,29 @@ const resetZoom = () => {
     zoom.value = 1;
 };
 
-const goTo = (index) => {
+const setIndex = (index) => {
     currentIndex.value = clampIndex(index);
     resetZoom();
+};
+
+// Thumbnail jump: infer direction from where we're headed.
+const goTo = (index) => {
+    direction.value = clampIndex(index) >= currentIndex.value ? 1 : -1;
+    setIndex(index);
 };
 
 const next = () => {
     if (!imageCount.value) return;
 
-    goTo((currentIndex.value + 1) % imageCount.value);
+    direction.value = 1;
+    setIndex((currentIndex.value + 1) % imageCount.value);
 };
 
 const previous = () => {
     if (!imageCount.value) return;
 
-    goTo((currentIndex.value - 1 + imageCount.value) % imageCount.value);
+    direction.value = -1;
+    setIndex((currentIndex.value - 1 + imageCount.value) % imageCount.value);
 };
 
 const zoomIn = () => {
@@ -94,17 +106,20 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
          otherwise become the containing block for this fixed overlay, dropping it
          to the bottom of the page instead of covering the viewport. -->
     <Teleport to="body">
-        <div
-            v-if="open"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6"
-            role="dialog"
-            aria-modal="true"
-            :aria-label="`${title} gallery`"
-            @click.self="close"
-        >
-        <div
-            class="flex max-h-full w-full max-w-5xl flex-col rounded-2xl border border-ledger-border bg-ledger-surface shadow-xl"
-        >
+        <Transition name="iv-fade">
+            <div
+                v-if="open"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6"
+                role="dialog"
+                aria-modal="true"
+                :aria-label="`${title} gallery`"
+                @click.self="close"
+            >
+                <Transition name="iv-panel">
+                    <div
+                        v-if="open"
+                        class="flex max-h-full w-full max-w-5xl flex-col rounded-2xl border border-ledger-border bg-ledger-surface shadow-xl"
+                    >
             <div
                 class="flex items-center justify-between gap-3 border-b border-ledger-border px-4 py-3"
             >
@@ -126,7 +141,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
             </div>
 
             <div
-                class="relative flex min-h-[18rem] flex-1 items-center justify-center overflow-auto bg-ledger-elevated p-4"
+                class="relative flex min-h-[18rem] flex-1 items-center justify-center overflow-hidden bg-ledger-elevated p-4"
             >
                 <button
                     type="button"
@@ -148,13 +163,20 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
                         />
                     </svg>
                 </button>
-                <img
-                    v-if="currentImage"
-                    :src="currentImage"
-                    :alt="`${title} image ${currentIndex + 1}`"
-                    class="max-h-[65vh] max-w-full object-contain transition-transform duration-150"
-                    :style="{ transform: `scale(${zoom})` }"
-                />
+                <Transition :name="slideName">
+                    <div
+                        :key="currentIndex"
+                        class="absolute inset-0 flex items-center justify-center p-4"
+                    >
+                        <img
+                            v-if="currentImage"
+                            :src="currentImage"
+                            :alt="`${title} image ${currentIndex + 1}`"
+                            class="max-h-[65vh] max-w-full object-contain transition-transform duration-150"
+                            :style="{ transform: `scale(${zoom})` }"
+                        />
+                    </div>
+                </Transition>
                 <button
                     type="button"
                     class="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-ledger-border bg-ledger-surface p-2.5 text-ledger-text transition hover:bg-ledger-bg"
@@ -223,8 +245,89 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleKeydown));
                         +
                     </button>
                 </div>
+                        </div>
+                    </div>
+                </Transition>
             </div>
-        </div>
-        </div>
+        </Transition>
     </Teleport>
 </template>
+
+<style scoped>
+/* Open / close: backdrop fades, panel rises and settles. Exit is quicker. */
+.iv-fade-enter-active,
+.iv-fade-leave-active {
+    transition: opacity 300ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.iv-fade-leave-active {
+    transition-duration: 200ms;
+}
+.iv-fade-enter-from,
+.iv-fade-leave-to {
+    opacity: 0;
+}
+
+.iv-panel-enter-active {
+    transition:
+        opacity 300ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+        transform 300ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.iv-panel-leave-active {
+    transition:
+        opacity 200ms ease-in,
+        transform 200ms ease-in;
+}
+.iv-panel-enter-from,
+.iv-panel-leave-to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+}
+
+/* Carousel: the incoming and outgoing frames overlap and slide in the travel
+   direction. Transform lives on the wrapper so it never fights the img zoom. */
+.iv-slide-next-enter-active,
+.iv-slide-next-leave-active,
+.iv-slide-prev-enter-active,
+.iv-slide-prev-leave-active {
+    transition:
+        opacity 260ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+        transform 260ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.iv-slide-next-enter-from {
+    opacity: 0;
+    transform: translateX(28px);
+}
+.iv-slide-next-leave-to {
+    opacity: 0;
+    transform: translateX(-28px);
+}
+.iv-slide-prev-enter-from {
+    opacity: 0;
+    transform: translateX(-28px);
+}
+.iv-slide-prev-leave-to {
+    opacity: 0;
+    transform: translateX(28px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iv-fade-enter-active,
+    .iv-fade-leave-active,
+    .iv-panel-enter-active,
+    .iv-panel-leave-active,
+    .iv-slide-next-enter-active,
+    .iv-slide-next-leave-active,
+    .iv-slide-prev-enter-active,
+    .iv-slide-prev-leave-active {
+        transition-duration: 0.01ms !important;
+    }
+    .iv-panel-enter-from,
+    .iv-panel-leave-to,
+    .iv-slide-next-enter-from,
+    .iv-slide-next-leave-to,
+    .iv-slide-prev-enter-from,
+    .iv-slide-prev-leave-to {
+        transform: none !important;
+    }
+}
+</style>

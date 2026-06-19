@@ -38,3 +38,7 @@ CLAUDE.md
 .mimocode/
 PRODUCT.md
 skills-lock.json
+
+# Playwright E2E artifacts
+/test-results/
+/playwright-report/

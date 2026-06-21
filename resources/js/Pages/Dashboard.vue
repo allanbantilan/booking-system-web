@@ -91,7 +91,7 @@ const formatDate = (value?: string | null) => value
                     <p class="mt-2 text-sm text-ledger-muted">
                         <i class="pi pi-calendar mr-2 text-orange-400" />{{ formatDate(upcomingReservation.scheduled_for) }}
                     </p>
-                    <Link :href="routeUrl('bookings.show', upcomingReservation.booking?.id)" class="mt-6 inline-block">
+                    <Link v-if="upcomingReservation.booking?.id" :href="routeUrl('bookings.show', upcomingReservation.booking.id)" class="mt-6 inline-block">
                         <Button label="View booking" icon="pi pi-arrow-right" icon-pos="right" text />
                     </Link>
                 </div>
@@ -112,10 +112,11 @@ const formatDate = (value?: string | null) => value
                 </div>
 
                 <div v-if="recentReservations.length" class="mt-5 divide-y divide-ledger-border">
-                    <Link
+                    <component
+                        :is="reservation.booking?.id ? Link : 'div'"
                         v-for="reservation in recentReservations"
                         :key="reservation.id"
-                        :href="routeUrl('bookings.show', reservation.booking?.id)"
+                        :href="reservation.booking?.id ? routeUrl('bookings.show', reservation.booking.id) : undefined"
                         class="flex items-center gap-4 py-4 transition hover:bg-ledger-elevated"
                     >
                         <span class="grid size-10 shrink-0 place-items-center rounded-lg border border-ledger-border bg-ledger-elevated text-ledger-primary">
@@ -129,7 +130,7 @@ const formatDate = (value?: string | null) => value
                             <StatusBadge :status="reservation.status" />
                             <p class="mt-1 text-xs font-semibold text-ledger-muted">{{ formatCurrency(reservation.total_price) }}</p>
                         </div>
-                    </Link>
+                    </component>
                 </div>
                 <div v-else class="mt-6 rounded-lg border border-dashed border-ledger-border p-8 text-center text-sm text-ledger-muted">
                     Your recent reservations will appear here.

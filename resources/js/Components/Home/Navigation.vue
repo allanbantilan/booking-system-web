@@ -49,8 +49,11 @@ const scrollTo = (id: string) => {
                 :class="hideMainLinks ? '' : 'md:col-start-3'"
             >
                 <Button text rounded severity="secondary" :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'" aria-label="Toggle theme" @click="toggleTheme" />
-                <Link v-if="canLogin" :href="routeUrl('login')" class="hidden px-3 py-2 text-sm font-bold text-ledger-muted hover:text-ledger-text sm:block">Sign in</Link>
-                <Link v-if="canRegister" :href="routeUrl('register')" class="bf-button bf-button-primary hidden sm:inline-flex">Create account</Link>
+                <!-- Wrapper controls visibility: .bf-button forces display:inline-flex, so `hidden` on the link itself is overridden. -->
+                <div class="hidden items-center gap-2 sm:flex">
+                    <Link v-if="canLogin" :href="routeUrl('login')" class="px-3 py-2 text-sm font-bold text-ledger-muted hover:text-ledger-text">Sign in</Link>
+                    <Link v-if="canRegister" :href="routeUrl('register')" class="bf-button bf-button-primary">Create account</Link>
+                </div>
                 <Button v-if="!hideMainLinks" class="md:!hidden" text rounded severity="secondary" icon="pi pi-bars" aria-label="Open menu" @click="menuOpen = true" />
             </div>
         </div>

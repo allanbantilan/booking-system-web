@@ -546,4 +546,12 @@
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
     }
+
+    /* Reveal animations start at opacity:0 and depend on the IntersectionObserver
+       adding .is-visible. Reduced-motion users shouldn't rely on scroll/JS to see
+       content — show it immediately. */
+    .bf-motion {
+        opacity: 1 !important;
+        transform: none !important;
+    }
 }

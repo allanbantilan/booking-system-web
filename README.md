@@ -9,7 +9,7 @@ The app is built as a modern Laravel + Vue/Inertia application: Laravel owns aut
 
 ## Demo Login Credentials
 
-Use this seeded account to explore the [live demo](https://bookbound.duckdns.org). It cannot delete seeded demo data.
+Use these seeded accounts to explore the [live demo](https://bookbound.duckdns.org). All share the same password.
 
 **Password:** `Hello123!`
 
@@ -20,6 +20,14 @@ Use this seeded account to explore the [live demo](https://bookbound.duckdns.org
 | Customer | `testuser1@example.com` |
 
 Browse listings, reserve dates, pay through the PayMaya sandbox, and manage or cancel your own bookings.
+
+### Admin back office — https://bookbound.duckdns.org/admin
+
+| Role | Email | Access |
+| --- | --- | --- |
+| Super Admin | `superadmin@example.com` | Full — create, update, delete, settings |
+
+Full control, including delete — avoid wiping seeded demo data.
 
 > Demo data only. Payments run against the PayMaya sandbox — use sandbox test cards for checkout.
 

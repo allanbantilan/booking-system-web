@@ -23,21 +23,5 @@ class BackendUsersSeeder extends Seeder
         );
 
         $superAdmin->syncRoles(['super_admin', 'admin']);
-
-        // Read-only demo account for recruiters/reviewers: can view the back
-        // office but cannot create, update, or delete seeded data.
-        $viewer = BackendUser::updateOrCreate(
-            ['email' => 'viewer@example.com'],
-            [
-                'name' => 'Demo Viewer',
-                'password' => Hash::make('Hello123!'),
-                'email_verified_at' => now(),
-                'mobile_number' => '09170000002',
-                'facebook_url' => 'https://facebook.com/demoviewer',
-                'instagram_url' => 'https://instagram.com/demoviewer',
-            ]
-        );
-
-        $viewer->syncRoles(['support_staff']);
     }
 }
